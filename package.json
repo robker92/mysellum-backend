@@ -1,0 +1,31 @@
+{
+  "name": "backend-app",
+  "version": "1.0.0",
+  "description": "Backend Application",
+  "main": "index.js",
+  "scripts": {
+    "test": "",
+    "start": "node ./index.js",
+    "devstart": "nodemon ./index.js"
+  },
+  "author": "Robert",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "body-parser": "^1.18.2",
+    "express": "^4.16.2",
+    "helmet": "^3.11.0",
+    "jsonwebtoken": "^8.1.1",
+    "mongod": "^2.0.0",
+    "mongodb": "^3.0.7",
+    "express-async-handler": "latest",
+    "axios": "latest"
+  },
+  "devDependencies": {
+    "jest": "^25.2.7",
+    "nodemon": "^1.14.12",
+	"moxios": "latest",
+	"jest": "latest",
+	"supertest": "latest"
+  }
+}

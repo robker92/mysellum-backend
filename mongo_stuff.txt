@@ -1,0 +1,1 @@
+db.users.insert({"firstName": "Max", "lastName": "Mustermann", "email": "max.mustermann@web.de", "birthDate": "01.01.2000", "password":"test", "city": "Musterstadt", "postcode": "11111", "addressLine1": "Musterstraße 1"})
