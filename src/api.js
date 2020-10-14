@@ -12,6 +12,7 @@ api.use(cookieParser())
 //Routes
 const routes_users = require('./routes/routes_users');
 const routes_orders = require('./routes/routes_orders');
+const routes_stores = require('./routes/routes_stores');
 
 //Adding Basic Middlewares
 api.use(helmet());
@@ -40,7 +41,8 @@ api.get('/', (req, res) => {
 //API routes
 api.use('/users', routes_users);
 api.use('/orders', routes_orders);
+api.use('/stores', routes_stores);
 
-api.use(middlewares.errorHandler);
+//api.use(middlewares.errorHandler);
 
 module.exports = api;

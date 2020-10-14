@@ -7,7 +7,7 @@ const JwtSecret = process.env.JWT_SECRET || 'very secret secret';
 const mongodb_name = 'testdatabase';
 const saltRounds = 11;
 const keyExpiresIn = "24h";
-const secretKey = '123456789'
+const secretKey = '123456789';
 
 module.exports = {
     port,

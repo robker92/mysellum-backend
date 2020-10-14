@@ -90,7 +90,7 @@ const createOrder = async function (req, res, next) {
     var insertResult = await collection.insertOne(data);
     if (insertResult.result.ok == 1) {
         var user = insertResult.ops[0];
-        console.log("Order creation successfull!");
+        console.log("Order creation successful!");
         console.log(user);
     } else {
         console.log("Order creation failed!");
