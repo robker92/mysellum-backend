@@ -11,21 +11,24 @@
   "author": "Robert",
   "license": "ISC",
   "dependencies": {
+    "axios": "latest",
     "bcryptjs": "^2.4.3",
     "body-parser": "^1.18.2",
-    "express": "^4.16.2",
+    "express": "^4.17.1",
+    "express-async-handler": "latest",
     "helmet": "^3.11.0",
     "jsonwebtoken": "^8.1.1",
     "mongod": "^2.0.0",
     "mongodb": "^3.0.7",
-    "express-async-handler": "latest",
-    "axios": "latest"
+    "cors": "latest",
+    "cookie-parser": "latest",
+    "bcrypt": "latest",
+    "express-validation": "latest"
   },
   "devDependencies": {
-    "jest": "^25.2.7",
-    "nodemon": "^1.14.12",
-	"moxios": "latest",
-	"jest": "latest",
-	"supertest": "latest"
+    "jest": "latest",
+    "moxios": "latest",
+    "nodemon": "^1.19.4",
+    "supertest": "latest"
   }
 }
