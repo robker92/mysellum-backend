@@ -43,6 +43,6 @@ api.use('/users', routes_users);
 api.use('/orders', routes_orders);
 api.use('/stores', routes_stores);
 
-//api.use(middlewares.errorHandler);
+api.use(middlewares.errorHandler);
 
 module.exports = api;

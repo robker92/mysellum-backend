@@ -1,0 +1,58 @@
+
+### Good request
+POST http://localhost:3000/users/registerUser HTTP/1.1
+content-type: application/json
+
+{
+  "firstName": "Hansi",
+  "lastName": "Hinterseer",
+  "email": "hansi@hinterseer.de",
+  "birthDate": "02.02.1954",
+  "password": "geheim123",
+  "city": "Berlin",
+  "postcode": "11011",
+  "addressLine1": "asdfsdf 12"
+}
+
+### Bad request - postcode missing
+POST http://localhost:3000/users/registerUser HTTP/1.1
+content-type: application/json
+
+{
+  "firstName": "Hansi",
+  "lastName": "Hinterseer",
+  "email": "hansi@hinterseer.de",
+  "birthDate": "02.02.1954",
+  "password": "geheim123",
+  "city": "Berlin",
+  "addressLine1": "asdfsdf 12"
+}
+
+### Bad request - birthdate wrong format
+
+POST http://localhost:3000/users/registerUser HTTP/1.1
+content-type: application/json
+
+{
+  "firstName": "Hansi",
+  "lastName": "Hinterseer",
+  "email": "hansi@hinterseer.de",
+  "birthDate": "02-02-1954",
+  "password": "geheim123",
+  "city": "Berlin",
+  "addressLine1": "asdfsdf 12"
+}
+
+### Bad request - email not valid
+POST http://localhost:3000/users/registerUser HTTP/1.1
+content-type: application/json
+
+{
+  "firstName": "Hansi",
+  "lastName": "Hinterseer",
+  "email": "hansi@hinterseer.sdfw",
+  "birthDate": "02-02-1954",
+  "password": "geheim123",
+  "city": "Berlin",
+  "addressLine1": "asdfsdf 12"
+}
