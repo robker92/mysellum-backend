@@ -213,6 +213,15 @@ const createStore = async function (req, res, next) {
         var store = insertResult.ops[0];
         console.log("Store creation successfull!");
         console.log(store);
+
+        //Write Store Id to user
+        await getMongoUsersCollection.updateOne({
+            email: data.userEmail
+        }, {
+            $set: {
+                "ownedStoreId": store._id
+            }
+        })
     } else {
         console.log("Store creation failed!");
         next("Store creation failed!");
@@ -229,14 +238,22 @@ const editStore = async function (req, res, next) {
     var collection = await getMongoStoresCollection();
     var data = req.body;
     var storeId = req.params.storeId;
-
+    console.log(storeId)
+    console.log(data.address)
+    console.log(data.location)
     var updateResult = await collection.updateOne({
         _id: ObjectId(storeId)
     }, {
         $set: {
             "profileData.title": data.title,
             "profileData.description": data.description,
-            "profileData.tags": data.tags
+            "profileData.tags": data.tags,
+            "profileData.images": data.images,
+            "mapData.address.addressLine1": data.address.addressLine1,
+            "mapData.address.city": data.address.city,
+            "mapData.address.postcode": data.address.postcode,
+            "mapData.location.lat": parseFloat(data.location.lat),
+            "mapData.location.lng": parseFloat(data.location.lng)
         }
     });
 

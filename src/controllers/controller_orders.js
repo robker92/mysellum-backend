@@ -86,10 +86,10 @@ const deleteOrder = async function (req, res, next) {
 const createOrder = async function (req, res, next) {
     var collection = await getMongoOrdersCollection();
     var data = req.body;
-
+    console.log(data.products[2])
     var insertResult = await collection.insertOne(data);
     if (insertResult.result.ok == 1) {
-        var user = insertResult.ops[0];
+        var user = insertResult.ops[0].user;
         console.log("Order creation successful!");
         console.log(user);
     } else {

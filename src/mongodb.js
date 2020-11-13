@@ -1,18 +1,32 @@
 const MongoClient = require('mongodb').MongoClient
 const config = require('./config');
 //const uri = 'mongodb://user:password@localhost:27017/dbName'
-let _client
+let _client;
 
-const connectClient = async function (callback) {
+// const connectClient = async function (callback) {
+//     console.log(config.mongoURL)
+//     try {
+//         await MongoClient.connect(config.mongoURL, {
+//             useUnifiedTopology: true
+//         }, function (err, client) {
+//             console.log(err)
+//             _client = client
+//             //return callback(err)
+//             return err
+//         })
+//     } catch (e) {
+//         throw e
+//     }
+// }
+
+const connectClient = async function () {
     try {
-        MongoClient.connect(config.mongoURL, {
+        let client = await MongoClient.connect(config.mongoURL, {
             useUnifiedTopology: true
-        }, function (err, client) {
-            _client = client
-            return callback(err)
-        })
-    } catch (e) {
-        throw e
+        });
+        _client = client;
+    } catch (err) {
+        throw err
     }
 }
 

@@ -37,6 +37,9 @@ function verifyToken(token) {
 };
 // Get the MongoDB users collection
 async function getMongoUsersCollection() {
+    // console.log("@ function 2")
+    // console.log(config.mongodb_name)
+    //console.log(mongodb.getClient())
     return mongodb.getClient().db(config.mongodb_name).collection("users");
 }
 
@@ -49,13 +52,16 @@ const getSingleUser = async function (req, res, next) {
     var result = await collection.findOne({
         'email': email
     });
-    //console.log(result);
+
     res.send(result);
 }
 
 const registerUser = async function (req, res, next) {
+    console.log("@ function")
     var collection = await getMongoUsersCollection();
+    console.log(collection)
     var data = req.body;
+    console.log(data)
     var passwordHash = await bcrypt.hash(data.password, config.saltRounds);
     // console.log(passwordHash);
     // console.log(data);
@@ -140,6 +146,7 @@ const loginUser = async function (req, res, next) {
                 token: accessToken,
                 authorizationRole: "Role1",
                 email: user.email,
+                ownedStoreId: user.ownedStoreId,
                 address: {
                     firstName: user.firstName,
                     lastName: user.lastName,
