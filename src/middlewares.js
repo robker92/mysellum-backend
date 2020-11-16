@@ -3,7 +3,9 @@
 const jwt = require('jsonwebtoken');
 
 const config = require('./config');
-const { ValidationError } = require('express-validation');
+const {
+    ValidationError
+} = require('express-validation');
 
 const allowCrossDomain = (req, res, next) => {
     res.header('Access-Control-Allow-Origin', "http://localhost:8080");
@@ -68,8 +70,8 @@ const errorHandler = (err, req, res, next) => {
             res.status(err.status || 500);
         }
         //res.render("error", { error: err });
-        console.log(err.status)
-        console.log(err.message)
+        //console.log(err.status)
+        //console.log(err.message)
         res.send({
             message: err.message
         });

@@ -1,7 +1,24 @@
-# Get All Stores
+# Get All Users
 GET http://localhost:3000/users HTTP/1.1
 ###
 
-#Get Single Store
+#Get Single User
 GET http://localhost:3000/users/TestEmail56@web.de HTTP/1.1
+###
+
+#Register User
+POST http://localhost:3000/users/registerUser HTTP/1.1
+
+content-type: application/json
+
+{
+    "email": "Test",
+    "password": "Test",
+    "firstName": "Test",
+    "lastName": "Test",
+    "birthDate": "01.01.2011",
+    "city": "Test",
+    "postcode": "Test",
+    "addressLine1": "Test"
+}
 ###

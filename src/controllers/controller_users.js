@@ -57,7 +57,6 @@ const getSingleUser = async function (req, res, next) {
 }
 
 const registerUser = async function (req, res, next) {
-    console.log("@ function")
     var collection = await getMongoUsersCollection();
     console.log(collection)
     var data = req.body;
@@ -89,7 +88,16 @@ const registerUser = async function (req, res, next) {
             token: accessToken,
             authorizationRole: "Role1",
             email: user.email,
-            shoppingCart: []
+            ownedStoreId: "",
+            address: {
+                firstName: user.firstName,
+                lastName: user.lastName,
+                addressLine1: user.addressLine1,
+                postcode: user.postcode,
+                city: user.city,
+            },
+            shoppingCart: [],
+            productCounter: 0
         }
     });
 }
