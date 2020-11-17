@@ -58,9 +58,9 @@ const getSingleUser = async function (req, res, next) {
 
 const registerUser = async function (req, res, next) {
     var collection = await getMongoUsersCollection();
-    console.log(collection)
+    //console.log(collection)
     var data = req.body;
-    console.log(data)
+    //console.log(data)
     var passwordHash = await bcrypt.hash(data.password, config.saltRounds);
     // console.log(passwordHash);
     // console.log(data);

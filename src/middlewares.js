@@ -59,22 +59,28 @@ const errorHandler = (err, req, res, next) => {
     //     return next(err);
     // }
     //req.logger.error(err);
-
+    console.log(req.body)
     console.log("error handler")
+
     if (err.status == 403) {
 
     } else {
         if (err instanceof ValidationError) {
             res.status(400);
+            res.send({
+                message: err.message,
+                details: err.details
+            });
         } else {
             res.status(err.status || 500);
+            res.send({
+                message: err.message
+            });
         }
         //res.render("error", { error: err });
         //console.log(err.status)
         //console.log(err.message)
-        res.send({
-            message: err.message
-        });
+
         // res.json({
         //     message: err.message,
         //     error: err

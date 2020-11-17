@@ -31,11 +31,10 @@ describe('Register User Tests', () => {
         //expect(res.body).toHaveProperty('post')
     });
 
-    //single test. it = synonym for "test" (function)
     it('should return Validation Failed', async () => {
         let payload = {
             "email": "Test@web.de",
-            "password": "Test",
+            "password": "Test", //should not validate
             "firstName": "Test",
             "lastName": "Test",
             "birthDate": "01.01.2011",
@@ -48,12 +47,13 @@ describe('Register User Tests', () => {
             .post('/users/registerUser')
             .send(payload);
 
-        expect(res.body.message).toEqual("Validation Failed");
+        //expect(res.body.details[0].context.key).toEqual("password"); //Get error details of validation error
+        expect(res.body.details[0]).toHaveProperty("password"); //Check if first element of error array has key password
     });
 
     it('should result in successfull registration', async () => {
         let payload = {
-            "email": "Test@web.de",
+            "email": "Test1@web.de",
             "password": "Test1aaa!",
             "firstName": "Test",
             "lastName": "Test",
