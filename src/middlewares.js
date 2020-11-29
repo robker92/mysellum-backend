@@ -37,9 +37,10 @@ const checkAuthentication = (req, res, next) => {
             error: 'Unauthorized',
             message: 'Failed to authenticate token.'
         });
-
+        console.log(decoded.email)
         // if everything is good, save to request for use in other routes
         req.userId = decoded.id;
+        req.userEmail = decoded.email;
         next();
     });
 };
@@ -59,11 +60,15 @@ const errorHandler = (err, req, res, next) => {
     //     return next(err);
     // }
     //req.logger.error(err);
+    console.log(err)
     console.log(req.body)
     console.log("error handler")
 
     if (err.status == 403) {
-
+        res.status(403);
+        res.send({
+            message: err.message
+        });
     } else {
         if (err instanceof ValidationError) {
             res.status(400);

@@ -12,20 +12,25 @@
   "license": "ISC",
   "dependencies": {
     "axios": "latest",
+    "bcrypt": "latest",
     "bcryptjs": "^2.4.3",
     "body-parser": "^1.18.2",
+    "cookie-parser": "latest",
+    "cors": "latest",
     "express": "^4.17.1",
     "express-async-handler": "latest",
+    "express-validation": "latest",
     "helmet": "^3.11.0",
     "jsonwebtoken": "^8.1.1",
     "mongod": "^2.0.0",
     "mongodb": "^3.0.7",
-    "cors": "latest",
-    "cookie-parser": "latest",
-    "bcrypt": "latest",
-    "express-validation": "latest"
+    "nodemailer": "^6.4.16"
   },
   "devDependencies": {
+    "@types/body-parser": "^1.19.0",
+    "@types/express": "^4.17.9",
+    "@types/mongodb": "^3.5.34",
+    "@types/node": "^14.14.10",
     "jest": "^26.6.3",
     "moxios": "latest",
     "nodemon": "^1.14.12",
@@ -34,7 +39,8 @@
   "jest": {
     "testEnvironment": "node",
     "coveragePathIgnorePatterns": [
-      "/node_modules/"
+      "/node_modules/",
+      "/api-requests/"
     ]
   }
 }

@@ -27,7 +27,7 @@ router.delete("/deleteReview/:storeId/:reviewId", asyncExceptionHandler(controll
 router.post("/addProduct", asyncExceptionHandler(controller_stores.addProduct));
 router.post("/editProduct/:storeId/:productId", asyncExceptionHandler(controller_stores.editProduct));
 router.delete("/deleteProduct/:storeId/:productId", asyncExceptionHandler(controller_stores.deleteProduct));
-
+router.patch("/updateStockAmount/:storeId/:productId", asyncExceptionHandler(controller_stores.updateStockAmount));
 // router.post("/loginUser", asyncExceptionHandler(controller_users.loginUser));
 // router.post("/registerUser", asyncExceptionHandler(controller_users.registerUser));
 // router.delete("/:email", asyncExceptionHandler(controller_users.deleteUser));

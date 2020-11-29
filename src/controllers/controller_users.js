@@ -7,6 +7,8 @@ const bcrypt = require('bcrypt');
 var jwt = require('jsonwebtoken');
 //const axios = require('axios');
 
+const nodemailer = require('../mailing/nodemailer');
+const crypto = require('crypto');
 /*
 Data Model
 User: {
@@ -21,8 +23,6 @@ User: {
     "shoppingCart": [{product: product, amount: 5},{product: product, amount: 5}]
 }
 */
-
-
 
 // Create a token from a payload
 function createToken(payload) {
@@ -331,7 +331,155 @@ const removeFromShoppingCart = async function (req, res, next) {
             shoppingCart: currentShoppingCart
         });
     }
-}
+};
+
+const sendTestMail = async function (req, res, next) {
+    let mail = req.body.mailAddress;
+    let contentType = req.body.contentType;
+
+    let info = await nodemailer.sendMail(mail, contentType);
+
+    res.status(200).json({
+        success: true,
+        info: info
+    });
+};
+
+const sendPasswordResetMail = async function (req, res, next) {
+    var collection = await getMongoUsersCollection();
+    let email = req.body.email;
+    let birthdate = req.body.birthdate;
+
+    var findUserResult = await collection.findOne({
+        'email': email
+    });
+
+    if (!findUserResult) {
+        //Check if user found (provided mail is from a valid user)
+        console.log("user not found!");
+        return next({
+            status: 403,
+            message: "E-Mail not found!"
+        });
+    };
+
+    if (findUserResult.birthdate !== birthdate) {
+        //throw error because of wrong email
+        console.log("wrong birthdate!")
+        return next({
+            status: 403,
+            message: "Wrong birthdate provided!"
+        })
+    };
+
+    let resetPasswordToken = crypto.randomBytes(config.resetToken_numBytes).toString("hex");
+    let resetPasswordExpires = Date.now() + 3600000; //Current time in milliseconds + one hour
+    console.log(resetPasswordToken)
+    console.log(resetPasswordExpires)
+
+    //save token and expire date to user
+    var updateUserResult = await collection.updateOne({
+        'email': email
+    }, {
+        $set: {
+            resetPasswordToken: resetPasswordToken,
+            resetPasswordExpires: resetPasswordExpires
+        }
+    });
+
+    //send mail to user email
+    let mailOptions = {
+        email: email,
+        contentType: "resetPassword",
+        resetPasswordToken: resetPasswordToken
+    };
+
+    let mailInfo;
+    try {
+        mailInfo = await nodemailer.sendMail(mailOptions);
+    } catch (error) {
+        console.log(error)
+        return next({
+            status: 500,
+            message: "Error while sending!"
+        });
+    };
+
+    res.status(200).json({
+        success: true,
+        info: mailInfo
+    });
+};
+
+const checkResetToken = async function (req, res, next) {
+    var collection = await getMongoUsersCollection();
+    var receivedToken = req.params.token;
+    console.log(receivedToken)
+    var findUserResult = await collection.findOne({
+        resetPasswordToken: receivedToken,
+        resetPasswordExpires: {
+            $gt: Date.now()
+        }
+    });
+
+    // var findUserResultTest = await collection.findOne({
+    //     'email': "TestEmail14@web.de"
+    // });
+    // console.log(findUserResultTest)
+
+    console.log(findUserResult)
+    if (!findUserResult) {
+        //Invalid Token or expired
+        return next({
+            status: 403,
+            message: "Password reset link is invalid or has expired."
+        });
+    }
+
+    res.status(200).json({
+        success: true,
+        message: "Password reset link is valid."
+    });
+};
+
+const resetPassword = async function (req, res, next) {
+    var collection = await getMongoUsersCollection();
+    var receivedToken = req.params.token;
+    let password = req.body.password;
+
+    // var findUserResult = await collection.findOne({
+    //     resetPasswordToken: receivedToken,
+    //     resetPasswordExpires: {
+    //         $gt: Date.now()
+    //     }
+    // });
+    // console.log(findUserResult)
+
+    var updateUserResult = await collection.updateOne({
+        resetPasswordToken: receivedToken,
+        resetPasswordExpires: {
+            $gt: Date.now()
+        }
+    }, {
+        $set: {
+            resetPasswordToken: null,
+            resetPasswordExpires: null,
+            password: await bcrypt.hash(password, config.saltRounds)
+        }
+    });
+    console.log(updateUserResult.modifiedCount)
+    if (!updateUserResult) {
+        return next({
+            status: 403,
+            message: "Password reset failed."
+        });
+    }
+
+    res.status(200).json({
+        success: true,
+        message: "Password successfully reset."
+    });
+};
 
 module.exports = {
     getSingleUser,
@@ -341,6 +489,10 @@ module.exports = {
     updateUserInfo,
     deleteUser,
     addToShoppingCart,
-    removeFromShoppingCart
+    removeFromShoppingCart,
     //logoutUser
+    sendTestMail,
+    sendPasswordResetMail,
+    checkResetToken,
+    resetPassword
 };

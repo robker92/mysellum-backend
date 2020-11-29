@@ -88,6 +88,7 @@ content-type: application/json
 #Add Product
 POST http://localhost:3000/stores/addProduct HTTP/1.1
 content-type: application/json
+
 {
     "storeId": "5f31406deae5b044240a57c8",
     "title": "Product 2",
@@ -95,12 +96,14 @@ content-type: application/json
     "imgSrc": "http://t2.gstatic.com/images?q=tbn:ANd9GcSBt4zB0dG24tS2BYvgTESt9nMTmIgYcKqQjO3KBHXgbjwNuipSgSaFecgStaLb-l6hqwOTC1gceewd5SitD24",
     "price": "20.00",
     "currency": "EUR",
-    "currencySymbol": "€"
+    "currencySymbol": "€",
+    "quantityType": "Kilograms",
+    "quantityValue": "1"
 }
 ###
 
 #Delete Product
-DELETE http://localhost:3000/stores/deleteProduct/5f31406deae5b044240a57c8/0 HTTP/1.1
+DELETE http://localhost:3000/stores/deleteProduct/5f31406deae5b044240a57c8/15 HTTP/1.1
 content-type: application/json
 ###
 
@@ -126,5 +129,16 @@ content-type: application/json
     "imgSrc": "https://upload.wikimedia.org/wikipedia/commons/9/9a/Gull_portrait_ca_usa.jpg",
     "price":"1.00",
     "datetime": "12-10-2020, 16:53"
+}
+###
+
+#Update Stock Amount
+PATCH http://localhost:3000/stores/updateStockAmount/5f31406deae5b044240a57c8/15 HTTP/1.1
+content-type: application/json
+
+{
+    //"storeId": "5f31406deae5b044240a57c8",
+    //"productId": "11",
+    "stockAmount": 6
 }
 ###

@@ -1,0 +1,57 @@
+# Get All Users
+GET http://localhost:3000/users HTTP/1.1
+###
+
+#Get Single User
+GET http://localhost:3000/users/TestEmail14@web.de HTTP/1.1
+x-access-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjVmMDczMTA2YjRhZmM5NjNjMGM5MjVkYiIsImVtYWlsIjoiVGVzdEVtYWlsMTRAd2ViLmRlIiwiaWF0IjoxNjA2MDgwMzcxLCJleHAiOjE2MDYxNjY3NzF9.SI9_-W92a672_VUM5BBnoB07OMfirAPMOo8gfuDzyRE
+###
+
+#Register User
+POST http://localhost:3000/users/registerUser HTTP/1.1
+content-type: application/json
+
+{
+    "email": "Testasdasd@web.de",
+    "password": "Test1!",
+    "firstName": "Test",
+    "lastName": "Test",
+    "birthDate": "01.01.2011",
+    "city": "Test",
+    "postcode": "11111",
+    "addressLine1": "Test"
+}
+###
+
+# Forgot Password - send reset Mail
+POST http://localhost:3000/users/sendPasswordResetMail HTTP/1.1
+content-type: application/json
+
+{
+    "email": "TestEmail14@web.de",
+    "birthdate": "05-05-2005"
+}
+###
+# Forgot Password - check reset token
+GET http://localhost:3000/users/checkResetToken/395c2e8a5f7e21e92acbece7d04d8da6aeb9bd75cc79cd2eaa84f456591a HTTP/1.1
+
+###
+# Forgot Password - reset Password
+POST http://localhost:3000/users/resetPassword/2bca66c65d49ef2c216c07bebe87a7582349f6bf74ea1ed44a86755673f2 HTTP/1.1
+content-type: application/json
+
+{
+    "password": "Test1!---"
+}
+###
+
+# Send Test Mail
+POST http://localhost:3000/users/sendTestMail HTTP/1.1
+content-type: application/json
+
+{
+    //"mailAddress": "nicolas.pfifferling@gmail.com",
+    "contentType": "testMail",
+    "mailAddress": "rkerscher@gmx.de"
+}
+###

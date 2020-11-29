@@ -364,7 +364,8 @@ const addProduct = async function (req, res, next) {
         "currency": data.currency,
         "currencySymbol": data.currencySymbol,
         "quantityType": data.quantityType,
-        "quantityValue": data.quantityValue
+        "quantityValue": data.quantityValue,
+        "stockAmount": 1
     }
     // var updateResult = await collection.updateOne({
     //     //Selection criteria
@@ -400,45 +401,105 @@ const editProduct = async function (req, res, next) {
     var storeId = req.params.storeId;
     var productId = req.params.productId;
 
-    var findResult = await collection.findOne({
-        '_id': ObjectId(storeId)
-    });
+    // var findResult = await collection.findOne({
+    //     '_id': ObjectId(storeId)
+    // });
 
-    var index = findResult.profileData.products.findIndex(rv => rv.productId === productId);
-    findResult.profileData.products[index].title = data.title;
-    findResult.profileData.products[index].description = data.description;
-    findResult.profileData.products[index].price = data.price;
-    findResult.profileData.products[index].imgSrc = data.imgSrc;
-    findResult.profileData.products[index].quantityType = data.quantityType;
-    findResult.profileData.products[index].quantityValue = data.quantityValue;
-    findResult.profileData.products[index].datetimeAdjusted = data.datetime;
-    //findResult.profileData.avgRating = calculateAverage(findResult.profileData.reviews).toString();
-    //console.log(findResult.profileData.reviews[index])
-    var updateResult = await collection.updateOne({
-        //Selection criteria
-        '_id': ObjectId(storeId)
-    }, {
-        //Updated data
-        $set: findResult
-    });
-
+    // var index = findResult.profileData.products.findIndex(pr => pr.productId === productId);
+    // findResult.profileData.products[index].title = data.title;
+    // findResult.profileData.products[index].description = data.description;
+    // findResult.profileData.products[index].price = data.price;
+    // findResult.profileData.products[index].imgSrc = data.imgSrc;
+    // findResult.profileData.products[index].quantityType = data.quantityType;
+    // findResult.profileData.products[index].quantityValue = data.quantityValue;
+    // findResult.profileData.products[index].datetimeAdjusted = data.datetime;
+    // //findResult.profileData.avgRating = calculateAverage(findResult.profileData.reviews).toString();
+    // //console.log(findResult.profileData.reviews[index])
     // var updateResult = await collection.updateOne({
-    //     _id: ObjectId(storeId)
+    //     //Selection criteria
+    //     '_id': ObjectId(storeId)
     // }, {
+    //     //Updated data
+    //     $set: findResult
+    // });
+    console.log(productId)
+    // var updateResult = await collection.updateOne({
+    //     "_id": ObjectId(storeId),
     //     "profileData.products.productId": productId
     // }, {
     //     $set: {
-    //         `profileData.products[${productId}].title`: data.title,
-    //         "profileData.products.$.description": data.description,
+    //         "profileData.products.$.title": data.title,
+    //         "profileData.products.$.description": data.tidescriptiontle,
     //         "profileData.products.$.price": data.price,
-    //         "profileData.products.$.imgSrc": data.imgSrc
+    //         "profileData.products.$.imgSrc": data.imgSrc,
+    //         "profileData.products.$.quantityType": data.quantityType,
+    //         "profileData.products.$.quantityValue": data.quantityValue,
+    //         "profileData.products.$.datetimeAdjusted": new Date(),
     //     }
+    // }, {
+    //     upsert: false
     // });
 
+    var updateResult = await collection.findOneAndUpdate({
+        "_id": ObjectId(storeId),
+        "profileData.products.productId": productId
+    }, {
+        $set: {
+            "profileData.products.$.title": data.title,
+            "profileData.products.$.description": data.description,
+            "profileData.products.$.price": data.price,
+            "profileData.products.$.imgSrc": data.imgSrc,
+            "profileData.products.$.quantityType": data.quantityType,
+            "profileData.products.$.quantityValue": data.quantityValue,
+            "profileData.products.$.datetimeAdjusted": new Date(),
+        }
+    }, {
+        returnOriginal: false
+    });
+    //console.log(updateResult)
+    var index = updateResult.value.profileData.products.findIndex(pr => pr.productId === productId);
     res.status(200).json({
         success: true,
         message: 'Product update successful!',
-        product: findResult.profileData.products[index]
+        modifiedCount: updateResult.modifiedCount,
+        product: updateResult.value.profileData.products[index]
+    });
+};
+
+const updateStockAmount = async function (req, res, next) {
+    var collection = await getMongoStoresCollection();
+    var storeId = req.params.storeId;
+    var productId = req.params.productId;
+    var data = req.body;
+
+    // var setString = "profileData.products.$.productId[" + productId.toString() + "].stockAmount"
+    // console.log(setString)
+    var updateResult = await collection.updateOne({
+        "_id": ObjectId(storeId),
+        "profileData.products.productId": productId
+    }, {
+        $set: {
+            //setString: data.stockAmount
+            "profileData.products.$.stockAmount": data.stockAmount
+        }
+    }, {
+        upsert: false
+    });
+
+    console.log(updateResult.modifiedCount)
+    console.log(updateResult.matchedCount)
+    // var findResult = await collection.findOne({
+    //     $and: [{
+    //         '_id': ObjectId(storeId),
+    //         "profileData.products.productId": productId
+    //     }]
+    // });
+
+    // console.log(findResult.profileData.products)
+    res.status(200).json({
+        success: true,
+        message: 'Product found',
+        //product: findResult.profileData.products[index]
     });
 };
 
@@ -670,5 +731,6 @@ module.exports = {
     deleteReview,
     addProduct,
     editProduct,
-    deleteProduct
+    deleteProduct,
+    updateStockAmount
 };
