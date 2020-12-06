@@ -20,7 +20,7 @@ api.use(bodyParser.json());
 api.use(bodyParser.urlencoded({
     extended: false
 }));
-
+api.disable('x-powered-by')
 //api.use(middlewares.allowCrossDomain);
 
 //Location of the Client:

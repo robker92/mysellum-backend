@@ -1,9 +1,24 @@
 "use strict";
 //App imports
+const NodeGeocoder = require('node-geocoder');
+
+const geoCodeOptions = {
+    provider: 'openstreetmap'
+};
+const geoCoder = NodeGeocoder(geoCodeOptions);
+
 const mongodb = require('../mongodb');
 const config = require('../config');
-var ObjectId = require('mongodb').ObjectId;
+const ObjectId = require('mongodb').ObjectId;
 //var coll = mongodb.getClient().db(config.mongodb_name).collection("stores");
+
+
+const geoCodeTest = async function (req, res, next) {
+    let address = req.body.address;
+    console.log(address)
+    let result = await geoCoder.geocode(address)
+    res.send(result);
+};
 
 /*
 Data Model
@@ -53,9 +68,9 @@ async function getMongoUsersCollection() {
 }
 
 const getSingleStore = async function (req, res, next) {
-    var collection = await getMongoStoresCollection();
+    let collection = await getMongoStoresCollection();
     //var id = new ObjectId(req.params.id);
-    var result = await collection.findOne({
+    let result = await collection.findOne({
         '_id': ObjectId(req.params.id)
     });
     //var result = await collection.findOne(ObjectId(req.params.id));
@@ -64,8 +79,8 @@ const getSingleStore = async function (req, res, next) {
 };
 
 const getAllStores = async function (req, res, next) {
-    var collection = await getMongoStoresCollection();
-    var result = await collection.find().toArray();
+    let collection = await getMongoStoresCollection();
+    let result = await collection.find().toArray();
     //console.log(result)
     //res.status(200).send(result);
     res.status(200).json({
@@ -76,12 +91,12 @@ const getAllStores = async function (req, res, next) {
 };
 
 const getFilteredStores = async function (req, res, next) {
-    var collection = await getMongoStoresCollection();
-    var searchTerm = req.params.searchterm;
+    let collection = await getMongoStoresCollection();
+    let searchTerm = req.params.searchterm;
     //var idArray = [];
     //var result = await collection.find().toArray();
     //db.stores.find({"profileData.tags":{$eq: "meat"}})
-    var result = await collection.find({
+    let result = await collection.find({
         "profileData.tags": {
             $eq: searchTerm
         }
@@ -103,12 +118,12 @@ const getFilteredStores = async function (req, res, next) {
 };
 
 const getFilteredStores2 = async function (req, res, next) {
-    var collection = await getMongoStoresCollection();
+    let collection = await getMongoStoresCollection();
     console.log(req.body)
-    var filterObject = req.body;
+    let filterObject = req.body;
     console.log(filterObject)
     //Create filter query (like here https://docs.mongodb.com/manual/tutorial/query-arrays/)
-    var queryFilter = {};
+    let queryFilter = {};
     for (let key in filterObject) {
         if (key == "tags") {
             if (filterObject[key].length > 0) {
@@ -123,7 +138,7 @@ const getFilteredStores2 = async function (req, res, next) {
     console.log(queryFilter)
 
     //Fetch filtered Stores
-    var result = await collection.find(queryFilter).toArray();
+    let result = await collection.find(queryFilter).toArray();
 
     res.status(200).json({
         success: true,
@@ -135,9 +150,9 @@ const getFilteredStores2 = async function (req, res, next) {
 
 const updateStore = async function (req, res, next) {
     //function for changing user data except password and email!
-    var collection = await getMongoStoresCollection();
-    var id = req.params.id;
-    var data = req.body; //json format
+    let collection = await getMongoStoresCollection();
+    let id = req.params.id;
+    let data = req.body; //json format
 
     //password routine
     // if (data['password']) {
@@ -147,7 +162,7 @@ const updateStore = async function (req, res, next) {
     //     delete data['email'];
     // };
 
-    var result = await collection.updateOne({
+    let result = await collection.updateOne({
         //Selection criteria
         'id': ObjectId(id)
     }, {
@@ -163,32 +178,54 @@ const updateStore = async function (req, res, next) {
 };
 
 const deleteStore = async function (req, res, next) {
-    var collection = await getMongoStoresCollection();
-    var storeId = req.params.storeId;
+    let collectionStores = await getMongoStoresCollection();
+    let collectionUsers = await getMongoUsersCollection();
+    let storeId = req.params.storeId;
 
-    var result = await collection.remove({
+    //Get the store to retrieve user email
+    let findStoreResult = await collectionStores.findOne({
         '_id': ObjectId(storeId)
+    });
+    let email = findStoreResult.userEmail;
+
+    //Delete Store
+    let deleteStoreResult = await collectionStores.deleteOne({
+        '_id': ObjectId(storeId)
+    });
+
+    //Set ownedStoreId at Owner to ""
+    let updateUserResult = await collectionUsers.updateOne({
+        'email': email
+    }, {
+        $set: {
+            ownedStoreId: ""
+        }
     });
 
     res.status(200).json({
         success: true,
-        message: 'Store successfully deleted!',
-        queryResult: result
+        message: 'Store successfully deleted!'
     });
 };
 
 const createStore = async function (req, res, next) {
-    var collection = await getMongoStoresCollection();
-    var data = req.body;
+    let collectionStores = await getMongoStoresCollection();
+    let collectionUsers = await getMongoUsersCollection();
+    let data = req.body;
 
-    var storeObject = {
+    let addressString = `${data.address.addressLine1}, ${data.address.postcode} ${data.address.city}, ${data.address.country}`
+    console.log(addressString)
+    let geoCodeResult = await geoCoder.geocode(addressString);
+    console.log(geoCodeResult)
+    let storeObject = {
         "userEmail": data.userEmail,
+        "creationDate": new Date(),
         "mapData": {
             "address": data.address,
             "img": data.mapImg,
             "location": {
-                "lat": parseFloat(data.lat),
-                "lng": parseFloat(data.lng)
+                "lat": geoCodeResult[0].latitude,
+                "lng": geoCodeResult[0].longitude
             }
         },
         "profileData": {
@@ -199,29 +236,28 @@ const createStore = async function (req, res, next) {
             "images": data.images,
             "products": [],
             "reviews": [],
-            "avgRating": "0",
-
+            "avgRating": "0"
         }
     };
     //add Ids to images -> Refactor with multiple images are there
-    for (var i = 0; i < storeObject.profileData.images.length; i++) {
+    for (let i = 0; i < storeObject.profileData.images.length; i++) {
         storeObject.profileData.images[i]["id"] = i;
     };
 
-    var insertResult = await collection.insertOne(storeObject);
-    if (insertResult.result.ok == 1) {
-        var store = insertResult.ops[0];
+    let insertResult = await collectionStores.insertOne(storeObject);
+    if (insertResult.result.ok == 1) { //necessary with expression wrapper?
+        let store = insertResult.ops[0];
         console.log("Store creation successfull!");
         console.log(store);
 
         //Write Store Id to user
-        await getMongoUsersCollection.updateOne({
+        await collectionUsers.updateOne({
             email: data.userEmail
         }, {
             $set: {
                 "ownedStoreId": store._id
             }
-        })
+        });
     } else {
         console.log("Store creation failed!");
         next("Store creation failed!");
@@ -235,13 +271,13 @@ const createStore = async function (req, res, next) {
 };
 
 const editStore = async function (req, res, next) {
-    var collection = await getMongoStoresCollection();
-    var data = req.body;
-    var storeId = req.params.storeId;
+    let collection = await getMongoStoresCollection();
+    let data = req.body;
+    let storeId = req.params.storeId;
     console.log(storeId)
     console.log(data.address)
     console.log(data.location)
-    var updateResult = await collection.updateOne({
+    let updateResult = await collection.updateOne({
         _id: ObjectId(storeId)
     }, {
         $set: {
@@ -265,20 +301,20 @@ const editStore = async function (req, res, next) {
 };
 
 const addStoreImage = async function (req, res, next) {
-    var collection = await getMongoStoresCollection();
-    var data = req.body;
-    var storeId = req.params.storeId;
+    let collection = await getMongoStoresCollection();
+    let data = req.body;
+    let storeId = req.params.storeId;
 
-    var findResult = await collection.findOne({
+    let findResult = await collection.findOne({
         '_id': ObjectId(storeId)
     });
 
-    var imageData = {
+    let imageData = {
         "id": findResult.profileData.images.length.toString(),
         "src": data.imageSrc,
         "title": data.title
     };
-    var updateResult = await collection.updateOne({
+    let updateResult = await collection.updateOne({
         _id: ObjectId(storeId)
     }, {
         $push: {
@@ -295,10 +331,10 @@ const addStoreImage = async function (req, res, next) {
 };
 
 const deleteStoreImage = async function (req, res, next) {
-    var collection = await getMongoStoresCollection();
-    var data = req.body;
-    var storeId = req.params.storeId;
-    var imageId = req.params.imageId;
+    let collection = await getMongoStoresCollection();
+    let data = req.body;
+    let storeId = req.params.storeId;
+    let imageId = req.params.imageId;
     console.log(storeId)
     console.log(imageId)
     console.log(data)
@@ -306,7 +342,7 @@ const deleteStoreImage = async function (req, res, next) {
     //     imageSrc: data.imageSrc,
     //     title: data.title
     // }
-    var updateResult = await collection.updateOne({
+    let updateResult = await collection.updateOne({
         _id: ObjectId(storeId)
     }, {
         $pull: {
@@ -328,10 +364,10 @@ const deleteStoreImage = async function (req, res, next) {
 };
 
 const addProduct = async function (req, res, next) {
-    var collection = await getMongoStoresCollection();
-    var data = req.body;
+    let collection = await getMongoStoresCollection();
+    let data = req.body;
     console.log(data)
-    var findResult = await collection.findOne({
+    let findResult = await collection.findOne({
         '_id': ObjectId(data.storeId)
     });
 
@@ -375,7 +411,7 @@ const addProduct = async function (req, res, next) {
     //     $set: findResult
     // });
 
-    var updateResult = await collection.updateOne({
+    let updateResult = await collection.updateOne({
         _id: ObjectId(data.storeId)
     }, {
         $push: {
@@ -396,10 +432,10 @@ const addProduct = async function (req, res, next) {
 };
 
 const editProduct = async function (req, res, next) {
-    var collection = await getMongoStoresCollection();
-    var data = req.body;
-    var storeId = req.params.storeId;
-    var productId = req.params.productId;
+    let collection = await getMongoStoresCollection();
+    let data = req.body;
+    let storeId = req.params.storeId;
+    let productId = req.params.productId;
 
     // var findResult = await collection.findOne({
     //     '_id': ObjectId(storeId)
@@ -440,7 +476,7 @@ const editProduct = async function (req, res, next) {
     //     upsert: false
     // });
 
-    var updateResult = await collection.findOneAndUpdate({
+    let updateResult = await collection.findOneAndUpdate({
         "_id": ObjectId(storeId),
         "profileData.products.productId": productId
     }, {
@@ -457,7 +493,7 @@ const editProduct = async function (req, res, next) {
         returnOriginal: false
     });
     //console.log(updateResult)
-    var index = updateResult.value.profileData.products.findIndex(pr => pr.productId === productId);
+    let index = updateResult.value.profileData.products.findIndex(pr => pr.productId === productId);
     res.status(200).json({
         success: true,
         message: 'Product update successful!',
@@ -467,14 +503,14 @@ const editProduct = async function (req, res, next) {
 };
 
 const updateStockAmount = async function (req, res, next) {
-    var collection = await getMongoStoresCollection();
-    var storeId = req.params.storeId;
-    var productId = req.params.productId;
-    var data = req.body;
+    let collection = await getMongoStoresCollection();
+    let storeId = req.params.storeId;
+    let productId = req.params.productId;
+    let data = req.body;
 
     // var setString = "profileData.products.$.productId[" + productId.toString() + "].stockAmount"
     // console.log(setString)
-    var updateResult = await collection.updateOne({
+    let updateResult = await collection.updateOne({
         "_id": ObjectId(storeId),
         "profileData.products.productId": productId
     }, {
@@ -504,9 +540,9 @@ const updateStockAmount = async function (req, res, next) {
 };
 
 const deleteProduct = async function (req, res, next) {
-    var collection = await getMongoStoresCollection();
-    var storeId = req.params.storeId;
-    var productId = req.params.productId;
+    let collection = await getMongoStoresCollection();
+    let storeId = req.params.storeId;
+    let productId = req.params.productId;
     //var data = req.body;
 
     //identify store
@@ -520,7 +556,7 @@ const deleteProduct = async function (req, res, next) {
     //         break
     //     };
     // };
-    var updateResult = await collection.updateOne({
+    let updateResult = await collection.updateOne({
         _id: ObjectId(storeId)
     }, {
         $pull: {
@@ -546,22 +582,22 @@ const deleteProduct = async function (req, res, next) {
 };
 
 const editReview = async function (req, res, next) {
-    var collection = await getMongoStoresCollection();
-    var data = req.body;
+    let collection = await getMongoStoresCollection();
+    let data = req.body;
 
-    var findResult = await collection.findOne({
+    let findResult = await collection.findOne({
         '_id': ObjectId(data.id)
     });
 
     //var index = findResult.profileData.reviews.findIndex(rv => rv.userEmail === data.userEmail);
-    var index = findResult.profileData.reviews.findIndex(rv => rv.reviewId === data.reviewId);
+    let index = findResult.profileData.reviews.findIndex(rv => rv.reviewId === data.reviewId);
     //console.log(index)
     findResult.profileData.reviews[index].text = data.text;
     findResult.profileData.reviews[index].rating = data.rating;
     findResult.profileData.reviews[index].datetimeAdjusted = data.datetime;
     findResult.profileData.avgRating = calculateAverage(findResult.profileData.reviews).toString();
     //console.log(findResult.profileData.reviews[index])
-    var updateResult = await collection.updateOne({
+    let updateResult = await collection.updateOne({
         //Selection criteria
         '_id': ObjectId(data.id)
     }, {
@@ -579,11 +615,11 @@ const editReview = async function (req, res, next) {
 };
 
 const addReview = async function (req, res, next) {
-    var collection = await getMongoStoresCollection();
-    var collection_users = await getMongoUsersCollection();
-    var data = req.body;
+    let collection = await getMongoStoresCollection();
+    let collection_users = await getMongoUsersCollection();
+    let data = req.body;
 
-    var findResult = await collection.findOne({
+    let findResult = await collection.findOne({
         '_id': ObjectId(data.id)
     });
 
@@ -591,13 +627,14 @@ const addReview = async function (req, res, next) {
     if (findResult.profileData.reviews.findIndex(rv => rv.userEmaild === '45')) {};
 
     //Define review id
+    let reviewId;
     if (findResult.profileData.reviews.length == 0) {
-        var reviewId = 0;
+        reviewId = 0;
         //avg = single rating
         findResult.profileData.avgRating = data.rating;
     } else {
         //add as first element
-        var reviewId = parseInt(findResult.profileData.reviews[0].reviewId) + 1;
+        reviewId = parseInt(findResult.profileData.reviews[0].reviewId) + 1;
         //add as last element
         //var reviewId = parseInt(findResult.profileData.reviews[findResult.profileData.reviews.length - 1].reviewId) + 1;
 
@@ -609,7 +646,7 @@ const addReview = async function (req, res, next) {
     };
 
     //Get user first and last name
-    var findResultUser = await collection_users.findOne({
+    let findResultUser = await collection_users.findOne({
         'email': data.userEmail
     });
 
@@ -626,7 +663,7 @@ const addReview = async function (req, res, next) {
     findResult.profileData.avgRating = calculateAverage(findResult.profileData.reviews).toString();
     console.log(findResult.profileData);
 
-    var updateResult = await collection.updateOne({
+    let updateResult = await collection.updateOne({
         //Selection criteria
         '_id': ObjectId(data.id)
     }, {
@@ -654,9 +691,9 @@ const addReview = async function (req, res, next) {
 };
 
 const deleteReview = async function (req, res, next) {
-    var collection = await getMongoStoresCollection();
-    var storeId = req.params.storeId;
-    var reviewId = req.params.reviewId;
+    let collection = await getMongoStoresCollection();
+    let storeId = req.params.storeId;
+    let reviewId = req.params.reviewId;
     //var data = req.body;
 
     // var findResult = await collection.findOne({
@@ -690,7 +727,7 @@ const deleteReview = async function (req, res, next) {
             }
         }
     });
-    var findResult = await collection.findOne({
+    let findResult = await collection.findOne({
         '_id': ObjectId(storeId)
     });
     findResult.profileData.avgRating = calculateAverage(findResult.profileData.reviews).toString();
@@ -703,10 +740,44 @@ const deleteReview = async function (req, res, next) {
     });
 };
 
+const getStoresByLocation = async function (req, res, next) {
+    let collectionStores = await getMongoStoresCollection();
+    let min_lat = parseFloat(req.params.min_lat);
+    let max_lat = parseFloat(req.params.max_lat);
+    let min_lng = parseFloat(req.params.min_lng);
+    let max_lng = parseFloat(req.params.max_lng);
+
+    //Query: gte: greater than or equal; lte: less than or equal; value in an array: { $in: [ 5, 15 ] }
+    //Get stores whose lat is >
+    console.log(`lat min: ${min_lat}; lat max: ${max_lat}`)
+    console.log(`lng min: ${min_lng}; lng max: ${max_lng}`)
+
+    var fetchResult = await collectionStores.find({
+        $and: [{
+            "mapData.location.lat": {
+                $gte: min_lat,
+                $lte: max_lat
+            },
+            "mapData.location.lng": {
+                $gte: min_lng,
+                $lte: max_lng
+            }
+        }]
+    }).limit(100).toArray();
+
+    //console.log(fetchResult[0].mapData.location)
+
+    res.status(200).json({
+        success: true,
+        message: 'Stores successfully fetched!',
+        stores: fetchResult
+    });
+};
+
 function calculateAverage(array) {
-    var value = 0.0;
+    let value = 0.0;
     if (array.length > 0) {
-        for (var i = 0; i < array.length; i++) {
+        for (let i = 0; i < array.length; i++) {
             value = value + array[i].rating;
         }
         return value / array.length;
@@ -732,5 +803,7 @@ module.exports = {
     addProduct,
     editProduct,
     deleteProduct,
-    updateStockAmount
+    updateStockAmount,
+    geoCodeTest,
+    getStoresByLocation
 };

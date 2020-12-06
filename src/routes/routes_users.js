@@ -11,7 +11,7 @@ const {
 } = require('express-validation');
 const validators = require("../validators.js");
 const opts = {
-    keyByField: true //Reduces the validation error to a list with "fieldname": "Message"
+    keyByField: true //Reduces the validation error to a list with key/value pair "fieldname": "Message"
 }
 
 //User Controller

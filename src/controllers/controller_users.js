@@ -239,7 +239,7 @@ const addToShoppingCart = async function (req, res, next) {
     console.log(email)
     var addedProduct = req.body.product;
     console.log(addedProduct)
-    var addedAmount = req.body.amount;
+    var addedAmount = parseInt(req.body.amount);
     console.log(addedAmount)
 
     var user = await collection.findOne({

@@ -12,6 +12,11 @@ GET http://localhost:3000/stores/filteredStores/Meat HTTP/1.1
 content-type: application/json
 ###
 
+#Get Stores By Location /:min_lat/:max_lat/:min_lng/:max_lng
+GET http://localhost:3000/stores/getStoresByLocation/48.03588261127108/48.321587137220874/11.319360693940175/11.88165927792455 HTTP/1.1
+content-type: application/json
+###
+
 #Add Review
 POST http://localhost:3000/stores/addReview HTTP/1.1
 content-type: application/json
@@ -49,8 +54,8 @@ POST http://localhost:3000/stores/createStore HTTP/1.1
 content-type: application/json
 
 {
-    "userEmail": "TestEmail14@web.de",
-    "title": "Test Store 3",
+    "userEmail": "TestEmail15@web.de",
+    "title": "Test Store 4",
     "subtitle": "",
     "description": "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam.",
     "tags": ["meat", "steak", "cow", "beer"],
@@ -67,12 +72,10 @@ content-type: application/json
         }
     ],
     "address": {
-        "postalCode": "80689",
+        "postcode": "80689",
         "city": "München",
-        "street": "Fischer-von-Erlach-Straße",
-        "houseNumber": "9",
+        "addressLine1": "Fischer-von-Erlach-Straße 9",
         "country": "Germany"
-
     },
     "mapImg": "http://i.stack.imgur.com/g672i.png",
     "lat": "48.139911",
@@ -81,7 +84,7 @@ content-type: application/json
 ###
 
 #Delete Store
-DELETE http://localhost:3000/stores/deleteStore/5f31406deae5b044240a57c8 HTTP/1.1
+DELETE http://localhost:3000/stores/deleteStore/5fc41998982b4a2eb89214d5 HTTP/1.1
 content-type: application/json
 ###
 
@@ -140,5 +143,20 @@ content-type: application/json
     //"storeId": "5f31406deae5b044240a57c8",
     //"productId": "11",
     "stockAmount": 6
+}
+###
+
+#Geo Code Test "address": "Magdalena-Herrle-Straße 15, 85051 Ingolstadt, Deutschland",
+POST http://localhost:3000/stores/geoCodeTest HTTP/1.1
+content-type: application/json
+
+{
+    //"zipcode": "85051",
+    //"city": "Ingolstadt",
+    //"streetName": "Magdalena-Herrle-Straße",
+    //"streetNumber": "15",
+    //"country": "Germany"
+    "address": "Münchener Str. 7, 85748 Garching, Deutschland"
+
 }
 ###

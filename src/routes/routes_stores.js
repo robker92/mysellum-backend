@@ -10,6 +10,8 @@ const controller_stores = require("../controllers/controller_stores");
 //Stores
 router.get("/:id", asyncExceptionHandler(controller_stores.getSingleStore));
 router.get("/", asyncExceptionHandler(controller_stores.getAllStores));
+router.get("/getStoresByLocation/:min_lat/:max_lat/:min_lng/:max_lng", asyncExceptionHandler(controller_stores.getStoresByLocation));
+
 router.get("/filteredStores/:searchterm", asyncExceptionHandler(controller_stores.getFilteredStores));
 router.post("/getFilteredStores2", asyncExceptionHandler(controller_stores.getFilteredStores2));
 router.post("/createStore", asyncExceptionHandler(controller_stores.createStore));
@@ -34,5 +36,7 @@ router.patch("/updateStockAmount/:storeId/:productId", asyncExceptionHandler(con
 // router.patch("/:email", asyncExceptionHandler(controller_users.updateUserInfo));
 // router.patch("/cart/:email", middlewares.checkAuthentication, asyncExceptionHandler(controller_users.addToShoppingCart));
 // router.delete("/cart/:email", middlewares.checkAuthentication, asyncExceptionHandler(controller_users.removeFromShoppingCart));
+
+router.post("/geoCodeTest", asyncExceptionHandler(controller_stores.geoCodeTest));
 
 module.exports = router;
