@@ -4,7 +4,8 @@ const config = require('../config');
 //const testMail = require('./htmlBodys/testMail');
 const {
     testMail,
-    resetPasswordMail
+    resetPasswordMail,
+    registrationConfirmationMail
 } = require('./htmlBodys');
 
 let transporter = nodemailer.createTransport({
@@ -50,6 +51,12 @@ async function sendMail(options) {
         case "resetPassword":
             mailContent = resetPasswordMail.getMailContent(options.resetPasswordToken);
             mailSubject = resetPasswordMail.subject;
+            //toAddress = options.email;
+            toAddress = "rkerscher@gmx.de";
+            break;
+        case "registrationConfirmation":
+            mailContent = registrationConfirmationMail.getMailContent(options.confirmationToken);
+            mailSubject = registrationConfirmationMail.subject;
             //toAddress = options.email;
             toAddress = "rkerscher@gmx.de";
             break;

@@ -24,7 +24,7 @@ const allowCrossDomain = (req, res, next) => {
 const checkAuthentication = (req, res, next) => {
     // check header or url parameters or post parameters for token
     const token = req.headers['x-access-token'];
-    console.log(token)
+    //console.log(token)
     if (!token) {
         return res.status(401).send({
             error: 'Unauthorized',
@@ -37,7 +37,7 @@ const checkAuthentication = (req, res, next) => {
             error: 'Unauthorized',
             message: 'Failed to authenticate token.'
         });
-        console.log(decoded.email)
+        console.log(decoded)
         // if everything is good, save to request for use in other routes
         req.userId = decoded.id;
         req.userEmail = decoded.email;

@@ -77,7 +77,7 @@ content-type: application/json
         "addressLine1": "Fischer-von-Erlach-Straße 9",
         "country": "Germany"
     },
-    "mapImg": "http://i.stack.imgur.com/g672i.png",
+    "mapIcon": "fish",
     "lat": "48.139911",
     "lng": "11.480547"
 }
@@ -101,7 +101,8 @@ content-type: application/json
     "currency": "EUR",
     "currencySymbol": "€",
     "quantityType": "Kilograms",
-    "quantityValue": "1"
+    "quantityValue": "1",
+    "stockAmount": 1
 }
 ###
 
@@ -131,7 +132,12 @@ content-type: application/json
     "description":"Test2Test2Test2Test2Test2Test2" ,
     "imgSrc": "https://upload.wikimedia.org/wikipedia/commons/9/9a/Gull_portrait_ca_usa.jpg",
     "price":"1.00",
-    "datetime": "12-10-2020, 16:53"
+    "datetime": "12-10-2020, 16:53",
+    "quantityType": "Kilograms",
+    "quantityValue": "1",
+    "currency": "EUR",
+    "currencySymbol": "€",
+    "stockAmount": 1
 }
 ###
 

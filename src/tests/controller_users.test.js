@@ -67,9 +67,35 @@ describe('Register User Tests', () => {
             .post('/users/registerUser')
             .send(payload);
 
-        expect(res.body.message).toEqual("Registration successful!");
+        expect(res.body.message).toEqual("E-Mail already used.");
     });
 });
+
+describe('Login User Tests', () => {
+    beforeAll(async () => {
+        await mongodb.connectClient();
+    });
+
+    afterAll(async () => {
+        await mongodb.disconnectClient();
+    });
+
+    //Wrong user name
+    //wrong password
+    //Correct credentials
+});
+
+//Stories:
+//Update user info
+//Delete user
+//SHopping Cart
+//Add
+//Remove
+
+// Password reset
+// sendPasswordResetMail
+// checkResetToken
+// resetPassword
 
 describe('Sample Test', () => {
     it('should test that true === true', () => {

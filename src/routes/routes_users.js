@@ -3,7 +3,7 @@
 const express = require("express");
 const router = express.Router();
 const asyncExceptionHandler = require("express-async-handler");
-const middlewares = require('../middlewares');
+const mws = require('../middlewares');
 
 //Validation
 const {
@@ -17,15 +17,19 @@ const opts = {
 //User Controller
 const controller_users = require("../controllers/controller_users");
 
-
+//Get Users
 router.get("/:email", asyncExceptionHandler(controller_users.getSingleUser));
 router.get("/", asyncExceptionHandler(controller_users.getAllUsers));
+//Login, Register
 router.post("/loginUser", asyncExceptionHandler(controller_users.loginUser));
 router.post("/registerUser", validate(validators.registerUserValidation, opts), asyncExceptionHandler(controller_users.registerUser));
+router.post("/confirmRegistration/:confirmationToken", asyncExceptionHandler(controller_users.confirmRegistration));
+//Update and Delete
 router.delete("/:email", asyncExceptionHandler(controller_users.deleteUser));
 router.patch("/:email", asyncExceptionHandler(controller_users.updateUserInfo));
-router.patch("/cart/:email", middlewares.checkAuthentication, asyncExceptionHandler(controller_users.addToShoppingCart));
-router.patch("/cartRemove/:email", middlewares.checkAuthentication, asyncExceptionHandler(controller_users.removeFromShoppingCart));
+//Shopping Cart
+router.patch("/cart/:email", mws.checkAuthentication, asyncExceptionHandler(controller_users.addToShoppingCart));
+router.patch("/cartRemove/:email", mws.checkAuthentication, asyncExceptionHandler(controller_users.removeFromShoppingCart));
 
 //Password reset
 router.post("/sendPasswordResetMail", asyncExceptionHandler(controller_users.sendPasswordResetMail));

@@ -226,7 +226,8 @@ const createStore = async function (req, res, next) {
             "location": {
                 "lat": geoCodeResult[0].latitude,
                 "lng": geoCodeResult[0].longitude
-            }
+            },
+            "mapIcon": data.mapIcon
         },
         "profileData": {
             "title": data.title,
@@ -274,9 +275,10 @@ const editStore = async function (req, res, next) {
     let collection = await getMongoStoresCollection();
     let data = req.body;
     let storeId = req.params.storeId;
-    console.log(storeId)
-    console.log(data.address)
-    console.log(data.location)
+
+    let addressString = `${data.address.addressLine1}, ${data.address.postcode} ${data.address.city}, ${data.address.country}`
+    let geoCodeResult = await geoCoder.geocode(addressString);
+
     let updateResult = await collection.updateOne({
         _id: ObjectId(storeId)
     }, {
@@ -288,8 +290,8 @@ const editStore = async function (req, res, next) {
             "mapData.address.addressLine1": data.address.addressLine1,
             "mapData.address.city": data.address.city,
             "mapData.address.postcode": data.address.postcode,
-            "mapData.location.lat": parseFloat(data.location.lat),
-            "mapData.location.lng": parseFloat(data.location.lng)
+            "mapData.location.lat": geoCodeResult[0].latitude,
+            "mapData.location.lng": geoCodeResult[0].longitude
         }
     });
 
@@ -432,7 +434,7 @@ const addProduct = async function (req, res, next) {
 };
 
 const editProduct = async function (req, res, next) {
-    let collection = await getMongoStoresCollection();
+    const collection = await getMongoStoresCollection();
     let data = req.body;
     let storeId = req.params.storeId;
     let productId = req.params.productId;
@@ -507,7 +509,7 @@ const updateStockAmount = async function (req, res, next) {
     let storeId = req.params.storeId;
     let productId = req.params.productId;
     let data = req.body;
-
+    console.log(data)
     // var setString = "profileData.products.$.productId[" + productId.toString() + "].stockAmount"
     // console.log(setString)
     let updateResult = await collection.updateOne({
@@ -516,7 +518,7 @@ const updateStockAmount = async function (req, res, next) {
     }, {
         $set: {
             //setString: data.stockAmount
-            "profileData.products.$.stockAmount": data.stockAmount
+            "profileData.products.$.stockAmount": parseInt(data.stockAmount)
         }
     }, {
         upsert: false
@@ -780,7 +782,7 @@ function calculateAverage(array) {
         for (let i = 0; i < array.length; i++) {
             value = value + array[i].rating;
         }
-        return value / array.length;
+        return (value / array.length).toFixed(2);
     } else {
         return 0;
     }

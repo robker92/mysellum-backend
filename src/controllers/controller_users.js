@@ -46,10 +46,10 @@ async function getMongoUsersCollection() {
 //const mongoUserCollection = mongodb.getClient().db(config.mongodb_name).collection("users");
 
 const getSingleUser = async function (req, res, next) {
-    var collection = await getMongoUsersCollection();
-    var email = req.params.email;
+    let collection = await getMongoUsersCollection();
+    let email = req.params.email;
 
-    var result = await collection.findOne({
+    let result = await collection.findOne({
         'email': email
     });
 
@@ -57,28 +57,137 @@ const getSingleUser = async function (req, res, next) {
 }
 
 const registerUser = async function (req, res, next) {
-    var collection = await getMongoUsersCollection();
-    //console.log(collection)
-    var data = req.body;
-    //console.log(data)
-    var passwordHash = await bcrypt.hash(data.password, config.saltRounds);
-    // console.log(passwordHash);
-    // console.log(data);
+    let collection = await getMongoUsersCollection();
+    let data = req.body;
+
+    //Check if e-mail already used
+    let checkResult = await collection.findOne({
+        'email': data.email
+    });
+    if (checkResult) {
+        return next({
+            message: "E-Mail already used."
+        })
+    };
+
+    let passwordHash = await bcrypt.hash(data.password, config.saltRounds);
+
     data["password"] = passwordHash;
+    data["reqAt"] = new Date();
+    data["emailConfirmed"] = false;
     data["shoppingCart"] = [];
-    var insertResult = await collection.insertOne(data);
+
+    let confirmationToken = crypto.randomBytes(config.resetToken_numBytes).toString("hex");
+    data["confirmRegistrationToken"] = confirmationToken;
+    data["confirmRegistrationExpires"] = Date.now() + 3600000; //Current time in milliseconds + one hour
+
+    // get user data model function
+
+    let insertResult = await collection.insertOne(data);
+    let user;
     if (insertResult.result.ok == 1) {
-        var user = insertResult.ops[0];
+        user = insertResult.ops[0];
         console.log("Registration successful!");
         console.log(user);
     } else {
         console.log("Registration failed!");
-        next("Registration failed!");
-    }
+        return next({
+            message: "Registration failed!"
+        });
+    };
+    console.log(data);
 
-    var accessToken = createToken({
-        id: user._id.toString(),
-        email: user.email
+    //send email confirmation mail
+    let mailOptions = {
+        email: data.email,
+        contentType: "registrationConfirmation",
+        confirmationToken: confirmationToken
+    };
+
+    let mailInfo;
+    try {
+        mailInfo = await nodemailer.sendMail(mailOptions);
+    } catch (error) {
+        console.log(error)
+        return next({
+            status: 500,
+            message: "Error while sending!"
+        });
+    };
+
+    // let accessToken = createToken({
+    //     id: user._id.toString(),
+    //     email: user.email
+    // });
+
+    // res.status(200).json({
+    //     success: true,
+    //     message: 'Registration successful!',
+    //     user: {
+    //         token: accessToken,
+    //         authorizationRole: "Role1",
+    //         email: user.email,
+    //         ownedStoreId: "",
+    //         address: {
+    //             firstName: user.firstName,
+    //             lastName: user.lastName,
+    //             addressLine1: user.addressLine1,
+    //             postcode: user.postcode,
+    //             city: user.city,
+    //         },
+    //         shoppingCart: [],
+    //         productCounter: 0
+    //     }
+    // });
+    res.status(200).json({
+        success: true,
+        message: 'Registration confirmation e-mail successfully sent!'
+    });
+};
+
+const confirmRegistration = async function (req, res, next) {
+    let collection = await getMongoUsersCollection();
+    let confirmationToken = req.params.confirmationToken;
+
+    let user = await collection.findOneAndUpdate({
+        confirmRegistrationToken: confirmationToken,
+        confirmRegistrationExpires: {
+            $gt: Date.now()
+        }
+    }, {
+        $set: {
+            confirmRegistrationToken: null,
+            confirmRegistrationExpires: null,
+            emailConfirmed: true
+        }
+    }, {
+        returnNewDocument: true,
+        upsert: false
+    });
+
+
+    // updates[i] = collectionStores.findOneAndUpdate({
+    //     "_id": ObjectId(products[i][0].storeId),
+    //     "profileData.products.productId": products[i][0].productId
+    // }, {
+    //     $inc: {
+    //         "profileData.products.$.stockAmount": -products[i][1] //reduce stock amount by purchased amount
+    //     }
+    // }, {
+    //     upsert: false
+    // });
+
+    console.log(user)
+    if (!user) {
+        return next({
+            status: 403,
+            message: "Password reset failed."
+        });
+    };
+
+    let accessToken = createToken({
+        id: user.value._id.toString(),
+        email: user.value.email
     });
 
     res.status(200).json({
@@ -87,35 +196,46 @@ const registerUser = async function (req, res, next) {
         user: {
             token: accessToken,
             authorizationRole: "Role1",
-            email: user.email,
+            email: user.value.email,
             ownedStoreId: "",
             address: {
-                firstName: user.firstName,
-                lastName: user.lastName,
-                addressLine1: user.addressLine1,
-                postcode: user.postcode,
-                city: user.city,
+                firstName: user.value.firstName,
+                lastName: user.value.lastName,
+                addressLine1: user.value.addressLine1,
+                postcode: user.value.postcode,
+                city: user.value.city,
             },
             shoppingCart: [],
             productCounter: 0
         }
     });
-}
+};
 
 const loginUser = async function (req, res, next) {
-    var collection = await getMongoUsersCollection();
+    let collection = await getMongoUsersCollection();
 
-    var email = req.body.email;
-    var password = req.body.password;
+    let email = req.body.email;
+    let password = req.body.password;
 
-    var user = await collection.findOne({
+    let user = await collection.findOne({
         'email': email
     });
+    if (!user) {
+        return next({
+            message: "User not found."
+        })
+    }
+    if (user.emailConfirmed === false) {
+        return next({
+            message: "E-mail address was not confirmed."
+        })
+    }
 
-    var match = await bcrypt.compare(password, user.password);
+    let match = await bcrypt.compare(password, user.password);
+    let accessToken;
     if (match) {
         console.log("logged in " + email + " successfully!");
-        var accessToken = createToken({
+        accessToken = createToken({
             id: user._id.toString(),
             email: user.email
         });
@@ -141,8 +261,8 @@ const loginUser = async function (req, res, next) {
         // })
         // res.send("{success: true}");
 
-        var counter = 0;
-        for (var i = 0; i < user.shoppingCart.length; i++) {
+        let counter = 0;
+        for (let i = 0; i < user.shoppingCart.length; i++) {
             counter = counter + user.shoppingCart[i][1];
         }
         console.log(counter)
@@ -485,6 +605,7 @@ module.exports = {
     getSingleUser,
     registerUser,
     loginUser,
+    confirmRegistration,
     getAllUsers,
     updateUserInfo,
     deleteUser,
