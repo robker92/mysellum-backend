@@ -2,27 +2,17 @@
 //App imports
 const mongodb = require('../mongodb');
 const config = require('../config');
+const userModel = require('../data-models/user-model');
 //External imports
 const bcrypt = require('bcrypt');
-var jwt = require('jsonwebtoken');
+const jwt = require('jsonwebtoken');
 //const axios = require('axios');
 
 const nodemailer = require('../mailing/nodemailer');
 const crypto = require('crypto');
-/*
-Data Model
-User: {
-    "firstName": "Max",
-    "lastName": "Mustermann",
-    "email": "max.mustermann@web.de",
-    "birthDate": "01.01.2000",
-    "password": "test",
-    "city": "Musterstadt",
-    "postcode": "11111",
-    "addressLine1": "Musterstraße 1",
-    "shoppingCart": [{product: product, amount: 5},{product: product, amount: 5}]
-}
-*/
+const {
+    fail
+} = require('assert');
 
 // Create a token from a payload
 function createToken(payload) {
@@ -57,33 +47,47 @@ const getSingleUser = async function (req, res, next) {
 }
 
 const registerUser = async function (req, res, next) {
-    let collection = await getMongoUsersCollection();
-    let data = req.body;
+    const collection = await getMongoUsersCollection();
+    const data = req.body;
 
     //Check if e-mail already used
-    let checkResult = await collection.findOne({
+    const checkResult = await collection.findOne({
         'email': data.email
     });
     if (checkResult) {
         return next({
+            status: 401,
+            type: "alreadyUsed",
             message: "E-Mail already used."
         })
     };
 
-    let passwordHash = await bcrypt.hash(data.password, config.saltRounds);
+    const passwordHash = await bcrypt.hash(data.password, config.saltRounds);
+    const verificationToken = crypto.randomBytes(config.resetToken_numBytes).toString("hex");
 
-    data["password"] = passwordHash;
-    data["reqAt"] = new Date();
-    data["emailConfirmed"] = false;
-    data["shoppingCart"] = [];
-
-    let confirmationToken = crypto.randomBytes(config.resetToken_numBytes).toString("hex");
-    data["confirmRegistrationToken"] = confirmationToken;
-    data["confirmRegistrationExpires"] = Date.now() + 3600000; //Current time in milliseconds + one hour
+    // data["password"] = passwordHash;
+    // data["creationDate"] = new Date();
+    // data["emailConfirmed"] = false;
+    // data["shoppingCart"] = [];
+    // data["confirmRegistrationToken"] = confirmationToken;
+    // data["confirmRegistrationExpires"] = Date.now() + 3600000; //Current time in milliseconds + one hour
 
     // get user data model function
+    const options = {
+        "firstName": data.firstName,
+        "lastName": data.lastName,
+        "email": data.email,
+        "passwordHash": passwordHash,
+        "city": data.city,
+        "postcode": data.postcode,
+        "addressLine1": data.addressLine1,
+        "birthdate": data.birthdate,
+        "verificationToken": verificationToken,
+    };
+    const userData = userModel.get(options);
+    console.log(userData);
 
-    let insertResult = await collection.insertOne(data);
+    const insertResult = await collection.insertOne(userData);
     let user;
     if (insertResult.result.ok == 1) {
         user = insertResult.ops[0];
@@ -92,25 +96,27 @@ const registerUser = async function (req, res, next) {
     } else {
         console.log("Registration failed!");
         return next({
+            status: 401,
+            type: "failed",
             message: "Registration failed!"
         });
     };
-    console.log(data);
+    //console.log(data);
 
     //send email confirmation mail
     let mailOptions = {
         email: data.email,
-        contentType: "registrationConfirmation",
-        confirmationToken: confirmationToken
+        contentType: "registrationVerification",
+        verificationToken: verificationToken
     };
 
-    let mailInfo;
     try {
-        mailInfo = await nodemailer.sendMail(mailOptions);
+        await nodemailer.sendMail(mailOptions);
     } catch (error) {
         console.log(error)
         return next({
-            status: 500,
+            status: 401,
+            type: "whileMailSending",
             message: "Error while sending!"
         });
     };
@@ -141,28 +147,86 @@ const registerUser = async function (req, res, next) {
     // });
     res.status(200).json({
         success: true,
-        message: 'Registration confirmation e-mail successfully sent!'
+        message: 'Registration verification e-mail successfully sent!'
     });
 };
 
-const confirmRegistration = async function (req, res, next) {
+const verifyRegistration = async function (req, res, next) {
     let collection = await getMongoUsersCollection();
-    let confirmationToken = req.params.confirmationToken;
+    let verificationToken = req.params.verificationToken;
 
-    let user = await collection.findOneAndUpdate({
-        confirmRegistrationToken: confirmationToken,
-        confirmRegistrationExpires: {
+    collection.findOneAndUpdate({
+        verifyRegistrationToken: verificationToken,
+        verifyRegistrationExpires: {
             $gt: Date.now()
         }
     }, {
         $set: {
-            confirmRegistrationToken: null,
-            confirmRegistrationExpires: null,
-            emailConfirmed: true
+            verifyRegistrationToken: null,
+            verifyRegistrationExpires: null,
+            emailVerified: true
         }
     }, {
-        returnNewDocument: true,
+        returnOriginal: false,
         upsert: false
+
+    }, (err, result) => {
+        console.log(err)
+        console.log(result)
+        if (err) {
+            //console.warn(err);
+            return next({
+                status: 401,
+                success: false,
+                type: "verification",
+                message: "E-Mail verification failed."
+            });
+        } else if (result.value == null) {
+            return next({
+                status: 401,
+                success: false,
+                type: "verification",
+                message: "E-Mail verification failed."
+            });
+        } else {
+            const user = result.value;
+            console.log(user)
+            // if (!user) {
+            //     return next({
+            //         status: 403,
+            //         message: "Password reset failed."
+            //     });
+            // };
+
+            let accessToken = createToken({
+                id: user._id.toString(),
+                email: user.email
+            });
+
+            res.status(200).json({
+                success: true,
+                message: 'Registration successful!',
+                user: {
+                    token: accessToken,
+                    authorizationRole: "Role1",
+                    email: user.email,
+                    name: {
+                        firstName: user.firstName,
+                        lastName: user.lastName
+                    },
+                    ownedStoreId: "",
+                    // address: {
+                    //     firstName: user.value.firstName,
+                    //     lastName: user.value.lastName,
+                    //     addressLine1: user.value.addressLine1,
+                    //     postcode: user.value.postcode,
+                    //     city: user.value.city,
+                    // },
+                    shoppingCart: [],
+                    productCounter: 0
+                }
+            });
+        };
     });
 
 
@@ -177,38 +241,7 @@ const confirmRegistration = async function (req, res, next) {
     //     upsert: false
     // });
 
-    console.log(user)
-    if (!user) {
-        return next({
-            status: 403,
-            message: "Password reset failed."
-        });
-    };
 
-    let accessToken = createToken({
-        id: user.value._id.toString(),
-        email: user.value.email
-    });
-
-    res.status(200).json({
-        success: true,
-        message: 'Registration successful!',
-        user: {
-            token: accessToken,
-            authorizationRole: "Role1",
-            email: user.value.email,
-            ownedStoreId: "",
-            address: {
-                firstName: user.value.firstName,
-                lastName: user.value.lastName,
-                addressLine1: user.value.addressLine1,
-                postcode: user.value.postcode,
-                city: user.value.city,
-            },
-            shoppingCart: [],
-            productCounter: 0
-        }
-    });
 };
 
 const loginUser = async function (req, res, next) {
@@ -220,16 +253,24 @@ const loginUser = async function (req, res, next) {
     let user = await collection.findOne({
         'email': email
     });
+
     if (!user) {
         return next({
-            message: "User not found."
+            success: false,
+            status: 401,
+            type: "incorrect",
+            message: "Combination of username and password was incorrect."
         })
-    }
-    if (user.emailConfirmed === false) {
+    };
+
+    if (user.emailVerified === false) {
         return next({
-            message: "E-mail address was not confirmed."
+            success: false,
+            status: 401,
+            type: "verification",
+            message: "E-mail address was not verified."
         })
-    }
+    };
 
     let match = await bcrypt.compare(password, user.password);
     let accessToken;
@@ -264,35 +305,40 @@ const loginUser = async function (req, res, next) {
         let counter = 0;
         for (let i = 0; i < user.shoppingCart.length; i++) {
             counter = counter + user.shoppingCart[i][1];
-        }
+        };
         console.log(counter)
         //Storage--------------
         res.status(200).json({
             success: true,
-            message: 'Authentication successful!',
+            message: 'Successfully logged in!',
             user: {
                 token: accessToken,
                 authorizationRole: "Role1",
                 email: user.email,
-                ownedStoreId: user.ownedStoreId,
-                address: {
+                name: {
                     firstName: user.firstName,
-                    lastName: user.lastName,
-                    addressLine1: user.addressLine1,
-                    postcode: user.postcode,
-                    city: user.city,
+                    lastName: user.lastName
                 },
+                ownedStoreId: user.ownedStoreId,
+                // address: {
+                //     firstName: user.firstName,
+                //     lastName: user.lastName,
+                //     addressLine1: user.addressLine1,
+                //     postcode: user.postcode,
+                //     city: user.city,
+                // },
                 shoppingCart: user.shoppingCart,
                 productCounter: counter
             }
         });
-
     } else {
-        console.log("password does not match!");
+        //console.log("password does not match!");
         next({
-            status: 403,
-            message: "Unauthorized. Password does not match!"
-        })
+            status: 401,
+            success: false,
+            type: "incorrect",
+            message: "Combination of username and password was incorrect."
+        });
     };
 }
 
@@ -466,39 +512,32 @@ const sendTestMail = async function (req, res, next) {
 };
 
 const sendPasswordResetMail = async function (req, res, next) {
-    var collection = await getMongoUsersCollection();
-    let email = req.body.email;
-    let birthdate = req.body.birthdate;
+    const collection = await getMongoUsersCollection();
+    const email = req.body.email;
+    const birthdate = req.body.birthdate;
 
-    var findUserResult = await collection.findOne({
-        'email': email
+    const findUserResult = await collection.findOne({
+        'email': email,
+        'birthdate': birthdate
     });
 
     if (!findUserResult) {
-        //Check if user found (provided mail is from a valid user)
-        console.log("user not found!");
+        //console.log("user not found!");
         return next({
-            status: 403,
-            message: "E-Mail not found!"
+            status: 401,
+            success: false,
+            type: "notFound",
+            message: "User was not found!"
         });
     };
 
-    if (findUserResult.birthdate !== birthdate) {
-        //throw error because of wrong email
-        console.log("wrong birthdate!")
-        return next({
-            status: 403,
-            message: "Wrong birthdate provided!"
-        })
-    };
-
-    let resetPasswordToken = crypto.randomBytes(config.resetToken_numBytes).toString("hex");
-    let resetPasswordExpires = Date.now() + 3600000; //Current time in milliseconds + one hour
+    const resetPasswordToken = crypto.randomBytes(config.resetToken_numBytes).toString("hex");
+    const resetPasswordExpires = Date.now() + 3600000; //Current time in milliseconds + one hour
     console.log(resetPasswordToken)
     console.log(resetPasswordExpires)
 
     //save token and expire date to user
-    var updateUserResult = await collection.updateOne({
+    await collection.updateOne({
         'email': email
     }, {
         $set: {
@@ -508,7 +547,7 @@ const sendPasswordResetMail = async function (req, res, next) {
     });
 
     //send mail to user email
-    let mailOptions = {
+    const mailOptions = {
         email: email,
         contentType: "resetPassword",
         resetPasswordToken: resetPasswordToken
@@ -520,7 +559,9 @@ const sendPasswordResetMail = async function (req, res, next) {
     } catch (error) {
         console.log(error)
         return next({
-            status: 500,
+            status: 401,
+            success: false,
+            type: "whileSending",
             message: "Error while sending!"
         });
     };
@@ -532,10 +573,10 @@ const sendPasswordResetMail = async function (req, res, next) {
 };
 
 const checkResetToken = async function (req, res, next) {
-    var collection = await getMongoUsersCollection();
-    var receivedToken = req.params.token;
+    const collection = await getMongoUsersCollection();
+    const receivedToken = req.params.token;
     console.log(receivedToken)
-    var findUserResult = await collection.findOne({
+    const findUserResult = await collection.findOne({
         resetPasswordToken: receivedToken,
         resetPasswordExpires: {
             $gt: Date.now()
@@ -547,14 +588,15 @@ const checkResetToken = async function (req, res, next) {
     // });
     // console.log(findUserResultTest)
 
-    console.log(findUserResult)
+    console.log(findUserResult);
     if (!findUserResult) {
         //Invalid Token or expired
         return next({
-            status: 403,
+            status: 401,
+            type: "invalid",
             message: "Password reset link is invalid or has expired."
         });
-    }
+    };
 
     res.status(200).json({
         success: true,
@@ -563,9 +605,9 @@ const checkResetToken = async function (req, res, next) {
 };
 
 const resetPassword = async function (req, res, next) {
-    var collection = await getMongoUsersCollection();
-    var receivedToken = req.params.token;
-    let password = req.body.password;
+    const collection = await getMongoUsersCollection();
+    const receivedToken = req.params.token;
+    const password = req.body.password;
 
     // var findUserResult = await collection.findOne({
     //     resetPasswordToken: receivedToken,
@@ -575,7 +617,7 @@ const resetPassword = async function (req, res, next) {
     // });
     // console.log(findUserResult)
 
-    var updateUserResult = await collection.updateOne({
+    const updateUserResult = await collection.updateOne({
         resetPasswordToken: receivedToken,
         resetPasswordExpires: {
             $gt: Date.now()
@@ -590,7 +632,8 @@ const resetPassword = async function (req, res, next) {
     console.log(updateUserResult.modifiedCount)
     if (!updateUserResult) {
         return next({
-            status: 403,
+            status: 401,
+            type: "failure",
             message: "Password reset failed."
         });
     }
@@ -605,7 +648,7 @@ module.exports = {
     getSingleUser,
     registerUser,
     loginUser,
-    confirmRegistration,
+    verifyRegistration,
     getAllUsers,
     updateUserInfo,
     deleteUser,

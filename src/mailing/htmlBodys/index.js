@@ -1,9 +1,9 @@
 const testMail = require('./testMail');
 const resetPasswordMail = require('./passwordResetMail');
-const registrationConfirmationMail = require('./registrationConfirmationMail');
+const registrationVerificationMail = require('./registrationVerificationMail');
 
 module.exports = {
     testMail,
     resetPasswordMail,
-    registrationConfirmationMail
+    registrationVerificationMail
 }

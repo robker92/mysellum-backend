@@ -11,13 +11,21 @@ const registerUserValidation = {
         password: Joi.string().min(8).max(30).regex(/(?=.*[$&+,:;=_?@#|'<>.^*()%!-])(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])/).required(),
         firstName: Joi.string().min(2).max(30).regex(/[a-zA-Z]/).required(),
         lastName: Joi.string().min(2).max(30).regex(/[a-zA-Z]/).required(),
-        birthDate: Joi.string().regex(/[0-9]{2}\.[0-9]{2}\.[0-9]{4}/).required(),
+        birthdate: Joi.string().regex(/[0-9]{2}\.[0-9]{2}\.[0-9]{4}/).required(),
         city: Joi.string().min(3).max(40).regex(/[a-zA-Z]/).required(),
         postcode: Joi.string().length(5).regex(/[0-9]/).required(),
         addressLine1: Joi.string().min(3).max(40).required()
     })
 };
 
+const loginUserValidation = {
+    body: Joi.object({
+        email: Joi.string().email().required(),
+        password: Joi.string().min(8).max(30).regex(/(?=.*[$&+,:;=_?@#|'<>.^*()%!-])(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])/).required()
+    })
+};
+
 module.exports = {
-    registerUserValidation
+    registerUserValidation,
+    loginUserValidation
 };

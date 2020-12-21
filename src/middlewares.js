@@ -56,41 +56,44 @@ const checkAuthentication = (req, res, next) => {
 // };
 
 const errorHandler = (err, req, res, next) => {
-    // if (res.headersSent) {
-    //     return next(err);
-    // }
-    //req.logger.error(err);
     console.log(err)
     console.log(req.body)
     console.log("error handler")
 
+    if (err instanceof ValidationError) {
+        return res.status(400).send({
+            message: err.message,
+            details: err.details
+        });
+    };
+
+    //Unauthorized
+    if (err.status === 401) {
+        return res.status(401).send({
+            success: err.success,
+            type: err.type,
+            message: err.message
+        });
+    }
+
     if (err.status == 403) {
-        res.status(403);
-        res.send({
+        return res.status(403).send({
             message: err.message
         });
     } else {
-        if (err instanceof ValidationError) {
-            res.status(400);
-            res.send({
-                message: err.message,
-                details: err.details
-            });
-        } else {
-            res.status(err.status || 500);
-            res.send({
-                message: err.message
-            });
-        }
-        //res.render("error", { error: err });
-        //console.log(err.status)
-        //console.log(err.message)
-
-        // res.json({
-        //     message: err.message,
-        //     error: err
-        // });
+        return res.status(err.status || 500).send({
+            message: err.message
+        });
     }
+    //res.render("error", { error: err });
+    //console.log(err.status)
+    //console.log(err.message)
+
+    // res.json({
+    //     message: err.message,
+    //     error: err
+    // });
+
 };
 
 module.exports = {

@@ -7,20 +7,37 @@ GET http://localhost:3000/users/TestEmail14@web.de HTTP/1.1
 x-access-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjVmMDczMTA2YjRhZmM5NjNjMGM5MjVkYiIsImVtYWlsIjoiVGVzdEVtYWlsMTRAd2ViLmRlIiwiaWF0IjoxNjA2MDgwMzcxLCJleHAiOjE2MDYxNjY3NzF9.SI9_-W92a672_VUM5BBnoB07OMfirAPMOo8gfuDzyRE
 ###
 
+#Login User
+POST http://localhost:3000/users/loginUser HTTP/1.1
+content-type: application/json
+
+{
+    "email": "TestEmail4211@web.de",
+    "password": "Test1!----"
+}
+###
+
 #Register User
 POST http://localhost:3000/users/registerUser HTTP/1.1
 content-type: application/json
 
 {
-    "email": "TestEmail20@web.de",
+    "email": "TestEmail42@web.de",
     "password": "Test1!----",
     "firstName": "Test",
     "lastName": "Test",
-    "birthDate": "29.11.2020",
+    "birthdate": "29.11.2020",
     "city": "Test",
     "postcode": "11111",
     "addressLine1": "Test"
 }
+###
+
+#Confirm Registration
+POST http://localhost:3000/users/confirmRegistration/1df8f818b779f45fadc5092e5f4e2abc97de2cc57a0f7b9f19e8fc09e6fd38ba035c24346b53c28c HTTP/1.1
+content-type: application/json
+
+{}
 ###
 
 # Forgot Password - send reset Mail
@@ -32,6 +49,7 @@ content-type: application/json
     "birthdate": "05-05-2005"
 }
 ###
+
 # Forgot Password - check reset token
 GET http://localhost:3000/users/checkResetToken/395c2e8a5f7e21e92acbece7d04d8da6aeb9bd75cc79cd2eaa84f456591a HTTP/1.1
 

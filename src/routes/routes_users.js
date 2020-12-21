@@ -9,7 +9,7 @@ const mws = require('../middlewares');
 const {
     validate
 } = require('express-validation');
-const validators = require("../validators.js");
+const validators = require("../validators/user_validators.js");
 const opts = {
     keyByField: true //Reduces the validation error to a list with key/value pair "fieldname": "Message"
 }
@@ -21,9 +21,9 @@ const controller_users = require("../controllers/controller_users");
 router.get("/:email", asyncExceptionHandler(controller_users.getSingleUser));
 router.get("/", asyncExceptionHandler(controller_users.getAllUsers));
 //Login, Register
-router.post("/loginUser", asyncExceptionHandler(controller_users.loginUser));
+router.post("/loginUser", validate(validators.loginUserValidation, opts), asyncExceptionHandler(controller_users.loginUser));
 router.post("/registerUser", validate(validators.registerUserValidation, opts), asyncExceptionHandler(controller_users.registerUser));
-router.post("/confirmRegistration/:confirmationToken", asyncExceptionHandler(controller_users.confirmRegistration));
+router.post("/verifyRegistration/:verificationToken", asyncExceptionHandler(controller_users.verifyRegistration));
 //Update and Delete
 router.delete("/:email", asyncExceptionHandler(controller_users.deleteUser));
 router.patch("/:email", asyncExceptionHandler(controller_users.updateUserInfo));
