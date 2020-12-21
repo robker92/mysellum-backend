@@ -16,7 +16,7 @@ function get(options) {
         "ownedStoreId": "",
         "emailVerified": false,
         "verifyRegistrationToken": options.verificationToken,
-        "verifyRegistrationExpires": Date.now() + 3600000,
+        "verifyRegistrationExpires": Date.now() + 3600000, //Date now + 60min
         "resetPasswordExpires": null,
         "resetPasswordToken": null
     };

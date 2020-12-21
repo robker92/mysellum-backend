@@ -51,24 +51,24 @@ describe('Register User Tests', () => {
         expect(res.body.details[0]).toHaveProperty("password"); //Check if first element of error array has key password
     });
 
-    it('should result in successfull registration', async () => {
-        let payload = {
-            "email": "Test1@web.de",
-            "password": "Test1aaa!",
-            "firstName": "Test",
-            "lastName": "Test",
-            "birthDate": "01.01.2011",
-            "city": "Test",
-            "postcode": "11111",
-            "addressLine1": "Test"
-        };
+    // it('should result in successfull registration', async () => {
+    //     let payload = {
+    //         "email": "Test1@web.de",
+    //         "password": "Test1aaa!",
+    //         "firstName": "Test",
+    //         "lastName": "Test",
+    //         "birthDate": "01.01.2011",
+    //         "city": "Test",
+    //         "postcode": "11111",
+    //         "addressLine1": "Test"
+    //     };
 
-        const res = await request(api)
-            .post('/users/registerUser')
-            .send(payload);
+    //     const res = await request(api)
+    //         .post('/users/registerUser')
+    //         .send(payload);
 
-        expect(res.body.message).toEqual("E-Mail already used.");
-    });
+    //     expect(res.body.message).toEqual("E-Mail already used.");
+    // });
 });
 
 describe('Login User Tests', () => {

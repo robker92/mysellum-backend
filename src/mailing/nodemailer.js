@@ -18,6 +18,7 @@ let transporter = nodemailer.createTransport({
         pass: config.mailPass
     }
 });
+
 transporter.verify().then((verify) => {
     console.log(verify);
 });

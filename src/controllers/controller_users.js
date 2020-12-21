@@ -59,7 +59,7 @@ const registerUser = async function (req, res, next) {
             status: 401,
             type: "alreadyUsed",
             message: "E-Mail already used."
-        })
+        });
     };
 
     const passwordHash = await bcrypt.hash(data.password, config.saltRounds);
@@ -538,7 +538,8 @@ const sendPasswordResetMail = async function (req, res, next) {
 
     //save token and expire date to user
     await collection.updateOne({
-        'email': email
+        'email': email,
+        'birthdate': birthdate
     }, {
         $set: {
             resetPasswordToken: resetPasswordToken,

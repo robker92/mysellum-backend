@@ -125,7 +125,7 @@ const createOrder = async function (req, res, next) {
                     success: false,
                     message: "Products out of stock",
                     productsOutOfStock: productsOutOfStock
-                })
+                });
             };
 
             let updates = []
