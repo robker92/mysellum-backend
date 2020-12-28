@@ -18,35 +18,32 @@ content-type: application/json
 ###
 
 #Add Review
-POST http://localhost:3000/stores/addReview HTTP/1.1
+POST http://localhost:3000/stores/addReview/5f31406deae5b044240a57c8 HTTP/1.1
 content-type: application/json
+x-access-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjVmYzNjMDEyZDRlZmY3MWIzY2ZhNmE1ZCIsImVtYWlsIjoiVGVzdEVtYWlsMTVAd2ViLmRlIiwiaWF0IjoxNjA5MTAzMDI3LCJleHAiOjE2MDkxODk0Mjd9.JTmBmIGWOW380zzYKTNdnsjxvDIMr629EDmlrbak3HQ
+
 {
-    "id": "5edfa27995ec324a216ea1c0",
-    "reviewId": "1",
-    "userId": "1",
-    "datetime": "1",
     "rating": 5,
     "text": "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet."
 }
 ###
 
 #Edit Review
-POST http://localhost:3000/stores/editReview HTTP/1.1
+POST http://localhost:3000/stores/editReview/5f31406deae5b044240a57c8/20 HTTP/1.1
 content-type: application/json
+x-access-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjVmYzNjMDEyZDRlZmY3MWIzY2ZhNmE1ZCIsImVtYWlsIjoiVGVzdEVtYWlsMTVAd2ViLmRlIiwiaWF0IjoxNjA5MTA3MzI0LCJleHAiOjE2MDkxOTM3MjR9.cr659oIWDVn2B1FyEhgWvx806e-yxRixM06FaVE87Jo
+
 {   
-    "reviewId": "", 
-    "id": "5edfa27995ec324a216ea1c0",
-    "reviewId": "1",
-    "userId": "1",
-    "datetime": "1",
-    "rating": 5,
+    "rating": 4,
     "text": "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet."
 }
 ###
 
 #Delete Review
-DELETE http://localhost:3000/stores/deleteReview/5f31406deae5b044240a57c8/0 HTTP/1.1
+DELETE http://localhost:3000/stores/deleteReview/5f31406deae5b044240a57c8/17 HTTP/1.1
 content-type: application/json
+x-access-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjVmYzNjMDEyZDRlZmY3MWIzY2ZhNmE1ZCIsImVtYWlsIjoiVGVzdEVtYWlsMTVAd2ViLmRlIiwiaWF0IjoxNjA5MTA3MzI0LCJleHAiOjE2MDkxOTM3MjR9.cr659oIWDVn2B1FyEhgWvx806e-yxRixM06FaVE87Jo
+
 ###
 
 #Create Store

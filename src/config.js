@@ -10,7 +10,8 @@ const mongodb_name = process.env.JEST_WORKER_ID === undefined ? 'testdatabase' :
 //BCrypt & Token
 const saltRounds = 11;
 const keyExpiresIn = "24h";
-const secretKey = '123456789';
+//const keyExpiresIn = "100";
+const secretKey = "123456789";
 
 //crypto - password reset
 const resetToken_numBytes = 40;

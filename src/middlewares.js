@@ -27,16 +27,28 @@ const checkAuthentication = (req, res, next) => {
     //console.log(token)
     if (!token) {
         return res.status(401).send({
-            error: 'Unauthorized',
+            error: 'TokenInvalid',
             message: 'No token provided in the request'
         });
     }
     // verifies secret and checks exp
     jwt.verify(token, config.secretKey, (err, decoded) => {
-        if (err) return res.status(401).send({
-            error: 'Unauthorized',
-            message: 'Failed to authenticate token.'
-        });
+        if (err) {
+            return res.status(401).send({
+                error: 'TokenInvalid',
+                message: 'Failed to authenticate token.'
+            });
+        };
+        // if ((decoded.exp * 1000) < Date.now()) {
+        //     console.log(decoded.exp)
+        //     console.log(Date.now())
+        //     console.log("JWT expired");
+        //     return res.status(401).send({
+        //         error: 'Expired',
+        //         message: 'Failed to authenticate token.'
+        //     });
+        // };
+        console.log(Date.now())
         console.log(decoded)
         // if everything is good, save to request for use in other routes
         req.userId = decoded.id;

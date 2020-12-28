@@ -7,6 +7,15 @@ const mws = require('../middlewares');
 
 const controller_stores = require("../controllers/controller_stores");
 
+//Validation
+const {
+    validate
+} = require('express-validation');
+const vals = require("../validators/stores_validators.js");
+const opts = {
+    keyByField: true //Reduces the validation error to a list with key/value pair "fieldname": "Message"
+}
+
 //Get Stores
 router.get("/:id", asyncExceptionHandler(controller_stores.getSingleStore));
 router.get("/", asyncExceptionHandler(controller_stores.getAllStores));
@@ -21,9 +30,9 @@ router.post("/addStoreImage/:storeId", asyncExceptionHandler(controller_stores.a
 router.post("/deleteStoreImage/:storeId/:imageId", asyncExceptionHandler(controller_stores.deleteStoreImage));
 
 //Reviews
-router.post("/addReview", asyncExceptionHandler(controller_stores.addReview));
-router.post("/editReview", asyncExceptionHandler(controller_stores.editReview));
-router.delete("/deleteReview/:storeId/:reviewId", asyncExceptionHandler(controller_stores.deleteReview));
+router.post("/addReview/:storeId", mws.checkAuthentication, validate(vals.addReviewVal, opts), asyncExceptionHandler(controller_stores.addReview));
+router.post("/editReview/:storeId/:reviewId", mws.checkAuthentication, asyncExceptionHandler(controller_stores.editReview));
+router.delete("/deleteReview/:storeId/:reviewId", mws.checkAuthentication, asyncExceptionHandler(controller_stores.deleteReview));
 
 //Products
 router.post("/addProduct", asyncExceptionHandler(controller_stores.addProduct));

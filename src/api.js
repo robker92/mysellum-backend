@@ -2,26 +2,28 @@
 require('dotenv').config()
 
 const express = require('express');
+const api = express();
+
 const bodyParser = require('body-parser');
+api.use(bodyParser.json());
+api.use(bodyParser.urlencoded({
+    extended: false
+}));
 const helmet = require('helmet');
+api.use(helmet());
 const cors = require('cors');
 const cookieParser = require('cookie-parser')
+api.use(cookieParser());
+api.disable('x-powered-by');
+
 
 const middlewares = require('./middlewares');
-const api = express();
-api.use(cookieParser())
 //Routes
 const routes_users = require('./routes/routes_users');
 const routes_orders = require('./routes/routes_orders');
 const routes_stores = require('./routes/routes_stores');
 
-//Adding Basic Middlewares
-api.use(helmet());
-api.use(bodyParser.json());
-api.use(bodyParser.urlencoded({
-    extended: false
-}));
-api.disable('x-powered-by')
+
 //api.use(middlewares.allowCrossDomain);
 
 //Location of the Client:

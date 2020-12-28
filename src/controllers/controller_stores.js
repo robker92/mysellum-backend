@@ -586,20 +586,28 @@ const deleteProduct = async function (req, res, next) {
 const editReview = async function (req, res, next) {
     let collection = await getMongoStoresCollection();
     let data = req.body;
+    let storeId = req.params.storeId;
+    let reviewId = req.params.reviewId;
+    console.log(req.userEmail)
 
     let findResult = await collection.findOne({
-        '_id': ObjectId(data.id)
+        '_id': ObjectId(storeId)
     });
-
+    if (!findResult) {
+        return next({
+            status: 400,
+            message: "Wrong store id provided."
+        });
+    };
     //var index = findResult.profileData.reviews.findIndex(rv => rv.userEmail === data.userEmail);
-    let index = findResult.profileData.reviews.findIndex(rv => rv.reviewId === data.reviewId);
+    let index = findResult.profileData.reviews.findIndex(rv => rv.reviewId === reviewId);
     //console.log(index)
     findResult.profileData.reviews[index].text = data.text;
     findResult.profileData.reviews[index].rating = data.rating;
-    findResult.profileData.reviews[index].datetimeAdjusted = data.datetime;
+    findResult.profileData.reviews[index].datetimeAdjusted = new Date();
     findResult.profileData.avgRating = calculateAverage(findResult.profileData.reviews).toString();
     //console.log(findResult.profileData.reviews[index])
-    let updateResult = await collection.updateOne({
+    await collection.updateOne({
         //Selection criteria
         '_id': ObjectId(data.id)
     }, {
@@ -617,20 +625,35 @@ const editReview = async function (req, res, next) {
 };
 
 const addReview = async function (req, res, next) {
-    let collection = await getMongoStoresCollection();
-    let collection_users = await getMongoUsersCollection();
+    //TODO check if user bought a product at store
+    let collectionStores = await getMongoStoresCollection();
+    let collectionUsers = await getMongoUsersCollection();
     let data = req.body;
+    let storeId = req.params.storeId;
+    console.log(req.userEmail)
 
-    let findResult = await collection.findOne({
-        '_id': ObjectId(data.id)
+    let findResult = await collectionStores.findOne({
+        '_id': ObjectId(storeId)
     });
 
+    if (!findResult) {
+        return next({
+            status: 400,
+            message: "Wrong store id provided."
+        });
+    };
     //Check if User already submitted a review for this specific store (only 1 review per store and per user allowed)
-    if (findResult.profileData.reviews.findIndex(rv => rv.userEmaild === '45')) {};
+    // if (findResult.profileData.reviews.findIndex(rv => rv.userEmail === req.userEmail)) {
+    //     console.log("found")
+    //     return next({
+    //         status: 400,
+    //         message: "User already submitted a review for this store."
+    //     })
+    // };
 
     //Define review id
     let reviewId;
-    if (findResult.profileData.reviews.length == 0) {
+    if (findResult.profileData.reviews.length === 0) {
         reviewId = 0;
         //avg = single rating
         findResult.profileData.avgRating = data.rating;
@@ -648,31 +671,38 @@ const addReview = async function (req, res, next) {
     };
 
     //Get user first and last name
-    let findResultUser = await collection_users.findOne({
-        'email': data.userEmail
+    let findResultUser = await collectionUsers.findOne({
+        'email': req.userEmail
     });
+
+    if (!findResultUser) {
+        return next({
+            status: 400,
+            message: "User not found."
+        });
+    };
 
     //findResult.profileData.reviews = [];
     findResult.profileData.reviews.unshift({
         "reviewId": reviewId.toString(),
-        "userEmail": data.userEmail,
+        "userEmail": req.userEmail,
         "userName": findResultUser.lastName + ", " + findResultUser.firstName,
-        "datetime": data.datetime,
+        "datetimeCreated": new Date(),
         "datetimeAdjusted": "",
         "rating": data.rating,
         "text": data.text
     });
     findResult.profileData.avgRating = calculateAverage(findResult.profileData.reviews).toString();
-    console.log(findResult.profileData);
+    //console.log(findResult.profileData);
 
-    let updateResult = await collection.updateOne({
+    await collectionStores.updateOne({
         //Selection criteria
-        '_id': ObjectId(data.id)
+        '_id': ObjectId(storeId)
     }, {
         //Updated data
         $set: findResult
     });
-    console.log(updateResult)
+    //console.log(updateResult)
 
     // var updateResult = await collection.updateOne({
     //     _id: ObjectId(storeId)
@@ -696,8 +726,17 @@ const deleteReview = async function (req, res, next) {
     let collection = await getMongoStoresCollection();
     let storeId = req.params.storeId;
     let reviewId = req.params.reviewId;
+    let userEmail = req.userEmail;
     //var data = req.body;
-
+    // let findResult2 = await collection.findOne({
+    //     '_id': ObjectId(storeId),
+    //     'profileData.reviews': {
+    //         $elemMatch: {
+    //             userEmail: userEmail
+    //         }
+    //     }
+    // });
+    // console.log(findResult2);
     // var findResult = await collection.findOne({
     //     '_id': ObjectId(storeId)
     // });
@@ -720,19 +759,35 @@ const deleteReview = async function (req, res, next) {
     // });
     // console.log(updateResult)
 
-    await collection.updateOne({
+    let updateResult = await collection.updateOne({
         _id: ObjectId(storeId)
     }, {
         $pull: {
             'profileData.reviews': {
-                reviewId: reviewId
+                reviewId: reviewId,
+                userEmail: userEmail
             }
         }
     });
+
+    if (!updateResult || !updateResult.result.nModified) {
+        console.log("not updated")
+        return next({
+            status: 400,
+            message: "Review not found or wrong user."
+        });
+    };
+
+    //update average rating
     let findResult = await collection.findOne({
         '_id': ObjectId(storeId)
     });
     findResult.profileData.avgRating = calculateAverage(findResult.profileData.reviews).toString();
+    await collection.updateOne({
+        _id: ObjectId(storeId)
+    }, {
+        $set: findResult
+    });
 
     res.status(200).json({
         success: true,

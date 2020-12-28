@@ -3,6 +3,7 @@
 const mongodb = require('../mongodb');
 const config = require('../config');
 const userModel = require('../data-models/user-model');
+const ObjectId = require('mongodb').ObjectId;
 //External imports
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
@@ -31,7 +32,10 @@ async function getMongoUsersCollection() {
     // console.log(config.mongodb_name)
     //console.log(mongodb.getClient())
     return mongodb.getClient().db(config.mongodb_name).collection("users");
-}
+};
+async function getMongoStoresCollection() {
+    return mongodb.getClient().db(config.mongodb_name).collection("stores");
+};
 
 //const mongoUserCollection = mongodb.getClient().db(config.mongodb_name).collection("users");
 
@@ -203,11 +207,11 @@ const verifyRegistration = async function (req, res, next) {
                 email: user.email
             });
 
-            res.status(200).json({
+            res.status(200).cookie('authToken', accessToken).json({
                 success: true,
                 message: 'Registration successful!',
                 user: {
-                    token: accessToken,
+                    //token: accessToken,
                     authorizationRole: "Role1",
                     email: user.email,
                     name: {
@@ -224,7 +228,9 @@ const verifyRegistration = async function (req, res, next) {
                     // },
                     shoppingCart: [],
                     productCounter: 0
-                }
+                },
+                shoppingCart: user.shoppingCart,
+                // productCounter: counter
             });
         };
     });
@@ -308,11 +314,11 @@ const loginUser = async function (req, res, next) {
         };
         console.log(counter)
         //Storage--------------
-        res.status(200).json({
+        res.status(200).cookie('authToken', accessToken).json({
             success: true,
             message: 'Successfully logged in!',
             user: {
-                token: accessToken,
+                //token: accessToken,
                 authorizationRole: "Role1",
                 email: user.email,
                 name: {
@@ -329,7 +335,9 @@ const loginUser = async function (req, res, next) {
                 // },
                 shoppingCart: user.shoppingCart,
                 productCounter: counter
-            }
+            },
+            shoppingCart: user.shoppingCart,
+            productCounter: counter
         });
     } else {
         //console.log("password does not match!");
@@ -400,37 +408,69 @@ const deleteUser = async function (req, res, next) {
 
 const addToShoppingCart = async function (req, res, next) {
     //payload: params: email, body:{product,amount}
-    var collection = await getMongoUsersCollection();
-    var email = req.params.email;
-    console.log(email)
-    var addedProduct = req.body.product;
+    let collectionUsers = await getMongoUsersCollection();
+    let collectionStores = await getMongoStoresCollection();
+    let email = req.params.email;
+    let addedProduct = req.body.product;
+    let addedAmount = parseInt(req.body.amount);
     console.log(addedProduct)
-    var addedAmount = parseInt(req.body.amount);
-    console.log(addedAmount)
 
-    var user = await collection.findOne({
+    //Get the product from the database and save it in the shopping cart
+    let store = await collectionStores.findOne({
+        _id: ObjectId(addedProduct.storeId)
+    });
+    if (!store) {
+        //when no store was found -> wrong store id in the payload
+        return next({
+            status: 400,
+            message: "Wrong store id provided."
+        });
+    };
+    //retrieve the product from the store document
+    let productFromDB = store.profileData.products.filter(obj => {
+        return obj.productId === addedProduct.productId
+    })[0];
+    if (!productFromDB) {
+        //when no product was found -> wrong product id
+        return next({
+            status: 400,
+            message: "Wrong product id provided."
+        });
+    };
+
+    //Update the user's shopping cart
+    let user = await collectionUsers.findOne({
         'email': email
     });
-    var currentShoppingCart = user.shoppingCart;
-    console.log(currentShoppingCart)
+
+    if (!user) {
+        //when no user was found -> wrong email
+        return next({
+            status: 400,
+            message: "Wrong email provided."
+        });
+    };
+
+    let currentShoppingCart = user.shoppingCart;
     //Check if product is already inside cart
-    var found = false;
+    let found = false;
     if (currentShoppingCart.length > 0) {
-        for (var i = 0; i < currentShoppingCart.length; i++) {
+        for (let i = 0; i < currentShoppingCart.length; i++) {
             //Check if added product is already in cart and increase amount if yes
-            if (currentShoppingCart[i][0].productId == addedProduct.productId && currentShoppingCart[i][0].storeId == addedProduct.storeId) {
+            if (currentShoppingCart[i][0].productId === productFromDB.productId && currentShoppingCart[i][0].storeId === productFromDB.storeId) {
                 currentShoppingCart[i][1] = currentShoppingCart[i][1] + addedAmount;
+                currentShoppingCart[i].splice(0, 1, productFromDB);
                 found = true;
                 break;
             }
-        }
-    }
+        };
+    };
     //add product to cart if it is not already there
-    if (found == false) {
-        currentShoppingCart.push([addedProduct, addedAmount])
-    }
+    if (found === false) {
+        currentShoppingCart.push([productFromDB, addedAmount])
+    };
 
-    var result = await collection.updateOne({
+    let result = await collectionUsers.updateOne({
         //Selection criteria
         'email': email
     }, {
@@ -445,36 +485,67 @@ const addToShoppingCart = async function (req, res, next) {
         message: 'Products successfully added to cart!',
         shoppingCart: currentShoppingCart
     });
-}
+};
 
 const removeFromShoppingCart = async function (req, res, next) {
     //payload: params: email, body:{product,amount}
-    var collection = await getMongoUsersCollection();
-    var email = req.params.email;
-    var removedProduct = req.body.product;
-    var removedAmount = req.body.amount;
+    let collection = await getMongoUsersCollection();
+    let collectionStores = await getMongoStoresCollection();
+    let email = req.params.email;
+    let removedProduct = req.body.product;
+    let removedAmount = req.body.amount;
 
-    var user = await collection.findOne({
+    //Get the product from the database and save it in the shopping cart
+    let store = await collectionStores.findOne({
+        _id: ObjectId(removedProduct.storeId)
+    });
+    if (!store) {
+        //when no store was found -> wrong store id in the payload
+        return next({
+            status: 400,
+            message: "Wrong store id provided."
+        });
+    };
+    //retrieve the product from the store document
+    let productFromDB = store.profileData.products.filter(obj => {
+        return obj.productId === removedProduct.productId
+    })[0];
+    if (!productFromDB) {
+        //when no product was found -> wrong product id
+        return next({
+            status: 400,
+            message: "Wrong product id provided."
+        });
+    };
+
+    let user = await collection.findOne({
         'email': email
     });
-    var currentShoppingCart = user.shoppingCart;
+    if (!user) {
+        //when no user was found -> wrong email
+        return next({
+            status: 400,
+            message: "Wrong email provided."
+        });
+    };
+    let currentShoppingCart = user.shoppingCart;
 
-    var found = false;
-    for (var i = 0; i < currentShoppingCart.length; i++) {
+    let found = false;
+    for (let i = 0; i < currentShoppingCart.length; i++) {
         //Check if added product exists in cart
-        if (currentShoppingCart[i][0].productId == removedProduct.productId && currentShoppingCart[i][0].storeId == removedProduct.storeId) {
+        if (currentShoppingCart[i][0].productId === productFromDB.productId && currentShoppingCart[i][0].storeId === productFromDB.storeId) {
             currentShoppingCart[i][1] = currentShoppingCart[i][1] - removedAmount;
+            currentShoppingCart[i].splice(0, 1, productFromDB);
             //Delete the array element if amount == 0
             if (currentShoppingCart[i][1] <= 0) {
                 currentShoppingCart.splice(i, 1);
-                console.log(currentShoppingCart)
             }
             found = true;
             break;
         }
     }
-    if (found == true) {
-        var result = await collection.updateOne({
+    if (found === true) {
+        let result = await collection.updateOne({
             //Selection criteria
             'email': email
         }, {
@@ -490,13 +561,69 @@ const removeFromShoppingCart = async function (req, res, next) {
             shoppingCart: currentShoppingCart
         });
 
-    } else if (found == false) {
-        res.status(200).json({
-            success: true,
-            message: 'Product was not found inside cart!',
-            shoppingCart: currentShoppingCart
+    } else if (found === false) {
+        return next({
+            status: 400,
+            message: "Product not found in shopping cart."
         });
     }
+};
+
+const updateShoppingCart = async function (req, res, next) {
+    let collection = await getMongoUsersCollection();
+    let collectionStores = await getMongoStoresCollection();
+    let email = req.params.email;
+    let shoppingCart = req.body.shoppingCart;
+    console.log(shoppingCart)
+
+    let storeId;
+    let productId;
+    let payloadArray = [];
+    //Run through the array, get every product from the database, push it to the payload array and save the cart to the user
+    for (let i = 0; i < shoppingCart.length; i++) {
+        storeId = shoppingCart[i][0].storeId;
+        productId = shoppingCart[i][0].productId;
+
+        let store = await collectionStores.findOne({
+            _id: ObjectId(storeId)
+        });
+        if (!store) {
+            //when no store was found -> wrong store id in the payload
+            return next({
+                status: 400,
+                message: "Wrong store id provided."
+            });
+        };
+        //retrieve the product from the store document
+        let productFromDB = store.profileData.products.filter(obj => {
+            return obj.productId === productId
+        })[0];
+        if (!productFromDB) {
+            //when no product was found -> wrong product id
+            return next({
+                status: 400,
+                message: "Wrong product id provided."
+            });
+        };
+
+        payloadArray.push([productFromDB, shoppingCart[i][1]])
+    };
+    console.log(payloadArray)
+    //check products in the cart array
+    await collection.updateOne({
+        //Selection criteria
+        'email': email
+    }, {
+        //Updated data
+        $set: {
+            shoppingCart: payloadArray
+        }
+    });
+
+    res.status(200).json({
+        success: true,
+        message: 'Cart was updated!'
+    });
 };
 
 const sendTestMail = async function (req, res, next) {
@@ -655,6 +782,7 @@ module.exports = {
     deleteUser,
     addToShoppingCart,
     removeFromShoppingCart,
+    updateShoppingCart,
     //logoutUser
     sendTestMail,
     sendPasswordResetMail,

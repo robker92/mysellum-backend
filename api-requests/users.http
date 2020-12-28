@@ -23,7 +23,7 @@ content-type: application/json
 
 {
     "email": "TestEmail42@web.de",
-    "password": "Test1!----",
+    "password": "Test1",
     "firstName": "Test",
     "lastName": "Test",
     "birthdate": "29.11.2020",
