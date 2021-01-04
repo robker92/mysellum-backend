@@ -24,8 +24,9 @@ const allowCrossDomain = (req, res, next) => {
 const checkAuthentication = (req, res, next) => {
     // check header or url parameters or post parameters for token
     const token = req.headers['x-access-token'];
-    //console.log(token)
+    console.log(token)
     if (!token) {
+        console.error("token invalid")
         return res.status(401).send({
             error: 'TokenInvalid',
             message: 'No token provided in the request'

@@ -86,8 +86,9 @@ content-type: application/json
 ###
 
 #Add Product
-POST http://localhost:3000/stores/addProduct HTTP/1.1
+POST http://localhost:3000/stores/addProduct/5f31406deae5b044240a57c8 HTTP/1.1
 content-type: application/json
+x-access-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjVmYzNjMDEyZDRlZmY3MWIzY2ZhNmE1ZCIsImVtYWlsIjoiVGVzdEVtYWlsMTVAd2ViLmRlIiwiaWF0IjoxNjA5MTA3MzI0LCJleHAiOjE2MDkxOTM3MjR9.cr659oIWDVn2B1FyEhgWvx806e-yxRixM06FaVE87Jo
 
 {
     "storeId": "5f31406deae5b044240a57c8",
@@ -121,6 +122,7 @@ content-type: application/json
 #Update Product
 POST http://localhost:3000/stores/editProduct/5f31406deae5b044240a57c8/11 HTTP/1.1
 content-type: application/json
+x-access-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjVmYzNjMDEyZDRlZmY3MWIzY2ZhNmE1ZCIsImVtYWlsIjoiVGVzdEVtYWlsMTVAd2ViLmRlIiwiaWF0IjoxNjA5MTA3MzI0LCJleHAiOjE2MDkxOTM3MjR9.cr659oIWDVn2B1FyEhgWvx806e-yxRixM06FaVE87Jo
 
 {
     "storeId": "5f31406deae5b044240a57c8",

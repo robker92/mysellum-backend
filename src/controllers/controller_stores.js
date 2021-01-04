@@ -10,6 +10,13 @@ const geoCoder = NodeGeocoder(geoCodeOptions);
 const mongodb = require('../mongodb');
 const config = require('../config');
 const ObjectId = require('mongodb').ObjectId;
+
+const {
+    productModel,
+    reviewModel,
+    storeModel
+} = require('../data-models');
+
 //var coll = mongodb.getClient().db(config.mongodb_name).collection("stores");
 
 
@@ -19,44 +26,6 @@ const geoCodeTest = async function (req, res, next) {
     let result = await geoCoder.geocode(address)
     res.send(result);
 };
-
-/*
-Data Model
-Store: {
-    _id,
-    mapData: {
-        img,
-        location:{lat,lng},
-        offerings,
-        subtitle,
-        title
-    }
-    profileData: {
-        title,
-        description,
-        avgRating,
-        images: [{
-            src,
-            title
-        }],
-        products:[{
-            currency,
-            currencySymbol,
-            description,
-            id,
-            imgSrc,
-            price,
-            title
-        }],
-        reviews: [{
-            user,
-            date,
-            rating,
-            text
-        }]
-    }
-}
-*/
 
 
 async function getMongoStoresCollection() {
@@ -148,45 +117,78 @@ const getFilteredStores2 = async function (req, res, next) {
     });
 };
 
-const updateStore = async function (req, res, next) {
-    //function for changing user data except password and email!
-    let collection = await getMongoStoresCollection();
-    let id = req.params.id;
-    let data = req.body; //json format
+// const updateStore = async function (req, res, next) {
+//     //function for changing user data except password and email!
+//     let collection = await getMongoStoresCollection();
+//     let storeId = req.params.storeId;
+//     let data = req.body; //json format
 
-    //password routine
-    // if (data['password']) {
-    //     delete data['password'];
-    // };
-    // if (data['email']) {
-    //     delete data['email'];
-    // };
+//     let userEmail = req.userEmail;
 
-    let result = await collection.updateOne({
-        //Selection criteria
-        'id': ObjectId(id)
-    }, {
-        //Updated data
-        $set: data
-    });
+//     let findResult = await collection.findOne({
+//         '_id': ObjectId(storeId)
+//     });
 
-    res.status(200).json({
-        success: true,
-        message: 'Store successfully updated!',
-        queryResult: result
-    });
-};
+//     if (!findResult) {
+//         return next({
+//             status: 400,
+//             message: "Store not found."
+//         });
+//     };
+//     //Guard to make sure that only the store owner is able to edit this store
+//     if (findResult.userEmail !== userEmail) {
+//         return next({
+//             status: 400,
+//             message: "User unauthorized to edit this store."
+//         });
+//     };
+
+//     //password routine
+//     // if (data['password']) {
+//     //     delete data['password'];
+//     // };
+//     // if (data['email']) {
+//     //     delete data['email'];
+//     // };
+
+//     let result = await collection.updateOne({
+//         //Selection criteria
+//         'id': ObjectId(storeId)
+//     }, {
+//         //Updated data
+//         $set: data
+//     });
+
+//     res.status(200).json({
+//         success: true,
+//         message: 'Store successfully updated!',
+//         queryResult: result
+//     });
+// };
 
 const deleteStore = async function (req, res, next) {
     let collectionStores = await getMongoStoresCollection();
     let collectionUsers = await getMongoUsersCollection();
+    let userEmail = req.userEmail;
     let storeId = req.params.storeId;
 
     //Get the store to retrieve user email
-    let findStoreResult = await collectionStores.findOne({
+    let findResult = await collectionStores.findOne({
         '_id': ObjectId(storeId)
     });
-    let email = findStoreResult.userEmail;
+    if (!findResult) {
+        return next({
+            status: 400,
+            message: "Store not found."
+        });
+    };
+    //Guard to make sure that only the store owner is able to edit this store
+    if (findResult.userEmail !== userEmail) {
+        return next({
+            status: 400,
+            message: "User unauthorized to delete this store."
+        });
+    };
 
     //Delete Store
     let deleteStoreResult = await collectionStores.deleteOne({
@@ -195,7 +197,7 @@ const deleteStore = async function (req, res, next) {
 
     //Set ownedStoreId at Owner to ""
     let updateUserResult = await collectionUsers.updateOne({
-        'email': email
+        'email': userEmail
     }, {
         $set: {
             ownedStoreId: ""
@@ -212,6 +214,18 @@ const createStore = async function (req, res, next) {
     let collectionStores = await getMongoStoresCollection();
     let collectionUsers = await getMongoUsersCollection();
     let data = req.body;
+    let userEmail = req.userEmail;
+
+    //check if the user already owns a store
+    let findResult = await collectionUsers.findOne({
+        'email': ObjectId(userEmail)
+    });
+    if (findResult.ownedStoreId.length > 0) {
+        return next({
+            status: 400,
+            message: "Creation unsuccessful. User already owns a store."
+        });
+    };
 
     let addressString = `${data.address.addressLine1}, ${data.address.postcode} ${data.address.city}, ${data.address.country}`
     console.log(addressString)
@@ -275,6 +289,27 @@ const editStore = async function (req, res, next) {
     let collection = await getMongoStoresCollection();
     let data = req.body;
     let storeId = req.params.storeId;
+    let userEmail = req.userEmail;
+
+    let findResult = await collection.findOne({
+        '_id': ObjectId(storeId)
+    });
+
+    if (!findResult) {
+        return next({
+            status: 400,
+            message: "Store not found."
+        });
+    };
+    //Guard to make sure that only the store owner is able to edit this store
+    if (findResult.userEmail !== userEmail) {
+        return next({
+            status: 400,
+            message: "User unauthorized to edit this store."
+        });
+    };
+
+    //let storeData = storeModel.get(options);
 
     let addressString = `${data.address.addressLine1}, ${data.address.postcode} ${data.address.city}, ${data.address.country}`
     let geoCodeResult = await geoCoder.geocode(addressString);
@@ -290,6 +325,8 @@ const editStore = async function (req, res, next) {
             "mapData.address.addressLine1": data.address.addressLine1,
             "mapData.address.city": data.address.city,
             "mapData.address.postcode": data.address.postcode,
+            "mapData.address.country": data.address.country,
+            "mapData.mapIcon": data.mapIcon,
             "mapData.location.lat": geoCodeResult[0].latitude,
             "mapData.location.lng": geoCodeResult[0].longitude
         }
@@ -298,86 +335,146 @@ const editStore = async function (req, res, next) {
     res.status(200).json({
         success: true,
         message: 'Store update successful!',
-        queryResult: updateResult
+        //queryResult: updateResult
     });
 };
 
-const addStoreImage = async function (req, res, next) {
+// const addStoreImage = async function (req, res, next) {
+//     let collection = await getMongoStoresCollection();
+//     let data = req.body;
+//     let storeId = req.params.storeId;
+//     let userEmail = req.userEmail;
+
+//     let findResult = await collection.findOne({
+//         '_id': ObjectId(storeId)
+//     });
+
+//     if (!findResult) {
+//         return next({
+//             status: 400,
+//             message: "Store not found."
+//         });
+//     };
+//     //Guard to make sure that only the store owner is able to edit this store
+//     if (findResult.userEmail !== userEmail) {
+//         return next({
+//             status: 400,
+//             message: "User unauthorized to edit this store."
+//         });
+//     };
+//     //Guard to check if there are max 10 images
+//     if (findResult.profileData.images.length >= 10) {
+//         return next({
+//             status: 400,
+//             message: "Only 10 images can be uploaded per store."
+//         });
+//     };
+
+//     let imageData = {
+//         "id": findResult.profileData.images.length.toString(),
+//         "src": data.imageSrc,
+//         "title": data.title
+//     };
+//     let updateResult = await collection.updateOne({
+//         _id: ObjectId(storeId)
+//     }, {
+//         $push: {
+//             'profileData.images': imageData
+//         }
+//     });
+
+//     res.status(200).json({
+//         success: true,
+//         message: 'Successfully added store image!',
+//         result: updateResult,
+//         imageData: imageData
+//     });
+// };
+
+// const deleteStoreImage = async function (req, res, next) {
+//     let collection = await getMongoStoresCollection();
+//     let data = req.body;
+//     let storeId = req.params.storeId;
+//     let imageId = req.params.imageId;
+//     let userEmail = req.userEmail;
+
+//     console.log(storeId)
+//     console.log(imageId)
+//     console.log(data)
+//     // var imageData = {
+//     //     imageSrc: data.imageSrc,
+//     //     title: data.title
+//     // }
+
+//     let findResult = await collection.findOne({
+//         '_id': ObjectId(storeId)
+//     });
+
+//     if (!findResult) {
+//         return next({
+//             status: 400,
+//             message: "Store not found."
+//         });
+//     };
+//     //Guard to make sure that only the store owner is able to edit this store
+//     if (findResult.userEmail !== userEmail) {
+//         return next({
+//             status: 400,
+//             message: "User unauthorized to edit this store."
+//         });
+//     };
+
+//     let updateResult = await collection.updateOne({
+//         _id: ObjectId(storeId)
+//     }, {
+//         $pull: {
+//             'profileData.images': {
+//                 id: imageId,
+//                 //src: data.imageSrc,
+//                 //title: data.title
+//             }
+//         }
+//     }, {
+//         multi: true
+//     });
+//     console.log(updateResult.result)
+//     res.status(200).json({
+//         success: true,
+//         message: 'Successfully deleted store image!',
+//         //result: updateResult
+//     });
+// };
+
+const createProduct = async function (req, res, next) {
     let collection = await getMongoStoresCollection();
     let data = req.body;
+    let userEmail = req.userEmail;
     let storeId = req.params.storeId;
 
     let findResult = await collection.findOne({
         '_id': ObjectId(storeId)
     });
 
-    let imageData = {
-        "id": findResult.profileData.images.length.toString(),
-        "src": data.imageSrc,
-        "title": data.title
+    if (!findResult) {
+        return next({
+            status: 400,
+            message: "Store not found."
+        });
     };
-    let updateResult = await collection.updateOne({
-        _id: ObjectId(storeId)
-    }, {
-        $push: {
-            'profileData.images': imageData
-        }
-    });
-
-    res.status(200).json({
-        success: true,
-        message: 'Successfully added store image!',
-        result: updateResult,
-        imageData: imageData
-    });
-};
-
-const deleteStoreImage = async function (req, res, next) {
-    let collection = await getMongoStoresCollection();
-    let data = req.body;
-    let storeId = req.params.storeId;
-    let imageId = req.params.imageId;
-    console.log(storeId)
-    console.log(imageId)
-    console.log(data)
-    // var imageData = {
-    //     imageSrc: data.imageSrc,
-    //     title: data.title
-    // }
-    let updateResult = await collection.updateOne({
-        _id: ObjectId(storeId)
-    }, {
-        $pull: {
-            'profileData.images': {
-                id: imageId,
-                src: data.imageSrc,
-                title: data.title
-            }
-        }
-    }, {
-        multi: true
-    });
-    console.log(updateResult.result)
-    res.status(200).json({
-        success: true,
-        message: 'Successfully deleted store image!',
-        result: updateResult
-    });
-};
-
-const addProduct = async function (req, res, next) {
-    let collection = await getMongoStoresCollection();
-    let data = req.body;
-    console.log(data)
-    let findResult = await collection.findOne({
-        '_id': ObjectId(data.storeId)
-    });
+    //Guard to make sure that only the store owner is able to edit this store
+    if (findResult.userEmail !== userEmail) {
+        return next({
+            status: 400,
+            message: "User unauthorized to edit this store."
+        });
+    };
 
     //Define product id
-    if (findResult.profileData.products.length == 0) {
-        var productId = 0;
+    let productId;
+    if (findResult.profileData.products.length === 0) {
+        productId = 0;
     } else {
-        var productId = parseInt(findResult.profileData.products[findResult.profileData.products.length - 1].productId) + 1;
+        productId = parseInt(findResult.profileData.products[findResult.profileData.products.length - 1].productId) + 1;
     }
 
     // findResult.profileData.products.push({
@@ -391,10 +488,11 @@ const addProduct = async function (req, res, next) {
     //     "currencySymbol": data.currencySymbol
     // });
 
-    var newProduct = {
+    let options = {
+        "datetimeCreated": new Date(),
+        "datetimeAdjusted": "",
         "productId": productId.toString(),
         "storeId": data.storeId,
-        "addDate": new Date(),
         "title": data.title,
         "description": data.description,
         "imgSrc": data.imgSrc,
@@ -402,9 +500,9 @@ const addProduct = async function (req, res, next) {
         "currency": data.currency,
         "currencySymbol": data.currencySymbol,
         "quantityType": data.quantityType,
-        "quantityValue": data.quantityValue,
-        "stockAmount": 1
-    }
+        "quantityValue": data.quantityValue
+    };
+    const productData = productModel.get(options)
     // var updateResult = await collection.updateOne({
     //     //Selection criteria
     //     '_id': ObjectId(data.storeId)
@@ -413,11 +511,11 @@ const addProduct = async function (req, res, next) {
     //     $set: findResult
     // });
 
-    let updateResult = await collection.updateOne({
-        _id: ObjectId(data.storeId)
+    await collection.updateOne({
+        _id: ObjectId(storeId)
     }, {
         $push: {
-            'profileData.products': newProduct
+            'profileData.products': productData
         }
     });
 
@@ -428,8 +526,9 @@ const addProduct = async function (req, res, next) {
     res.status(200).json({
         success: true,
         message: 'Successfully added product!',
-        result: updateResult,
-        product: newProduct
+        productId: productId
+        // result: updateResult,
+        // product: productData
     });
 };
 
@@ -438,6 +537,25 @@ const editProduct = async function (req, res, next) {
     let data = req.body;
     let storeId = req.params.storeId;
     let productId = req.params.productId;
+    let userEmail = req.userEmail;
+
+    let findResult = await collection.findOne({
+        '_id': ObjectId(storeId)
+    });
+
+    if (!findResult) {
+        return next({
+            status: 400,
+            message: "Store not found."
+        });
+    };
+    //Guard to make sure that only the store owner is able to edit this store
+    if (findResult.userEmail !== userEmail) {
+        return next({
+            status: 400,
+            message: "User unauthorized to edit this store."
+        });
+    };
 
     // var findResult = await collection.findOne({
     //     '_id': ObjectId(storeId)
@@ -460,7 +578,7 @@ const editProduct = async function (req, res, next) {
     //     //Updated data
     //     $set: findResult
     // });
-    console.log(productId)
+    //console.log(productId)
     // var updateResult = await collection.updateOne({
     //     "_id": ObjectId(storeId),
     //     "profileData.products.productId": productId
@@ -478,7 +596,7 @@ const editProduct = async function (req, res, next) {
     //     upsert: false
     // });
 
-    let updateResult = await collection.findOneAndUpdate({
+    let updateResult = await collection.updateOne({
         "_id": ObjectId(storeId),
         "profileData.products.productId": productId
     }, {
@@ -489,18 +607,27 @@ const editProduct = async function (req, res, next) {
             "profileData.products.$.imgSrc": data.imgSrc,
             "profileData.products.$.quantityType": data.quantityType,
             "profileData.products.$.quantityValue": data.quantityValue,
-            "profileData.products.$.datetimeAdjusted": new Date(),
+            "profileData.products.$.datetimeAdjusted": new Date()
         }
     }, {
         returnOriginal: false
     });
+
+    if (!updateResult || !updateResult.result.nModified) {
+        console.log("not updated")
+        return next({
+            status: 400,
+            message: "Store not found or wrong ids provided. Product was not updated."
+        });
+    };
+
     //console.log(updateResult)
-    let index = updateResult.value.profileData.products.findIndex(pr => pr.productId === productId);
+    //let index = updateResult.value.profileData.products.findIndex(pr => pr.productId === productId);
     res.status(200).json({
         success: true,
         message: 'Product update successful!',
-        modifiedCount: updateResult.modifiedCount,
-        product: updateResult.value.profileData.products[index]
+        // modifiedCount: updateResult.modifiedCount,
+        // product: updateResult.value.profileData.products[index]
     });
 };
 
@@ -508,8 +635,27 @@ const updateStockAmount = async function (req, res, next) {
     let collection = await getMongoStoresCollection();
     let storeId = req.params.storeId;
     let productId = req.params.productId;
+    let userEmail = req.userEmail;
     let data = req.body;
-    console.log(data)
+
+    let findResult = await collection.findOne({
+        '_id': ObjectId(storeId)
+    });
+
+    if (!findResult) {
+        return next({
+            status: 400,
+            message: "Store not found."
+        });
+    };
+    //Guard to make sure that only the store owner is able to edit this store
+    if (findResult.userEmail !== userEmail) {
+        return next({
+            status: 400,
+            message: "User unauthorized to edit this store."
+        });
+    };
+
     // var setString = "profileData.products.$.productId[" + productId.toString() + "].stockAmount"
     // console.log(setString)
     let updateResult = await collection.updateOne({
@@ -524,8 +670,15 @@ const updateStockAmount = async function (req, res, next) {
         upsert: false
     });
 
-    console.log(updateResult.modifiedCount)
-    console.log(updateResult.matchedCount)
+    if (!updateResult || !updateResult.result.nModified) {
+        console.log("not updated")
+        return next({
+            status: 400,
+            message: "Store not found or wrong ids provided. Product was not updated."
+        });
+    };
+    // console.log(updateResult.modifiedCount)
+    // console.log(updateResult.matchedCount)
     // var findResult = await collection.findOne({
     //     $and: [{
     //         '_id': ObjectId(storeId),
@@ -536,7 +689,7 @@ const updateStockAmount = async function (req, res, next) {
     // console.log(findResult.profileData.products)
     res.status(200).json({
         success: true,
-        message: 'Product found',
+        message: 'Product stock updated.',
         //product: findResult.profileData.products[index]
     });
 };
@@ -545,7 +698,20 @@ const deleteProduct = async function (req, res, next) {
     let collection = await getMongoStoresCollection();
     let storeId = req.params.storeId;
     let productId = req.params.productId;
+    let userEmail = req.userEmail;
     //var data = req.body;
+
+    let findResult = await collection.findOne({
+        '_id': ObjectId(storeId)
+    });
+
+    //Guard to make sure that only the store owner is able to edit this store
+    if (findResult.userEmail !== userEmail) {
+        return next({
+            status: 400,
+            message: "User unauthorized to edit this store."
+        });
+    };
 
     //identify store
     // var findResult = await collection.findOne({
@@ -567,6 +733,14 @@ const deleteProduct = async function (req, res, next) {
             }
         }
     });
+
+    if (!updateResult || !updateResult.result.nModified) {
+        console.log("not updated")
+        return next({
+            status: 400,
+            message: "Store not found or wrong ids provided. Product was not updated."
+        });
+    };
     //update store (=delete product)
     // var updateResult = await collection.updateOne({
     //     //Selection criteria
@@ -575,11 +749,11 @@ const deleteProduct = async function (req, res, next) {
     //     //Updated data
     //     $set: findResult
     // });
-    console.log(updateResult)
+    //console.log(updateResult)
     res.status(200).json({
         success: true,
         message: 'Successfully deleted the product!',
-        result: updateResult
+        //result: updateResult
     });
 };
 
@@ -609,7 +783,7 @@ const editReview = async function (req, res, next) {
     //console.log(findResult.profileData.reviews[index])
     await collection.updateOne({
         //Selection criteria
-        '_id': ObjectId(data.id)
+        '_id': ObjectId(storeId)
     }, {
         //Updated data
         $set: findResult
@@ -682,16 +856,29 @@ const addReview = async function (req, res, next) {
         });
     };
 
-    //findResult.profileData.reviews = [];
-    findResult.profileData.reviews.unshift({
+    let options = {
         "reviewId": reviewId.toString(),
         "userEmail": req.userEmail,
+        "userFirstName": findResultUser.firstName,
+        "userLastName": findResultUser.lastName,
         "userName": findResultUser.lastName + ", " + findResultUser.firstName,
         "datetimeCreated": new Date(),
         "datetimeAdjusted": "",
         "rating": data.rating,
         "text": data.text
-    });
+    };
+    let reviewData = reviewModel.get(options);
+    //findResult.profileData.reviews = [];
+    // findResult.profileData.reviews.unshift({
+    //     "reviewId": reviewId.toString(),
+    //     "userEmail": req.userEmail,
+    //     "userName": findResultUser.lastName + ", " + findResultUser.firstName,
+    //     "datetimeCreated": new Date(),
+    //     "datetimeAdjusted": "",
+    //     "rating": data.rating,
+    //     "text": data.text
+    // });
+    findResult.profileData.reviews.unshift(reviewData);
     findResult.profileData.avgRating = calculateAverage(findResult.profileData.reviews).toString();
     //console.log(findResult.profileData);
 
@@ -848,16 +1035,16 @@ module.exports = {
     getAllStores,
     getFilteredStores,
     getFilteredStores2,
-    updateStore,
+    //updateStore,
     deleteStore,
     createStore,
     editStore,
-    addStoreImage,
-    deleteStoreImage,
+    //addStoreImage,
+    //deleteStoreImage,
     addReview,
     editReview,
     deleteReview,
-    addProduct,
+    createProduct,
     editProduct,
     deleteProduct,
     updateStockAmount,

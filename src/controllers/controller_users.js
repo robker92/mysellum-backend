@@ -2,7 +2,10 @@
 //App imports
 const mongodb = require('../mongodb');
 const config = require('../config');
-const userModel = require('../data-models/user-model');
+const {
+    userModel
+} = require('../data-models');
+
 const ObjectId = require('mongodb').ObjectId;
 //External imports
 const bcrypt = require('bcrypt');
