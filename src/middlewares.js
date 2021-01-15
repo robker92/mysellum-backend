@@ -49,7 +49,7 @@ const checkAuthentication = (req, res, next) => {
         //         message: 'Failed to authenticate token.'
         //     });
         // };
-        console.log(Date.now())
+        console.log(`Date now: ${Date.now()}`)
         console.log(decoded)
         // if everything is good, save to request for use in other routes
         req.userId = decoded.id;
@@ -70,7 +70,7 @@ const checkAuthentication = (req, res, next) => {
 
 const errorHandler = (err, req, res, next) => {
     console.log(err)
-    console.log(req.body)
+    //console.log(req.body)
     console.log("error handler")
 
     if (err instanceof ValidationError) {

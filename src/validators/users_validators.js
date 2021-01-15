@@ -1,4 +1,6 @@
 //https://www.npmjs.com/package/express-validation
+//https://github.com/sideway/joi/blob/v13.1.2/API.md
+
 const {
     Joi
 } = require('express-validation');
@@ -41,7 +43,8 @@ const cartProductValidation = {
             quantityType: Joi.string().optional(),
             quantityValue: Joi.string().optional(),
             stockAmount: Joi.optional(),
-            datetimeAdjusted: Joi.string().optional(),
+            datetimeCreated: Joi.string().allow(null, "").optional(),
+            datetimeAdjusted: Joi.string().allow(null, "").optional(),
         }).required(),
         amount: Joi.number().required()
     })
@@ -64,7 +67,8 @@ const cartUpdateValidation = {
                     quantityType: Joi.string().optional(),
                     quantityValue: Joi.string().optional(),
                     stockAmount: Joi.optional(),
-                    datetimeAdjusted: Joi.string().optional()
+                    datetimeCreated: Joi.string().allow(null, "").optional(),
+                    datetimeAdjusted: Joi.string().allow(null, "").optional(),
                 }).required(),
                 Joi.number().required()
             )

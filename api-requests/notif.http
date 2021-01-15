@@ -1,0 +1,33 @@
+# Register Notification
+POST http://localhost:3000/notif/rgstrPrdctAvNotif HTTP/1.1
+content-type: application/json
+x-access-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjVmMDczMTA2YjRhZmM5NjNjMGM5MjVkYiIsImVtYWlsIjoiVGVzdEVtYWlsMTRAd2ViLmRlIiwiaWF0IjoxNjA5ODgyNDY0LCJleHAiOjE2MDk5Njg4NjR9.DAKNQfHdYHDzZR7d43-hsHCZkViHzB5ycBG3tBBxD3k
+
+{
+    "email": "rkerscher@gmx.de",
+    "storeId": "5f31406deae5b044240a57c8",
+    "productId": "12"
+}
+###
+
+# Check Notifications
+POST http://localhost:3000/notif/checkNotifications HTTP/1.1
+content-type: application/json
+x-access-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjVmMDczMTA2YjRhZmM5NjNjMGM5MjVkYiIsImVtYWlsIjoiVGVzdEVtYWlsMTRAd2ViLmRlIiwiaWF0IjoxNjA5ODgyNDY0LCJleHAiOjE2MDk5Njg4NjR9.DAKNQfHdYHDzZR7d43-hsHCZkViHzB5ycBG3tBBxD3k
+
+{
+    "storeId": "5f31406deae5b044240a57c8",
+    "productId": "12"
+}
+###
+
+# Send Notifications
+POST http://localhost:3000/notif/sendNotifications HTTP/1.1
+content-type: application/json
+x-access-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjVmMDczMTA2YjRhZmM5NjNjMGM5MjVkYiIsImVtYWlsIjoiVGVzdEVtYWlsMTRAd2ViLmRlIiwiaWF0IjoxNjA5ODgyNDY0LCJleHAiOjE2MDk5Njg4NjR9.DAKNQfHdYHDzZR7d43-hsHCZkViHzB5ycBG3tBBxD3k
+
+{
+    "storeId": "5f31406deae5b044240a57c8",
+    "productId": "12"
+}
+###

@@ -2,16 +2,17 @@
 
 const express = require("express");
 const router = express.Router();
-const asyncExceptionHandler = require("express-async-handler");
+const excHandler = require("express-async-handler");
 const mws = require('../middlewares');
 
 const controller_orders = require("../controllers/controller_orders");
 
-router.get("/:id", mws.checkAuthentication, asyncExceptionHandler(controller_orders.getSingleOrder));
-router.get("/", asyncExceptionHandler(controller_orders.getAllOrders));
-router.post("/createOrder", asyncExceptionHandler(controller_orders.createOrder));
-router.delete("/:id", asyncExceptionHandler(controller_orders.deleteOrder));
-router.patch("/:id", asyncExceptionHandler(controller_orders.updateOrder));
-
+router.get("/singleOrder/:id", mws.checkAuthentication, excHandler(controller_orders.getSingleOrder));
+router.get("/getUsersOrders", mws.checkAuthentication, excHandler(controller_orders.getUsersOrders));
+router.get("/getStoresOrders/:storeId", mws.checkAuthentication, excHandler(controller_orders.getStoresOrders));
+router.get("/", excHandler(controller_orders.getAllOrders));
+router.post("/createOrder", excHandler(controller_orders.createOrder));
+router.delete("/:id", excHandler(controller_orders.deleteOrder));
+router.patch("/:id", excHandler(controller_orders.updateOrder));
 
 module.exports = router;

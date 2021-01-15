@@ -3,39 +3,52 @@ POST http://localhost:3000/orders/createOrder HTTP/1.1
 content-type: application/json
 
 {
-         "user": {
-          "email": "TestEmail14@web.de"
-        },
-        "date": "date",
-        // type: "pickUp",
-        // status: { overall: "inProcess", orderReceived: 1, packageReady: 0, packagePickUp: 0 },
-        "type": "delivery",
-        "status": {
-          "finished": false,
-          "successfully": false,
-          "steps": {
-            "orderReceived": 1,
-            "paymentReceived": 0,
-            "inDelivery": 0
-          }
-        },
-        "shippingAddress": "address",
-        "billingAddress": "address",
-        "products": [
-            [{
-                "storeId": "5f31406deae5b044240a57c8",
-                "productId": "10",
-                "stockAmount": 1
-            },1],
-            [{
-                "storeId": "5f31406deae5b044240a57c8",
-                "productId": "12",
-                "stockAmount": 1
-            },3]
-        ],
-        "payment": "paypal",
-        "totalSum": 100,
-        "currency": "EUR",
-        "currencySymbol": "€"
+  "user": {
+    "email": "TestEmail14@web.de"
+  },
+  "storeId": "5f31406deae5b044240a57c8",
+  "date": "date",
+  // type: "pickUp",
+  // status: { overall: "inProcess", orderReceived: 1, packageReady: 0, packagePickUp: 0 },
+  "type": "delivery",
+  "status": {
+    "finished": false,
+    "successfully": false,
+    "steps": {
+      "orderReceived": 1,
+      "paymentReceived": 0,
+      "inDelivery": 0
+    }
+  },
+  "shippingAddress": "address",
+  "billingAddress": "address",
+  "products": [
+      [{
+          "storeId": "5f31406deae5b044240a57c8",
+          "productId": "10",
+          "stockAmount": 1
+      },1],
+      [{
+          "storeId": "5f31406deae5b044240a57c8",
+          "productId": "12",
+          "stockAmount": 1
+      },3]
+  ],
+  "payment": "paypal",
+  "totalSum": 100,
+  "currency": "EUR",
+  "currencySymbol": "€"
 }
+###
+
+#Get Stores Orders
+GET http://localhost:3000/orders/getStoresOrders/5f31406deae5b044240a57c8 HTTP/1.1
+content-type: application/json
+x-access-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjVmMDczMTA2YjRhZmM5NjNjMGM5MjVkYiIsImVtYWlsIjoiVGVzdEVtYWlsMTRAd2ViLmRlIiwiaWF0IjoxNjA5ODgyNDY0LCJleHAiOjE2MDk5Njg4NjR9.DAKNQfHdYHDzZR7d43-hsHCZkViHzB5ycBG3tBBxD3k
+###
+
+#Get Users Orders
+GET http://localhost:3000/orders/getUsersOrders HTTP/1.1
+content-type: application/json
+x-access-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjVmMDczMTA2YjRhZmM5NjNjMGM5MjVkYiIsImVtYWlsIjoiVGVzdEVtYWlsMTRAd2ViLmRlIiwiaWF0IjoxNjA5ODgyNDY0LCJleHAiOjE2MDk5Njg4NjR9.DAKNQfHdYHDzZR7d43-hsHCZkViHzB5ycBG3tBBxD3k
 ###

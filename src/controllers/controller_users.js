@@ -14,9 +14,9 @@ const jwt = require('jsonwebtoken');
 
 const nodemailer = require('../mailing/nodemailer');
 const crypto = require('crypto');
-const {
-    fail
-} = require('assert');
+// const {
+//     fail
+// } = require('assert');
 
 // Create a token from a payload
 function createToken(payload) {
@@ -61,6 +61,7 @@ const registerUser = async function (req, res, next) {
     const checkResult = await collection.findOne({
         'email': data.email
     });
+    //console.log(checkResult)
     if (checkResult) {
         return next({
             status: 401,
@@ -161,6 +162,15 @@ const registerUser = async function (req, res, next) {
 const verifyRegistration = async function (req, res, next) {
     let collection = await getMongoUsersCollection();
     let verificationToken = req.params.verificationToken;
+
+    if (!verificationToken) {
+        return next({
+            status: 401,
+            success: false,
+            type: "verification",
+            message: "No token provided."
+        });
+    };
 
     collection.findOneAndUpdate({
         verifyRegistrationToken: verificationToken,
@@ -416,7 +426,7 @@ const addToShoppingCart = async function (req, res, next) {
     let email = req.params.email;
     let addedProduct = req.body.product;
     let addedAmount = parseInt(req.body.amount);
-    console.log(addedProduct)
+    //console.log(addedProduct)
 
     //Get the product from the database and save it in the shopping cart
     let store = await collectionStores.findOne({
@@ -433,6 +443,7 @@ const addToShoppingCart = async function (req, res, next) {
     let productFromDB = store.profileData.products.filter(obj => {
         return obj.productId === addedProduct.productId
     })[0];
+
     if (!productFromDB) {
         //when no product was found -> wrong product id
         return next({
@@ -440,6 +451,8 @@ const addToShoppingCart = async function (req, res, next) {
             message: "Wrong product id provided."
         });
     };
+    //delete the image to save localstorage space
+    delete productFromDB["imgSrc"];
 
     //Update the user's shopping cart
     let user = await collectionUsers.findOne({
@@ -520,6 +533,8 @@ const removeFromShoppingCart = async function (req, res, next) {
             message: "Wrong product id provided."
         });
     };
+    //delete the image to save localstorage space
+    delete productFromDB["imgSrc"];
 
     let user = await collection.findOne({
         'email': email
@@ -557,7 +572,7 @@ const removeFromShoppingCart = async function (req, res, next) {
                 shoppingCart: currentShoppingCart
             }
         });
-        console.log(result)
+        // console.log(result)
         res.status(200).json({
             success: true,
             message: 'Products successfully removed from cart!',
@@ -577,7 +592,7 @@ const updateShoppingCart = async function (req, res, next) {
     let collectionStores = await getMongoStoresCollection();
     let email = req.params.email;
     let shoppingCart = req.body.shoppingCart;
-    console.log(shoppingCart)
+    //console.log(shoppingCart)
 
     let storeId;
     let productId;
@@ -611,7 +626,7 @@ const updateShoppingCart = async function (req, res, next) {
 
         payloadArray.push([productFromDB, shoppingCart[i][1]])
     };
-    console.log(payloadArray)
+    //console.log(payloadArray)
     //check products in the cart array
     await collection.updateOne({
         //Selection criteria

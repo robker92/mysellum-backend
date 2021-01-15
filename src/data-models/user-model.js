@@ -11,7 +11,7 @@ function get(options) {
         //},
         "birthdate": options.birthdate,
         "shoppingCart": [],
-        "creationDate": new Date(),
+        "creationDate": new Date().toISOString(),
         "updateDate": "",
         "ownedStoreId": "",
         "emailVerified": false,

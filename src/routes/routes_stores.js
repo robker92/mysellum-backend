@@ -3,6 +3,13 @@
 const express = require("express");
 const router = express.Router();
 const excHandler = require("express-async-handler");
+
+const multer = require('multer');
+const storage = multer.memoryStorage();
+const upload = multer({
+    storage: storage
+});
+
 const mws = require('../middlewares');
 
 const controller_stores = require("../controllers/controller_stores");
@@ -22,13 +29,15 @@ router.get("/", excHandler(controller_stores.getAllStores));
 router.get("/getStoresByLocation/:min_lat/:max_lat/:min_lng/:max_lng", excHandler(controller_stores.getStoresByLocation));
 router.get("/filteredStores/:searchterm", excHandler(controller_stores.getFilteredStores));
 router.post("/getFilteredStores2", excHandler(controller_stores.getFilteredStores2));
+router.get("/get-product-image/:storeId/:productId", excHandler(controller_stores.getProductImage));
 
-//Create Update Delete Stores
-router.post("/createStore", mws.checkAuthentication, excHandler(controller_stores.createStore));
+//Stores
+router.post("/createStore", mws.checkAuthentication, validate(vals.createStoreVal, opts), upload.array('images', 12), excHandler(controller_stores.createStore));
 router.patch("/editStore/:storeId", mws.checkAuthentication, validate(vals.editStoreVal, opts), excHandler(controller_stores.editStore));
 router.delete("/deleteStore/:storeId", mws.checkAuthentication, excHandler(controller_stores.deleteStore));
 // router.post("/addStoreImage/:storeId", mws.checkAuthentication, validate(vals.addStoreImageVal, opts), excHandler(controller_stores.addStoreImage));
 // router.delete("/deleteStoreImage/:storeId/:imageId", mws.checkAuthentication, excHandler(controller_stores.deleteStoreImage));
+router.post("/getImageBuffer", mws.checkAuthentication, upload.single('image'), excHandler(controller_stores.getImageBuffer));
 
 //Reviews
 router.post("/addReview/:storeId", mws.checkAuthentication, validate(vals.addReviewVal, opts), excHandler(controller_stores.addReview));
@@ -48,5 +57,6 @@ router.patch("/updateStockAmount/:storeId/:productId", mws.checkAuthentication, 
 // router.delete("/cart/:email", mws.checkAuthentication, excHandler(controller_users.removeFromShoppingCart));
 
 router.post("/geoCodeTest", excHandler(controller_stores.geoCodeTest));
+router.post("/uploadImagesTest", upload.array('images', 12), excHandler(controller_stores.uploadImagesTest));
 
 module.exports = router;

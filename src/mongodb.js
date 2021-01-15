@@ -34,8 +34,22 @@ const getClient = () => _client
 
 const disconnectClient = () => _client.close()
 
+const getTransactionWriteOptions = function () {
+    const transactionOptions = {
+        readPreference: 'primary',
+        readConcern: {
+            level: 'local'
+        },
+        writeConcern: {
+            w: 'majority'
+        }
+    };
+    return transactionOptions;
+};
+
 module.exports = {
     connectClient,
     getClient,
-    disconnectClient
+    disconnectClient,
+    getTransactionWriteOptions
 }

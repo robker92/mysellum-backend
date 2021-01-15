@@ -11,6 +11,8 @@ const mongodb = require('../mongodb');
 const config = require('../config');
 const ObjectId = require('mongodb').ObjectId;
 
+const controller_prdctAvNotif = require('./notifications/controller_prdctAvNotif');
+
 const {
     productModel,
     reviewModel,
@@ -42,9 +44,10 @@ const getSingleStore = async function (req, res, next) {
     let result = await collection.findOne({
         '_id': ObjectId(req.params.id)
     });
+    //console.log(result)
     //var result = await collection.findOne(ObjectId(req.params.id));
     //console.log(result);
-    res.send(result);
+    res.status(200).send(result);
 };
 
 const getAllStores = async function (req, res, next) {
@@ -215,11 +218,19 @@ const createStore = async function (req, res, next) {
     let collectionUsers = await getMongoUsersCollection();
     let data = req.body;
     let userEmail = req.userEmail;
+    let fileArray = req.files;
+    console.log(fileArray)
 
     //check if the user already owns a store
     let findResult = await collectionUsers.findOne({
-        'email': ObjectId(userEmail)
+        'email': userEmail
     });
+    if (!findResult) {
+        return next({
+            status: 400,
+            message: "User not found."
+        });
+    };
     if (findResult.ownedStoreId.length > 0) {
         return next({
             status: 400,
@@ -230,40 +241,52 @@ const createStore = async function (req, res, next) {
     let addressString = `${data.address.addressLine1}, ${data.address.postcode} ${data.address.city}, ${data.address.country}`
     console.log(addressString)
     let geoCodeResult = await geoCoder.geocode(addressString);
-    console.log(geoCodeResult)
-    let storeObject = {
-        "userEmail": data.userEmail,
-        "creationDate": new Date(),
-        "mapData": {
-            "address": data.address,
-            "img": data.mapImg,
-            "location": {
-                "lat": geoCodeResult[0].latitude,
-                "lng": geoCodeResult[0].longitude
-            },
-            "mapIcon": data.mapIcon
-        },
-        "profileData": {
-            "title": data.title,
-            "subtitle": data.subtitle,
-            "description": data.description,
-            "tags": data.tags,
-            "images": data.images,
-            "products": [],
-            "reviews": [],
-            "avgRating": "0"
-        }
+    //throw error when address was not found
+    if (geoCodeResult.length === 0) {
+        return next({
+            status: 400,
+            type: "address",
+            message: "Invalid address provided."
+        });
     };
-    //add Ids to images -> Refactor with multiple images are there
+    //TODO validate the address, check if it exists, if it is in the correct country (legal) etc
+
+    console.log(geoCodeResult[0])
+    let storeOptions = {
+        "userEmail": data.userEmail,
+        "datetimeCreated": new Date().toISOString(),
+        "datetimeAdjusted": "",
+        "addressLine1": data.address.addressLine1,
+        "postcode": data.address.postcode,
+        "city": data.address.city,
+        "country": data.address.country,
+        "mapImg": data.mapImg,
+        "lat": geoCodeResult[0].latitude,
+        "lng": geoCodeResult[0].longitude,
+        "mapIcon": data.mapIcon,
+        "title": data.title,
+        "subtitle": data.subtitle,
+        "description": data.description,
+        "tags": data.tags,
+        "images": data.images,
+        "products": [],
+        "reviews": [],
+        "avgRating": "0"
+    };
+    //Get the store data model
+    let storeObject = storeModel.get(storeOptions);
+
+    //add Ids to images
     for (let i = 0; i < storeObject.profileData.images.length; i++) {
         storeObject.profileData.images[i]["id"] = i;
     };
 
+    //insert the store to the database
     let insertResult = await collectionStores.insertOne(storeObject);
     if (insertResult.result.ok == 1) { //necessary with expression wrapper?
         let store = insertResult.ops[0];
         console.log("Store creation successfull!");
-        console.log(store);
+        //console.log(store);
 
         //Write Store Id to user
         await collectionUsers.updateOne({
@@ -275,7 +298,10 @@ const createStore = async function (req, res, next) {
         });
     } else {
         console.log("Store creation failed!");
-        next("Store creation failed!");
+        return next({
+            status: 400,
+            message: "Store creation failed!"
+        });
     }
 
     res.status(200).json({
@@ -472,9 +498,9 @@ const createProduct = async function (req, res, next) {
     //Define product id
     let productId;
     if (findResult.profileData.products.length === 0) {
-        productId = 0;
+        productId = "0";
     } else {
-        productId = parseInt(findResult.profileData.products[findResult.profileData.products.length - 1].productId) + 1;
+        productId = (parseInt(findResult.profileData.products[findResult.profileData.products.length - 1].productId) + 1).toString();
     }
 
     // findResult.profileData.products.push({
@@ -655,6 +681,14 @@ const updateStockAmount = async function (req, res, next) {
             message: "User unauthorized to edit this store."
         });
     };
+    //Check if stock amount was zero before to trigger the product availability notification system
+    let index = findResult.profileData.products.findIndex(pr => pr.productId === productId);
+    if (index === -1) {
+        return next({
+            status: 400,
+            message: "Wrong product id provided."
+        });
+    };
 
     // var setString = "profileData.products.$.productId[" + productId.toString() + "].stockAmount"
     // console.log(setString)
@@ -677,6 +711,12 @@ const updateStockAmount = async function (req, res, next) {
             message: "Store not found or wrong ids provided. Product was not updated."
         });
     };
+
+    if (index > -1 && findResult.profileData.products[index].stockAmount === 0) {
+        console.log("trigger notification");
+        controller_prdctAvNotif.sendNotifications(storeId, productId);
+    };
+
     // console.log(updateResult.modifiedCount)
     // console.log(updateResult.matchedCount)
     // var findResult = await collection.findOne({
@@ -776,6 +816,12 @@ const editReview = async function (req, res, next) {
     //var index = findResult.profileData.reviews.findIndex(rv => rv.userEmail === data.userEmail);
     let index = findResult.profileData.reviews.findIndex(rv => rv.reviewId === reviewId);
     //console.log(index)
+    if (index === -1) {
+        return next({
+            status: 400,
+            message: "Wrong review id provided."
+        });
+    };
     findResult.profileData.reviews[index].text = data.text;
     findResult.profileData.reviews[index].rating = data.rating;
     findResult.profileData.reviews[index].datetimeAdjusted = new Date();
@@ -1028,7 +1074,55 @@ function calculateAverage(array) {
     } else {
         return 0;
     }
-}
+};
+
+const getImageBuffer = async function (req, res, next) {
+    let image = req.file;
+    //console.log(image.buffer)
+    let bufferString = Buffer.from(image.buffer).toString('base64');
+    // let bytes = new Uint8Array(image.buffer);
+    // let binary = bytes.reduce((data, b) => data += String.fromCharCode(b), '');
+    let final = "data:image/jpeg;base64," + bufferString;
+    //console.log(final)
+    res.status(200).send(final)
+};
+
+const getProductImage = async function (req, res, next) {
+    let collectionStores = await getMongoStoresCollection();
+    let storeId = req.params.storeId;
+    let productId = req.params.productId;
+
+    let findResult = await collectionStores.findOne({
+        '_id': ObjectId(storeId)
+    });
+    if (!findResult) {
+        return next({
+            status: 400,
+            message: "Store not found."
+        });
+    };
+    let index = findResult.profileData.products.findIndex(pr => pr.productId === productId);
+    if (index === -1) {
+        return next({
+            status: 400,
+            message: "Wrong product id provided."
+        });
+    };
+    let image = findResult.profileData.products[index].imgSrc;
+    //console.log(image.buffer)
+    // let bytes = new Uint8Array(image.buffer);
+    // let binary = bytes.reduce((data, b) => data += String.fromCharCode(b), '');
+
+    //console.log(final)
+    res.status(200).send(image)
+};
+
+const uploadImagesTest = async function (req, res, next) {
+    let fileArray = req.files;
+    console.log(fileArray)
+    console.log(req.body.text)
+    res.status(200).send("Hello World")
+};
 
 module.exports = {
     getSingleStore,
@@ -1049,5 +1143,8 @@ module.exports = {
     deleteProduct,
     updateStockAmount,
     geoCodeTest,
-    getStoresByLocation
+    getStoresByLocation,
+    uploadImagesTest,
+    getImageBuffer,
+    getProductImage
 };

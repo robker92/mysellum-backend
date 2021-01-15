@@ -1,27 +1,28 @@
-const nodemailer = require('nodemailer');
-
+//const nodemailer = require('nodemailer');
+const nodemailerTransporter = require('./mailTransporter')
 const config = require('../config');
 //const testMail = require('./htmlBodys/testMail');
 const {
     testMail,
     resetPasswordMail,
-    registrationVerificationMail
+    registrationVerificationMail,
+    prdctAvNotifMail
 } = require('./htmlBodys');
 
-let transporter = nodemailer.createTransport({
-    host: 'mail.gmx.net',
-    port: 587,
-    //port: 586,
-    greetingTimeout: 3000,
-    auth: {
-        user: config.mailUser,
-        pass: config.mailPass
-    }
-});
+// let transporter = nodemailer.createTransport({
+//     host: 'mail.gmx.net',
+//     port: 587,
+//     //port: 586,
+//     greetingTimeout: 3000,
+//     auth: {
+//         user: config.mailUser,
+//         pass: config.mailPass
+//     }
+// });
 
-transporter.verify().then((verify) => {
-    console.log(verify);
-});
+// transporter.verify().then((verify) => {
+//     console.log(verify);
+// });
 
 async function sendMail(options) {
     // let testAccount = await nodemailer.createTestAccount();
@@ -34,7 +35,7 @@ async function sendMail(options) {
     //         pass: testAccount.pass
     //     }
     // });
-
+    const transporter = nodemailerTransporter.get();
     //Checks if the transporter is working - if not an error is thrown immediately
     let verify = await transporter.verify();
     console.log(verify);
@@ -60,6 +61,12 @@ async function sendMail(options) {
             mailSubject = registrationVerificationMail.subject;
             //toAddress = options.email;
             toAddress = "rkerscher@gmx.de";
+            break;
+        case "prdctAvNotif":
+            mailContent = prdctAvNotifMail.getMailContent(options);
+            mailSubject = prdctAvNotifMail.subject;
+            toAddress = options.email;
+            //toAddress = "rkerscher@gmx.de";
             break;
     };
 

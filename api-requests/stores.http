@@ -49,6 +49,7 @@ x-access-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjVmYzNjMDEyZDRlZmY
 #Create Store
 POST http://localhost:3000/stores/createStore HTTP/1.1
 content-type: application/json
+x-access-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjVmMDczMTA2YjRhZmM5NjNjMGM5MjVkYiIsImVtYWlsIjoiVGVzdEVtYWlsMTRAd2ViLmRlIiwiaWF0IjoxNjEwMjkxODE3LCJleHAiOjE2MTAzNzgyMTd9.p3g3Ry0JsvOZN9bt1ySKX8T9DaBqp15v6TliwrJjPwY
 
 {
     "userEmail": "TestEmail15@web.de",
@@ -58,12 +59,10 @@ content-type: application/json
     "tags": ["meat", "steak", "cow", "beer"],
     "images": [
         {
-            "id": "0",
             "src": "https://www.peta.de/mediadb/cache/1800x1200/kuh-claudio-schwarz-purzlbaum-uR5w1Y9-8yE-unsplash.jpg",
             "title": "cow"
         },
         {   
-            "id": "1",
             "src":"https://encrypted-tbn0.gstatic.com/images?q=tbn%3AANd9GcTeVo04Xgsk_YB77MpuYU2jA3MRZ13TNP4IMWh0LiGMaGrUG5LLXSiH1K1ywA&usqp=CAc",
             "title": "meat"
         }
@@ -75,8 +74,47 @@ content-type: application/json
         "country": "Germany"
     },
     "mapIcon": "fish",
-    "lat": "48.139911",
-    "lng": "11.480547"
+    "location": {
+        "lat": "48.139911",
+        "lng": "11.480547"
+    }
+    
+}
+###
+
+#Create Store
+POST http://localhost:3000/stores/createStore HTTP/1.1
+content-type: multipart/form-data
+x-access-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjVmMDczMTA2YjRhZmM5NjNjMGM5MjVkYiIsImVtYWlsIjoiVGVzdEVtYWlsMTRAd2ViLmRlIiwiaWF0IjoxNjEwMjkxODE3LCJleHAiOjE2MTAzNzgyMTd9.p3g3Ry0JsvOZN9bt1ySKX8T9DaBqp15v6TliwrJjPwY
+
+{
+    "userEmail": "TestEmail15@web.de",
+    "title": "Test Store 4",
+    "subtitle": "",
+    "description": "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam.",
+    "tags": ["meat", "steak", "cow", "beer"],
+    "images": [
+        {
+            "src": "https://www.peta.de/mediadb/cache/1800x1200/kuh-claudio-schwarz-purzlbaum-uR5w1Y9-8yE-unsplash.jpg",
+            "title": "cow"
+        },
+        {   
+            "src":"https://encrypted-tbn0.gstatic.com/images?q=tbn%3AANd9GcTeVo04Xgsk_YB77MpuYU2jA3MRZ13TNP4IMWh0LiGMaGrUG5LLXSiH1K1ywA&usqp=CAc",
+            "title": "meat"
+        }
+    ],
+    "address": {
+        "postcode": "80689",
+        "city": "München",
+        "addressLine1": "Fischer-von-Erlach-Straße 9",
+        "country": "Germany"
+    },
+    "mapIcon": "fish",
+    "location": {
+        "lat": "48.139911",
+        "lng": "11.480547"
+    }
+    
 }
 ###
 
@@ -165,3 +203,41 @@ content-type: application/json
 
 }
 ###
+
+#Upload single Image test
+POST http://localhost:3000/stores/getImageBuffer HTTP/1.1
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+x-access-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjVmMDczMTA2YjRhZmM5NjNjMGM5MjVkYiIsImVtYWlsIjoiVGVzdEVtYWlsMTRAd2ViLmRlIiwiaWF0IjoxNjEwMzE1NDYwLCJleHAiOjE2MTA0MDE4NjB9.TrtzvIfK7_rvC7FR9ZJWbFOgvHe5WkXnI13vo6_iXWk
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="image"; filename="product1.jpg";
+Content-Type: image/jpg
+
+< ./product1.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+######
+
+#Upload Image array test
+POST http://localhost:3000/stores/uploadImagesTest HTTP/1.1
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="text"
+
+title1
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="text"
+
+title2
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="images"; filename="product1.jpg"; id="test1"
+Content-Type: image/jpg
+
+< ./product1.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="images"; filename="product2.jpg"
+Content-Type: image/jpg
+
+< ./product2.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+######

@@ -22,8 +22,8 @@ POST http://localhost:3000/users/registerUser HTTP/1.1
 content-type: application/json
 
 {
-    "email": "TestEmail42@web.de",
-    "password": "Test1",
+    "email": "TestEmail54@web.de",
+    "password": "Test1!----",
     "firstName": "Test",
     "lastName": "Test",
     "birthdate": "29.11.2020",
