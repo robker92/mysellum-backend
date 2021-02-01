@@ -15,9 +15,9 @@ import { getContentPrdctAvNotif, subjectPrdctAvNotif, getContentRegVerification,
 //     }
 // });
 
-nodemailerTransporter.verify().then((verify) => {
-    console.log(verify);
-});
+// nodemailerTransporter.verify().then((verify) => {
+//     console.log(verify);
+// });
 
 async function sendNodemailerMail(options) {
     // let testAccount = await nodemailer.createTestAccount();
