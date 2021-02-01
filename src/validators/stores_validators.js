@@ -1,9 +1,9 @@
 //https://www.npmjs.com/package/express-validation
 //https://github.com/sideway/joi/blob/v13.1.2/API.md
 
-const {
+import {
     Joi
-} = require('express-validation');
+} from 'express-validation';
 
 const addReviewVal = {
     body: Joi.object({
@@ -11,8 +11,8 @@ const addReviewVal = {
         text: Joi.string().min(20).max(1000).required()
     })
 };
-
-const editReviewVal = {
+ 
+const editReviewVal = { 
     body: Joi.object({
         rating: Joi.number().integer().min(1).max(5).required(),
         text: Joi.string().min(20).max(1000).required()
@@ -22,11 +22,13 @@ const editReviewVal = {
 const productVal = {
     body: Joi.object({
         storeId: Joi.string().optional(),
-        productId: Joi.string().optional(),
+        _id: Joi.string().optional(),
         title: Joi.string().min(5).max(30).required(),
         description: Joi.string().min(20).max(200).required(),
         imgSrc: Joi.string().required(),
+        imageDetails: Joi.object().required(),
         price: Joi.string().required(),
+        priceFloat: Joi.number().optional(),
         currency: Joi.string().required(),
         currencySymbol: Joi.string().required(),
         //check if in list
@@ -39,7 +41,7 @@ const productVal = {
 const stockAmountVal = {
     body: Joi.object({
         storeId: Joi.string().optional(),
-        productId: Joi.string().optional(),
+        _id: Joi.string().optional(),
         stockAmount: Joi.number().integer().min(0).required()
     })
 };
@@ -106,12 +108,6 @@ const createStoreVal = {
     })
 };
 
-module.exports = {
-    addReviewVal,
-    editReviewVal,
-    productVal,
-    stockAmountVal,
-    //addStoreImageVal,
-    editStoreVal,
-    createStoreVal
-};
+//===================================================================================================
+export { addReviewVal, editReviewVal, productVal, stockAmountVal, editStoreVal, createStoreVal };
+//===================================================================================================

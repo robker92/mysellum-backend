@@ -1,9 +1,9 @@
 //https://www.npmjs.com/package/express-validation
 //https://github.com/sideway/joi/blob/v13.1.2/API.md
 
-const {
+import {
     Joi
-} = require('express-validation');
+} from 'express-validation';
 
 const registerUserValidation = {
     body: Joi.object({
@@ -76,9 +76,6 @@ const cartUpdateValidation = {
     })
 };
 
-module.exports = {
-    registerUserValidation,
-    loginUserValidation,
-    cartProductValidation,
-    cartUpdateValidation
-};
+//===================================================================================================
+export { registerUserValidation, loginUserValidation, cartProductValidation, cartUpdateValidation };
+//===================================================================================================

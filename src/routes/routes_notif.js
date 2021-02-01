@@ -1,14 +1,24 @@
 "use strict";
 
-const express = require("express");
-const router = express.Router();
-const excHandler = require("express-async-handler");
-const mws = require('../middlewares');
+import express from "express";
+const routerNotif = express.Router();
 
-const controller_notif = require("../controllers/notifications/controller_prdctAvNotif");
+import excHandler from "express-async-handler";
+// import {
+//     checkAuthentication
+// } from '../middlewares';
+import {
+    parserJsonLimit
+} from '../utils/bodyParsers';
 
-router.post("/rgstrPrdctAvNotif", excHandler(controller_notif.rgstrPrdctAvNotif));
-router.post("/checkNotifications", excHandler(controller_notif.checkNotificationsEndpoint));
-router.post("/sendNotifications", excHandler(controller_notif.sendNotificationsEndpoint));
+import {
+    rgstrPrdctAvNotif,
+    checkNotificationsEndpoint,
+    sendNotificationsEndpoint
+} from '../controllers/notifications/controller_prdctAvNotif';
 
-module.exports = router;
+routerNotif.post("/rgstrPrdctAvNotif", parserJsonLimit, excHandler(rgstrPrdctAvNotif));
+routerNotif.post("/checkNotifications", parserJsonLimit, excHandler(checkNotificationsEndpoint));
+routerNotif.post("/sendNotifications", parserJsonLimit, excHandler(sendNotificationsEndpoint));
+
+export { routerNotif };

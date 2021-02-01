@@ -1,10 +1,10 @@
-let htmlBody =
-  `<b>Hello Nico</b><br/> 
-    Wir können jetzt Mails versenden ;)`;
+// let htmlBody =
+//   `<b>Hello Nico</b><br/> 
+//     Wir können jetzt Mails versenden ;)`;
 
-let subject = "Sending Email using Node.js";
+export const subjectTest = "Sending Email using Node.js";
 
-function getMailContent() {
+export function getContentTest() {
   let htmlBody2 =
     `<!doctype html>
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
@@ -257,10 +257,4 @@ function getMailContent() {
   </body>
 </html>`
   return htmlBody;
-}
-
-module.exports = {
-  htmlBody,
-  subject,
-  getMailContent
 }

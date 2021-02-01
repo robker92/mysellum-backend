@@ -1,14 +1,9 @@
-//const nodemailer = require('nodemailer');
-const nodemailerTransporter = require('./mailTransporter')
-const config = require('../config');
-//const testMail = require('./htmlBodys/testMail');
-const {
-    testMail,
-    resetPasswordMail,
-    registrationVerificationMail,
-    prdctAvNotifMail
-} = require('./htmlBodys');
+import { nodemailerTransporter } from './mailTransporter'
+import {
+    MAIL_USER
+} from '../config';
 
+import { getContentPrdctAvNotif, subjectPrdctAvNotif, getContentRegVerification, subjectRegVerification, getContentPasswordReset, subjectPasswordReset, getContentTest, subjectTest } from './htmlBodys'
 // let transporter = nodemailer.createTransport({
 //     host: 'mail.gmx.net',
 //     port: 587,
@@ -20,11 +15,11 @@ const {
 //     }
 // });
 
-// transporter.verify().then((verify) => {
-//     console.log(verify);
-// });
+nodemailerTransporter.verify().then((verify) => {
+    console.log(verify);
+});
 
-async function sendMail(options) {
+async function sendNodemailerMail(options) {
     // let testAccount = await nodemailer.createTestAccount();
     // let transporterTest = nodemailer.createTransport({
     //     host: "smtp.ethereal.email",
@@ -35,7 +30,7 @@ async function sendMail(options) {
     //         pass: testAccount.pass
     //     }
     // });
-    const transporter = nodemailerTransporter.get();
+    const transporter = nodemailerTransporter;
     //Checks if the transporter is working - if not an error is thrown immediately
     let verify = await transporter.verify();
     console.log(verify);
@@ -46,32 +41,32 @@ async function sendMail(options) {
     let mailSubject;
     switch (options.contentType) {
         case "testMail":
-            mailContent = testMail.htmlBody;
-            mailSubject = testMail.subject;
+            mailContent = getContentTest();
+            mailSubject = subjectTest;
             toAddress = options.email;
             break;
         case "resetPassword":
-            mailContent = resetPasswordMail.getMailContent(options.resetPasswordToken);
-            mailSubject = resetPasswordMail.subject;
+            mailContent = getContentPasswordReset(options.resetPasswordToken);
+            mailSubject = subjectPasswordReset;
             //toAddress = options.email;
             toAddress = "rkerscher@gmx.de";
             break;
         case "registrationVerification":
-            mailContent = registrationVerificationMail.getMailContent(options.verificationToken);
-            mailSubject = registrationVerificationMail.subject;
+            mailContent = getContentRegVerification(options.verificationToken);
+            mailSubject = subjectRegVerification;
             //toAddress = options.email;
             toAddress = "rkerscher@gmx.de";
             break;
         case "prdctAvNotif":
-            mailContent = prdctAvNotifMail.getMailContent(options);
-            mailSubject = prdctAvNotifMail.subject;
+            mailContent = getContentPrdctAvNotif(options);
+            mailSubject = subjectPrdctAvNotif;
             toAddress = options.email;
             //toAddress = "rkerscher@gmx.de";
             break;
     };
 
     let mailOptions = {
-        from: `"Awesome Website AMK! 👻" <${config.mailUser}>`,
+        from: `"Awesome Website AMK! 👻" <${MAIL_USER}>`,
         to: toAddress,
         subject: mailSubject,
         //text: 'That was easy!', //Text only content
@@ -93,6 +88,6 @@ async function sendMail(options) {
     };
 };
 
-module.exports = {
-    sendMail
-}
+//===================================================================================================
+export { sendNodemailerMail };
+//===================================================================================================

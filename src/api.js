@@ -1,36 +1,40 @@
 "use strict";
-require('dotenv').config()
+//require('dotenv').config()
+// import dotenv from 'dotenv'
+// dotenv.config()
 
-const express = require('express');
+import express from "express";
 const api = express();
 
-const bodyParser = require('body-parser');
-api.use(bodyParser.json({
-    limit: '50mb',
-}));
-api.use(bodyParser.urlencoded({
-    parameterLimit: 100000,
-    limit: '50mb',
-    extended: true
-}));
-// api.use(express.json());
-// api.use(express.urlencoded({
-//     extended: true
-// }));
-const helmet = require('helmet');
+//const bP = require('./bodyParsers');
+// api.use(bP.jsonLimit);
+// api.use(bP.urlEncodedLimit);
+// "test": "jest",
+// "start": "node ./index.js",
+// "devstart": "nodemon ./index.js",
+
+import helmet from "helmet";
 api.use(helmet());
-const cors = require('cors');
-const cookieParser = require('cookie-parser')
+
+import cors from "cors";
+import cookieParser from "cookie-parser";
 api.use(cookieParser());
 api.disable('x-powered-by');
 
-
-const middlewares = require('./middlewares');
+import {
+    errorHandler
+} from './middlewares';
 //Routes
-const routes_users = require('./routes/routes_users');
-const routes_orders = require('./routes/routes_orders');
-const routes_stores = require('./routes/routes_stores');
-const routes_notif = require('./routes/routes_notif');
+import {
+    routerNotif,
+    routerOrders,
+    routerStores,
+    routerUsers
+} from './routes';
+// const routes_users = require('./routes/routes_users');
+// const routes_orders = require('./routes/routes_orders');
+// const routes_stores = require('./routes/routes_stores');
+// const routes_notif = require('./routes/routes_notif');
 
 //api.use(middlewares.allowCrossDomain);
 
@@ -41,7 +45,7 @@ api.use(cors({
     credentials: true,
     //allowedHeaders: 'Content-Type,Authorization,ETag',
     //exposedHeaders: ['Content-Type,Authorization,Content-Length,ETag']
-}))
+}));
 //Basic route
 api.get('/', (req, res) => {
     res.json({
@@ -50,11 +54,11 @@ api.get('/', (req, res) => {
 });
 
 //API routes
-api.use('/users', routes_users);
-api.use('/orders', routes_orders);
-api.use('/stores', routes_stores);
-api.use('/notif', routes_notif);
+api.use('/users', routerUsers);
+api.use('/orders', routerOrders);
+api.use('/stores', routerStores);
+api.use('/notif', routerNotif);
 
-api.use(middlewares.errorHandler);
+api.use(errorHandler);
 
-module.exports = api;
+export default api;

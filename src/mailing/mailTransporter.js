@@ -1,25 +1,20 @@
-const nodemailer = require('nodemailer');
-const config = require('../config');
+import nodemailer from 'nodemailer'
+import {
+    MAIL_USER,
+    MAIL_PW
+} from '../config';
 
-const transporter = nodemailer.createTransport({
+const nodemailerTransporter = nodemailer.createTransport({
     host: 'mail.gmx.net',
     port: 587,
     //port: 586,
     greetingTimeout: 3000,
     auth: {
-        user: config.mailUser,
-        pass: config.mailPass
+        user: MAIL_USER,
+        pass: MAIL_PW
     }
 });
 
-// transporter.verify().then((verify) => {
-//     console.log(verify);
-// });
-
-function get() {
-    return transporter;
-};
-
-module.exports = {
-    get
-};
+//===================================================================================================
+export { nodemailerTransporter };
+//===================================================================================================

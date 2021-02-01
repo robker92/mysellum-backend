@@ -1,4 +1,4 @@
-function get(options) {
+export function getReviewModel(options) {
     const model = {
         "reviewId": options.reviewId,
         "userEmail": options.userEmail,
@@ -12,7 +12,3 @@ function get(options) {
     };
     return model;
 };
-
-module.exports = {
-    get
-}

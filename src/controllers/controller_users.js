@@ -1,46 +1,54 @@
 "use strict";
-//App imports
-const mongodb = require('../mongodb');
-const config = require('../config');
-const {
-    userModel
-} = require('../data-models');
 
-const ObjectId = require('mongodb').ObjectId;
+import {
+    StatusCodes
+} from 'http-status-codes';
+
+import {
+    ObjectId
+} from 'mongodb';
+
+import {
+    JWT_SECRET_KEY,
+    JWT_KEY_EXPIRE,
+    PW_HASH_SALT_ROUNDS,
+    PW_RESET_TOKEN_NUM_BYTES
+} from '../config';
+
+import {
+    getUserModel
+} from '../data-models';
+
 //External imports
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 //const axios = require('axios');
 
-const nodemailer = require('../mailing/nodemailer');
-const crypto = require('crypto');
+import {
+    sendNodemailerMail
+} from '../mailing/nodemailer';
+
+import {
+    getMongoStoresCollection,
+    getMongoUsersCollection
+} from '../mongodb/collections';
+
 // const {
 //     fail
 // } = require('assert');
 
 // Create a token from a payload
 function createToken(payload) {
-    var expiresIn = config.keyExpiresIn;
-    return jwt.sign(payload, config.secretKey, {
+    var expiresIn = JWT_KEY_EXPIRE;
+    return jwt.sign(payload, JWT_SECRET_KEY, {
         expiresIn
     });
 };
 // Verify the token
 function verifyToken(token) {
-    return jwt.verify(token, SECRET_KEY);
+    return jwt.verify(token, JWT_SECRET_KEY);
 };
-// Get the MongoDB users collection
-async function getMongoUsersCollection() {
-    // console.log("@ function 2")
-    // console.log(config.mongodb_name)
-    //console.log(mongodb.getClient())
-    return mongodb.getClient().db(config.mongodb_name).collection("users");
-};
-async function getMongoStoresCollection() {
-    return mongodb.getClient().db(config.mongodb_name).collection("stores");
-};
-
-//const mongoUserCollection = mongodb.getClient().db(config.mongodb_name).collection("users");
 
 const getSingleUser = async function (req, res, next) {
     let collection = await getMongoUsersCollection();
@@ -61,17 +69,17 @@ const registerUser = async function (req, res, next) {
     const checkResult = await collection.findOne({
         'email': data.email
     });
-    //console.log(checkResult)
+    console.log(checkResult)
     if (checkResult) {
         return next({
-            status: 401,
+            status: StatusCodes.UNAUTHORIZED,
             type: "alreadyUsed",
             message: "E-Mail already used."
         });
     };
 
-    const passwordHash = await bcrypt.hash(data.password, config.saltRounds);
-    const verificationToken = crypto.randomBytes(config.resetToken_numBytes).toString("hex");
+    const passwordHash = await bcrypt.hash(data.password, PW_HASH_SALT_ROUNDS);
+    const verificationToken = crypto.randomBytes(PW_RESET_TOKEN_NUM_BYTES).toString("hex");
 
     // data["password"] = passwordHash;
     // data["creationDate"] = new Date();
@@ -92,7 +100,7 @@ const registerUser = async function (req, res, next) {
         "birthdate": data.birthdate,
         "verificationToken": verificationToken,
     };
-    const userData = userModel.get(options);
+    const userData = getUserModel(options);
     console.log(userData);
 
     const insertResult = await collection.insertOne(userData);
@@ -104,7 +112,7 @@ const registerUser = async function (req, res, next) {
     } else {
         console.log("Registration failed!");
         return next({
-            status: 401,
+            status: StatusCodes.UNAUTHORIZED,
             type: "failed",
             message: "Registration failed!"
         });
@@ -119,11 +127,11 @@ const registerUser = async function (req, res, next) {
     };
 
     try {
-        await nodemailer.sendMail(mailOptions);
+        await sendNodemailerMail(mailOptions);
     } catch (error) {
         console.log(error)
         return next({
-            status: 401,
+            status: StatusCodes.INTERNAL_SERVER_ERROR,
             type: "whileMailSending",
             message: "Error while sending!"
         });
@@ -153,7 +161,7 @@ const registerUser = async function (req, res, next) {
     //         productCounter: 0
     //     }
     // });
-    res.status(200).json({
+    res.status(StatusCodes.OK).json({
         success: true,
         message: 'Registration verification e-mail successfully sent!'
     });
@@ -165,7 +173,7 @@ const verifyRegistration = async function (req, res, next) {
 
     if (!verificationToken) {
         return next({
-            status: 401,
+            status: StatusCodes.UNAUTHORIZED,
             success: false,
             type: "verification",
             message: "No token provided."
@@ -193,21 +201,20 @@ const verifyRegistration = async function (req, res, next) {
         if (err) {
             //console.warn(err);
             return next({
-                status: 401,
+                status: StatusCodes.UNAUTHORIZED,
                 success: false,
                 type: "verification",
                 message: "E-Mail verification failed."
             });
-        } else if (result.value == null) {
+        } else if (result.value === null) {
             return next({
-                status: 401,
+                status: StatusCodes.UNAUTHORIZED,
                 success: false,
                 type: "verification",
                 message: "E-Mail verification failed."
             });
         } else {
             const user = result.value;
-            console.log(user)
             // if (!user) {
             //     return next({
             //         status: 403,
@@ -220,7 +227,7 @@ const verifyRegistration = async function (req, res, next) {
                 email: user.email
             });
 
-            res.status(200).cookie('authToken', accessToken).json({
+            res.status(StatusCodes.CREATED).cookie('authToken', accessToken).json({
                 success: true,
                 message: 'Registration successful!',
                 user: {
@@ -623,7 +630,8 @@ const updateShoppingCart = async function (req, res, next) {
                 message: "Wrong product id provided."
             });
         };
-
+        //delete the image to save localstorage space
+        delete productFromDB["imgSrc"];
         payloadArray.push([productFromDB, shoppingCart[i][1]])
     };
     //console.log(payloadArray)
@@ -648,7 +656,7 @@ const sendTestMail = async function (req, res, next) {
     let mail = req.body.mailAddress;
     let contentType = req.body.contentType;
 
-    let info = await nodemailer.sendMail(mail, contentType);
+    let info = await sendNodemailerMail(mail, contentType);
 
     res.status(200).json({
         success: true,
@@ -676,7 +684,7 @@ const sendPasswordResetMail = async function (req, res, next) {
         });
     };
 
-    const resetPasswordToken = crypto.randomBytes(config.resetToken_numBytes).toString("hex");
+    const resetPasswordToken = crypto.randomBytes(PW_RESET_TOKEN_NUM_BYTES).toString("hex");
     const resetPasswordExpires = Date.now() + 3600000; //Current time in milliseconds + one hour
     console.log(resetPasswordToken)
     console.log(resetPasswordExpires)
@@ -701,7 +709,7 @@ const sendPasswordResetMail = async function (req, res, next) {
 
     let mailInfo;
     try {
-        mailInfo = await nodemailer.sendMail(mailOptions);
+        mailInfo = await sendNodemailerMail(mailOptions);
     } catch (error) {
         console.log(error)
         return next({
@@ -772,7 +780,7 @@ const resetPassword = async function (req, res, next) {
         $set: {
             resetPasswordToken: null,
             resetPasswordExpires: null,
-            password: await bcrypt.hash(password, config.saltRounds)
+            password: await bcrypt.hash(password, PW_HASH_SALT_ROUNDS)
         }
     });
     console.log(updateUserResult.modifiedCount)
@@ -790,20 +798,8 @@ const resetPassword = async function (req, res, next) {
     });
 };
 
-module.exports = {
-    getSingleUser,
-    registerUser,
-    loginUser,
-    verifyRegistration,
-    getAllUsers,
-    updateUserInfo,
-    deleteUser,
-    addToShoppingCart,
-    removeFromShoppingCart,
-    updateShoppingCart,
-    //logoutUser
-    sendTestMail,
-    sendPasswordResetMail,
-    checkResetToken,
-    resetPassword
-};
+//===================================================================================================
+export { getSingleUser, registerUser, verifyRegistration, loginUser, getAllUsers, updateUserInfo, 
+    deleteUser, addToShoppingCart, removeFromShoppingCart, updateShoppingCart, sendTestMail, 
+    sendPasswordResetMail, checkResetToken, resetPassword };
+//===================================================================================================

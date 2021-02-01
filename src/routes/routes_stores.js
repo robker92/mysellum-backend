@@ -1,62 +1,134 @@
 "use strict";
 
-const express = require("express");
-const router = express.Router();
-const excHandler = require("express-async-handler");
+import {
+    MULTER_LIMIT
+} from '../config';
 
-const multer = require('multer');
+import express from "express";
+const routerStores = express.Router();
+
+import excHandler from "express-async-handler";
+
+import multer from "multer";
 const storage = multer.memoryStorage();
 const upload = multer({
+    limits: {
+        fileSize: MULTER_LIMIT
+    },
     storage: storage
 });
 
-const mws = require('../middlewares');
+import {
+    checkAuthentication
+} from '../middlewares';
+
+import {
+    parserJsonLimit,
+    parserUrlEncodedLimit
+} from '../utils/bodyParsers';
 
 const controller_stores = require("../controllers/controller_stores");
 
+// Controller stores
+import {
+    getSingleStore,
+    createStore,
+    editStore,
+    deleteStore
+}
+from "../controllers/stores/controller-stores";
+
+// Controller products
+import {
+    createProduct,
+    editProduct,
+    deleteProduct,
+    updateStockAmount,
+    getStoreProducts,
+    getProductImage
+}
+from "../controllers/stores/controller-products";
+
+// Controller Reviews
+import {
+    addReview,
+    editReview,
+    deleteReview
+}
+from "../controllers/stores/controller-reviews";
+// Controller Search
+import {
+    getStoresByLocation,
+    getStoresDelivery
+}
+from "../controllers/stores/controller-search";
+// Controller Images
+import {
+    getImageBuffer,
+    getImageBufferResized,
+    getImageResized
+}
+from "../controllers/stores/controller-images"
+
 //Validation
-const {
+import {
     validate
-} = require('express-validation');
-const vals = require("../validators/stores_validators.js");
+} from 'express-validation'
+// const {
+//     validate
+// } = require('express-validation');
+import {
+    addReviewVal,
+    editReviewVal,
+    productVal,
+    stockAmountVal,
+    editStoreVal,
+    createStoreVal
+} from "../validators/stores_validators.js";
 const opts = {
     keyByField: true //Reduces the validation error to a list with key/value pair "fieldname": "Message"
 }
 
+//Pipeline: bodyParser, authetication,validate,upload,executionHandler + function
 //Get Stores
-router.get("/:id", excHandler(controller_stores.getSingleStore));
-router.get("/", excHandler(controller_stores.getAllStores));
-router.get("/getStoresByLocation/:min_lat/:max_lat/:min_lng/:max_lng", excHandler(controller_stores.getStoresByLocation));
-router.get("/filteredStores/:searchterm", excHandler(controller_stores.getFilteredStores));
-router.post("/getFilteredStores2", excHandler(controller_stores.getFilteredStores2));
-router.get("/get-product-image/:storeId/:productId", excHandler(controller_stores.getProductImage));
+routerStores.get("/single-store/:id", excHandler(getSingleStore));
+routerStores.get("/", excHandler(controller_stores.getAllStores));
+routerStores.get("/getStoresByLocation/:min_lat/:max_lat/:min_lng/:max_lng", excHandler(getStoresByLocation));
+routerStores.get("/search-delivery", excHandler(getStoresDelivery));
+//router.get("/filteredStores/:searchterm", excHandler(controller_stores.getFilteredStores));
+//router.post("/getFilteredStores2", parserJsonLimit, excHandler(controller_stores.getFilteredStores2));
 
 //Stores
-router.post("/createStore", mws.checkAuthentication, validate(vals.createStoreVal, opts), upload.array('images', 12), excHandler(controller_stores.createStore));
-router.patch("/editStore/:storeId", mws.checkAuthentication, validate(vals.editStoreVal, opts), excHandler(controller_stores.editStore));
-router.delete("/deleteStore/:storeId", mws.checkAuthentication, excHandler(controller_stores.deleteStore));
-// router.post("/addStoreImage/:storeId", mws.checkAuthentication, validate(vals.addStoreImageVal, opts), excHandler(controller_stores.addStoreImage));
-// router.delete("/deleteStoreImage/:storeId/:imageId", mws.checkAuthentication, excHandler(controller_stores.deleteStoreImage));
-router.post("/getImageBuffer", mws.checkAuthentication, upload.single('image'), excHandler(controller_stores.getImageBuffer));
+routerStores.post("/store", parserJsonLimit, checkAuthentication, validate(createStoreVal, opts), upload.array('images', 12), excHandler(createStore));
+routerStores.patch("/store/:storeId", parserJsonLimit, checkAuthentication, validate(editStoreVal, opts), excHandler(editStore));
+routerStores.delete("/store/:storeId", checkAuthentication, excHandler(deleteStore));
+// router.post("/addStoreImage/:storeId", checkAuthentication, validate(addStoreImageVal, opts), excHandler(controller_stores.addStoreImage));
+// router.delete("/deleteStoreImage/:storeId/:imageId", checkAuthentication, excHandler(controller_stores.deleteStoreImage));
+routerStores.post("/image-buffer", checkAuthentication, upload.single('image'), excHandler(getImageBuffer));
+routerStores.post("/image-buffer-resized", checkAuthentication, upload.single('image'), excHandler(getImageBufferResized));
+routerStores.post("/image-resized", checkAuthentication, upload.single('image'), excHandler(getImageResized));
 
 //Reviews
-router.post("/addReview/:storeId", mws.checkAuthentication, validate(vals.addReviewVal, opts), excHandler(controller_stores.addReview));
-router.patch("/editReview/:storeId/:reviewId", mws.checkAuthentication, validate(vals.editReviewVal, opts), excHandler(controller_stores.editReview));
-router.delete("/deleteReview/:storeId/:reviewId", mws.checkAuthentication, excHandler(controller_stores.deleteReview));
+routerStores.post("/addReview/:storeId", parserJsonLimit, checkAuthentication, validate(addReviewVal, opts), excHandler(addReview));
+routerStores.patch("/editReview/:storeId/:reviewId", parserJsonLimit, checkAuthentication, validate(editReviewVal, opts), excHandler(editReview));
+routerStores.delete("/deleteReview/:storeId/:reviewId", checkAuthentication, excHandler(deleteReview));
 
 //Products
-router.post("/createProduct/:storeId", mws.checkAuthentication, validate(vals.productVal, opts), excHandler(controller_stores.createProduct));
-router.patch("/editProduct/:storeId/:productId", mws.checkAuthentication, validate(vals.productVal, opts), excHandler(controller_stores.editProduct));
-router.delete("/deleteProduct/:storeId/:productId", mws.checkAuthentication, excHandler(controller_stores.deleteProduct));
-router.patch("/updateStockAmount/:storeId/:productId", mws.checkAuthentication, validate(vals.stockAmountVal, opts), excHandler(controller_stores.updateStockAmount));
+routerStores.post("/product/:storeId", parserJsonLimit, checkAuthentication, validate(productVal, opts), excHandler(createProduct));
+routerStores.patch("/product/:storeId/:productId", parserJsonLimit, checkAuthentication, validate(productVal, opts), excHandler(editProduct));
+routerStores.delete("/product/:storeId/:productId", checkAuthentication, excHandler(deleteProduct));
+routerStores.patch("/product-stock/:storeId/:productId", parserJsonLimit, checkAuthentication, validate(stockAmountVal, opts), excHandler(updateStockAmount));
+routerStores.get("/store-products/:storeId", excHandler(getStoreProducts));
+routerStores.get("/product-image/:storeId/:productId", excHandler(getProductImage));
 // router.post("/loginUser", excHandler(controller_users.loginUser));
 // router.post("/registerUser", excHandler(controller_users.registerUser));
 // router.delete("/:email", excHandler(controller_users.deleteUser));
 // router.patch("/:email", excHandler(controller_users.updateUserInfo));
-// router.patch("/cart/:email", mws.checkAuthentication, excHandler(controller_users.addToShoppingCart));
-// router.delete("/cart/:email", mws.checkAuthentication, excHandler(controller_users.removeFromShoppingCart));
+// router.patch("/cart/:email", checkAuthentication, excHandler(controller_users.addToShoppingCart));
+// router.delete("/cart/:email", checkAuthentication, excHandler(controller_users.removeFromShoppingCart));
 
-router.post("/geoCodeTest", excHandler(controller_stores.geoCodeTest));
-router.post("/uploadImagesTest", upload.array('images', 12), excHandler(controller_stores.uploadImagesTest));
+routerStores.post("/geoCodeTest", excHandler(controller_stores.geoCodeTest));
+routerStores.post("/uploadImagesTest", parserUrlEncodedLimit, upload.array('images', 12), excHandler(controller_stores.uploadImagesTest));
 
-module.exports = router;
+//console.log(router)
+export { routerStores };

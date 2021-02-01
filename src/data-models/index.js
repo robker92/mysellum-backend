@@ -1,11 +1,4 @@
-const productModel = require('./product-model');
-const reviewModel = require('./review-model');
-const userModel = require('./user-model');
-const storeModel = require('./store-model');
-
-module.exports = {
-    productModel,
-    reviewModel,
-    userModel,
-    storeModel
-}
+export * from "./product-model";
+export * from "./review-model";
+export * from "./user-model";
+export * from "./store-model";

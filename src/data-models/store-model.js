@@ -1,6 +1,7 @@
-function get(options) {
+export function getStoreModel(options) {
     const model = {
         "userEmail": options.userEmail,
+        "adminActivation": true,
         "datetimeCreated": options.datetimeCreated,
         "datetimeAdjusted": options.datetimeAdjusted,
         "mapData": {
@@ -26,11 +27,33 @@ function get(options) {
             "products": options.products,
             "reviews": options.reviews,
             "avgRating": options.avgRating
-        }
+        },
+        "activationSteps": {
+            "profileComplete": false,
+            "minOneProduct": false,
+            "shippingRegistered": false,
+            "paymentMethodRegistered": false
+        },
+        "activation": false,
+        "notifications:": {
+            "receivedOrder": false,
+            "productOutOfStock": {
+                "atAmount": 0,
+                "registered": false
+            }
+        },
+        "shipping": {},
+        "payment": {}
     };
     return model;
 };
 
-module.exports = {
-    get
-}
+export function getStoreConfig() {
+    const config = {
+        title: {
+            minLength: 30,
+            maxLenght: 200
+        }
+    };
+    return config;
+};

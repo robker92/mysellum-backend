@@ -1,4 +1,4 @@
-function getMailContent(resetToken) {
+function getContentPasswordReset(resetToken) {
     let htmlBody =
         `<b>Hello User</b><br/> <br/> 
 
@@ -6,9 +6,8 @@ function getMailContent(resetToken) {
     return htmlBody;
 };
 
-let subject = "Password reset";
+const subjectPasswordReset = "Password reset";
 
-module.exports = {
-    getMailContent,
-    subject
-};
+//===================================================================================================
+export { getContentPasswordReset, subjectPasswordReset };
+//===================================================================================================

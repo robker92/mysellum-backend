@@ -1,5 +1,6 @@
 /.idea/
 /node_modules/*
 /npm-debug.log
-/config/config.js
+/dist/
+/archive/
 .env

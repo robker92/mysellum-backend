@@ -1,4 +1,4 @@
-function getMailContent(options) {
+function getContentPrdctAvNotif(options) {
     let htmlBody =
         `<b>Hello User</b><br/> <br/> 
     we wanted to inform you that the product ${options.productId} from the store ${options.storeId}. 
@@ -7,9 +7,8 @@ function getMailContent(options) {
     return htmlBody;
 };
 
-let subject = "Product Notification";
+const subjectPrdctAvNotif = "Product Notification";
 
-module.exports = {
-    getMailContent,
-    subject
-};
+//===================================================================================================
+export { getContentPrdctAvNotif, subjectPrdctAvNotif };
+//===================================================================================================

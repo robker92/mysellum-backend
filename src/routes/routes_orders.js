@@ -1,18 +1,34 @@
 "use strict";
 
-const express = require("express");
-const router = express.Router();
-const excHandler = require("express-async-handler");
-const mws = require('../middlewares');
+import express from "express";
+const routerOrders = express.Router();
 
-const controller_orders = require("../controllers/controller_orders");
+import excHandler from "express-async-handler";
+import {
+    checkAuthentication
+} from '../middlewares';
+import {
+    parserJsonLimit
+} from '../utils/bodyParsers';
 
-router.get("/singleOrder/:id", mws.checkAuthentication, excHandler(controller_orders.getSingleOrder));
-router.get("/getUsersOrders", mws.checkAuthentication, excHandler(controller_orders.getUsersOrders));
-router.get("/getStoresOrders/:storeId", mws.checkAuthentication, excHandler(controller_orders.getStoresOrders));
-router.get("/", excHandler(controller_orders.getAllOrders));
-router.post("/createOrder", excHandler(controller_orders.createOrder));
-router.delete("/:id", excHandler(controller_orders.deleteOrder));
-router.patch("/:id", excHandler(controller_orders.updateOrder));
+// Controller products
+import {
+    getSingleOrder,
+    getUsersOrders,
+    getStoresOrders,
+    getAllOrders,
+    createOrder,
+    deleteOrder,
+    updateOrder
+}
+from "../controllers/controller_orders";
 
-module.exports = router;
+routerOrders.get("/singleOrder/:id", checkAuthentication, excHandler(getSingleOrder));
+routerOrders.get("/getUsersOrders", checkAuthentication, excHandler(getUsersOrders));
+routerOrders.get("/getStoresOrders/:storeId", checkAuthentication, excHandler(getStoresOrders));
+routerOrders.get("/", excHandler(getAllOrders));
+routerOrders.post("/createOrder", parserJsonLimit, excHandler(createOrder));
+routerOrders.delete("/:id", excHandler(deleteOrder));
+routerOrders.patch("/:id", parserJsonLimit, excHandler(updateOrder));
+
+export { routerOrders };

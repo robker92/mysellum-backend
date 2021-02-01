@@ -1,41 +1,68 @@
 "use strict";
 
-const express = require("express");
-const router = express.Router();
-const asyncExceptionHandler = require("express-async-handler");
-const mws = require('../middlewares');
+import express from "express";
+const routerUsers = express.Router();
+
+import excHandler from "express-async-handler";
+import {
+    checkAuthentication
+} from '../middlewares';
+import {
+    parserJsonLimit
+} from '../utils/bodyParsers';
 
 //Validation
-const {
+import {
+    registerUserValidation,
+    loginUserValidation,
+    cartProductValidation,
+    cartUpdateValidation
+} from "../validators/users_validators"
+import {
     validate
-} = require('express-validation');
-const vals = require("../validators/users_validators.js");
+} from 'express-validation';
+
 const opts = {
     keyByField: true //Reduces the validation error to a list with key/value pair "fieldname": "Message"
 }
 
 //User Controller
-const controller_users = require("../controllers/controller_users");
+import {
+    getSingleUser,
+    getAllUsers,
+    loginUser,
+    registerUser,
+    verifyRegistration,
+    updateUserInfo,
+    addToShoppingCart,
+    deleteUser,
+    removeFromShoppingCart,
+    updateShoppingCart,
+    sendPasswordResetMail,
+    checkResetToken,
+    resetPassword,
+    sendTestMail
+} from "../controllers/controller_users"
 
 //Get Users
-router.get("/:email", asyncExceptionHandler(controller_users.getSingleUser));
-router.get("/", asyncExceptionHandler(controller_users.getAllUsers));
+routerUsers.get("/:email", excHandler(getSingleUser));
+routerUsers.get("/", excHandler(getAllUsers));
 //Login, Register
-router.post("/loginUser", validate(vals.loginUserValidation, opts), asyncExceptionHandler(controller_users.loginUser));
-router.post("/registerUser", validate(vals.registerUserValidation, opts), asyncExceptionHandler(controller_users.registerUser));
-router.post("/verifyRegistration/:verificationToken", asyncExceptionHandler(controller_users.verifyRegistration));
+routerUsers.post("/loginUser", parserJsonLimit, validate(loginUserValidation, opts), excHandler(loginUser));
+routerUsers.post("/registerUser", parserJsonLimit, validate(registerUserValidation, opts), excHandler(registerUser));
+routerUsers.post("/verifyRegistration/:verificationToken", parserJsonLimit, excHandler(verifyRegistration));
 //Update and Delete
-router.delete("/:email", asyncExceptionHandler(controller_users.deleteUser));
-router.patch("/:email", asyncExceptionHandler(controller_users.updateUserInfo));
+routerUsers.delete("/:email", excHandler(deleteUser));
+routerUsers.patch("/:email", parserJsonLimit, excHandler(updateUserInfo));
 //Shopping Cart
-router.patch("/cart/:email", mws.checkAuthentication, validate(vals.cartProductValidation, opts), asyncExceptionHandler(controller_users.addToShoppingCart));
-router.patch("/cartRemove/:email", mws.checkAuthentication, validate(vals.cartProductValidation, opts), asyncExceptionHandler(controller_users.removeFromShoppingCart));
-router.patch("/updateCart/:email", mws.checkAuthentication, validate(vals.cartUpdateValidation, opts), asyncExceptionHandler(controller_users.updateShoppingCart));
+routerUsers.patch("/cart/:email", parserJsonLimit, checkAuthentication, validate(cartProductValidation, opts), excHandler(addToShoppingCart));
+routerUsers.patch("/cartRemove/:email", parserJsonLimit, checkAuthentication, validate(cartProductValidation, opts), excHandler(removeFromShoppingCart));
+routerUsers.patch("/updateCart/:email", parserJsonLimit, checkAuthentication, validate(cartUpdateValidation, opts), excHandler(updateShoppingCart));
 
 //Password reset
-router.post("/sendPasswordResetMail", asyncExceptionHandler(controller_users.sendPasswordResetMail));
-router.get("/checkResetToken/:token", asyncExceptionHandler(controller_users.checkResetToken));
-router.post("/resetPassword/:token", asyncExceptionHandler(controller_users.resetPassword));
-router.post("/sendTestMail", asyncExceptionHandler(controller_users.sendTestMail));
+routerUsers.post("/sendPasswordResetMail", parserJsonLimit, excHandler(sendPasswordResetMail));
+routerUsers.get("/checkResetToken/:token", excHandler(checkResetToken));
+routerUsers.post("/resetPassword/:token", parserJsonLimit, excHandler(resetPassword));
+routerUsers.post("/sendTestMail", parserJsonLimit, excHandler(sendTestMail));
 
-module.exports = router;
+export { routerUsers };

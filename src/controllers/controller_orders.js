@@ -1,28 +1,26 @@
 "use strict";
 //App imports
-const mongodb = require('../mongodb');
-const ObjectId = require('mongodb').ObjectId;
-const config = require('../config');
+import {
+    getMongoDBClient
+} from '../mongodb/setup';
 
-/*
-Data Model
-Order: {
-    id
-    userId
-    storeId
-    totalSum
-    shippingAddress
-    products
+import {
+    ObjectId
+} from 'mongodb';
 
-}
-*/
+import {
+    getMongoStoresCollection,
+    getMongoOrdersCollection
+} from '../mongodb/collections';
 
-async function getMongoOrdersCollection() {
-    return mongodb.getClient().db(config.mongodb_name).collection("orders");
-};
-async function getMongoStoresCollection() {
-    return mongodb.getClient().db(config.mongodb_name).collection("stores");
-};
+import {
+    removeDuplicatesFromArray
+} from '../utils/arrayFunctions';
+
+import {
+    sendNodemailerMail
+} from '../mailing/nodemailer';
+
 
 const getSingleOrder = async function (req, res, next) {
     let collection = await getMongoOrdersCollection();
@@ -145,18 +143,19 @@ const createOrder = async function (req, res, next) {
     const data = req.body;
     const products = req.body.products;
 
-    let foundStoresArray = [];
+    let foundStoresPromiseArray = [];
     for (let i = 0; i < products.length; i++) {
         //Find stores with contained products in DB
-        foundStoresArray[i] = collectionStores.findOne({
+        foundStoresPromiseArray[i] = collectionStores.findOne({
             "_id": ObjectId(products[i][0].storeId),
             "profileData.products.productId": products[i][0].productId
         });
     };
-
+    //TODO single store id false?
     let foundStores;
+    console.log(foundStores);
     try {
-        foundStores = await Promise.all(foundStoresArray);
+        foundStores = await Promise.all(foundStoresPromiseArray);
     } catch (error) {
         //Error while searching for stores
         return next({
@@ -164,6 +163,9 @@ const createOrder = async function (req, res, next) {
             message: "Wrong store Ids provided."
         });
     };
+    //TODO remove store duplicates?
+    removeDuplicatesFromArray(foundStores);
+    onsole.log(foundStores);
 
     // console.log(foundStores)
     let productsOutOfStock = [];
@@ -173,7 +175,7 @@ const createOrder = async function (req, res, next) {
             return obj.productId === products[i][0].productId
         });
         console.log(orderedProductFromStore)
-        if (orderedProductFromStore === undefined) {
+        if (!orderedProductFromStore) {
             return next({
                 status: 400,
                 message: "Wrong product Id provided."
@@ -196,8 +198,10 @@ const createOrder = async function (req, res, next) {
         });
     };
 
+    //TODO order data model
+
     //Start MongoDB transaction session
-    const session = mongodb.getClient().startSession();
+    const session = getMongoDBClient().startSession();
 
     try {
         await session.withTransaction(async () => {
@@ -218,7 +222,7 @@ const createOrder = async function (req, res, next) {
             };
 
             await Promise.all(updates);
-
+            //TODO One order per store
             let orderCreation = await collectionOrders.insertOne(data);
             //console.log(orderCreation)
         }, mongodb.getTransactionWriteOptions());
@@ -233,27 +237,27 @@ const createOrder = async function (req, res, next) {
         await session.endSession();
     };
 
+    //Check and send the order creation notifications to the store owners
+    for (let i = 0; i < foundStores.length; i++) {
+        if(foundStores[i].notification.receivedOrder === true) {
+            let mailOptions = {
+                email: foundStores[i].userEmail,
+                contentType: "orderCreation",
+                orderData: {
+                    id: orderCreation._id
+                }
+            };
+            sendNodemailerMail(mailOptions);
+        };
+        //checkOrderCreationNotification(foundStores[i].notification, foundStores[i].userEmail, orderCreation._id)
+    };
+    //TODO Notification Product now out of stock or below defined limit
     res.status(200).json({
         success: true,
         message: 'Order creation successful!'
     });
 };
-// var insertResult = await collectionOrders.insertOne(data);
-// if (insertResult.result.ok == 1) {
-//     var user = insertResult.ops[0].user;
-//     console.log("Order creation successful!");
-//     console.log(user);
-// } else {
-//     console.log("Order creation failed!");
-//     next("Order creation failed!");
-// }
 
-module.exports = {
-    getSingleOrder,
-    getStoresOrders,
-    getUsersOrders,
-    getAllOrders,
-    updateOrder,
-    deleteOrder,
-    createOrder
-};
+//===================================================================================================
+export { getSingleOrder, getStoresOrders, getUsersOrders, getAllOrders, updateOrder, deleteOrder, createOrder };
+//===================================================================================================

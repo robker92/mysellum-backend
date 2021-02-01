@@ -1,26 +1,32 @@
 "use strict";
 //App imports
-const NodeGeocoder = require('node-geocoder');
-
+import NodeGeocoder from 'node-geocoder';
 const geoCodeOptions = {
     provider: 'openstreetmap'
 };
 const geoCoder = NodeGeocoder(geoCodeOptions);
 
-const mongodb = require('../mongodb');
+import sharp from 'sharp';
+
+import {
+    getMongoDBClient
+} from '../mongodb/setup';
+
+import {
+    ObjectId
+} from 'mongodb';
+
 const config = require('../config');
-const ObjectId = require('mongodb').ObjectId;
 
-const controller_prdctAvNotif = require('./notifications/controller_prdctAvNotif');
+import {
+    sendNotifications
+} from './notifications/controller_prdctAvNotif';
 
-const {
-    productModel,
-    reviewModel,
-    storeModel
-} = require('../data-models');
-
-//var coll = mongodb.getClient().db(config.mongodb_name).collection("stores");
-
+import {
+    getProductModel,
+    getReviewModel,
+    getStoreModel
+} from '../data-models';
 
 const geoCodeTest = async function (req, res, next) {
     let address = req.body.address;
@@ -31,12 +37,15 @@ const geoCodeTest = async function (req, res, next) {
 
 
 async function getMongoStoresCollection() {
-    return mongodb.getClient().db(config.mongodb_name).collection("stores");
+    return getMongoDBClient().db(config.mongodb_name).collection("stores");
 };
 // Get the MongoDB users collection
 async function getMongoUsersCollection() {
-    return mongodb.getClient().db(config.mongodb_name).collection("users");
+    return getMongoDBClient().db(config.mongodb_name).collection("users");
 }
+async function getMongoProductsCollection() {
+    return getMongoDBClient().db(config.mongodb_name).collection("products");
+};
 
 const getSingleStore = async function (req, res, next) {
     let collection = await getMongoStoresCollection();
@@ -97,15 +106,24 @@ const getFilteredStores2 = async function (req, res, next) {
     //Create filter query (like here https://docs.mongodb.com/manual/tutorial/query-arrays/)
     let queryFilter = {};
     for (let key in filterObject) {
-        if (key == "tags") {
-            if (filterObject[key].length > 0) {
-                queryFilter[`profileData.${key}`] = {
-                    $all: filterObject[key]
-                }
-            } else {
-
+        if (key === "tags") {
+            if (filterObject[key].length === 0) {
+                return next({
+                    status: 400,
+                    message: "Invalid filter provided."
+                });
+            }
+            queryFilter[`profileData.${key}`] = {
+                $all: filterObject[key] //matches all elements in array
             }
         }
+        if (key === "country") {
+
+        }
+    }
+    //If no valid key is provided
+    if (queryFilter === {}) {
+        //TODO No Filter provided
     }
     console.log(queryFilter)
 
@@ -274,7 +292,7 @@ const createStore = async function (req, res, next) {
         "avgRating": "0"
     };
     //Get the store data model
-    let storeObject = storeModel.get(storeOptions);
+    let storeObject = getStoreModel(storeOptions);
 
     //add Ids to images
     for (let i = 0; i < storeObject.profileData.images.length; i++) {
@@ -471,13 +489,196 @@ const editStore = async function (req, res, next) {
 //     });
 // };
 
+// const createProduct = async function (req, res, next) {
+//     let collection = await getMongoStoresCollection();
+//     let data = req.body;
+//     let userEmail = req.userEmail;
+//     let storeId = req.params.storeId;
+
+//     let findResult = await collection.findOne({
+//         '_id': ObjectId(storeId)
+//     });
+
+//     if (!findResult) {
+//         return next({
+//             status: 400,
+//             message: "Store not found."
+//         });
+//     };
+//     //Guard to make sure that only the store owner is able to edit this store
+//     if (findResult.userEmail !== userEmail) {
+//         return next({
+//             status: 400,
+//             message: "User unauthorized to edit this store."
+//         });
+//     };
+
+//     //Define product id
+//     let productId;
+//     if (findResult.profileData.products.length === 0) {
+//         productId = "0";
+//     } else {
+//         productId = (parseInt(findResult.profileData.products[findResult.profileData.products.length - 1].productId) + 1).toString();
+//     }
+
+//     // findResult.profileData.products.push({
+//     //     "productId": productId.toString(),
+//     //     "addDate": new Date(),
+//     //     "title": data.title,
+//     //     "description": data.description,
+//     //     "imgSrc": data.imgSrc,
+//     //     "price": data.price,
+//     //     "currency": data.currency,
+//     //     "currencySymbol": data.currencySymbol
+//     // });
+
+//     let options = {
+//         "datetimeCreated": new Date(),
+//         "datetimeAdjusted": "",
+//         "productId": productId.toString(),
+//         "storeId": data.storeId,
+//         "title": data.title,
+//         "description": data.description,
+//         "imgSrc": data.imgSrc,
+//         "price": data.price,
+//         "currency": data.currency,
+//         "currencySymbol": data.currencySymbol,
+//         "quantityType": data.quantityType,
+//         "quantityValue": data.quantityValue
+//     };
+//     const productData = productModel.get(options)
+//     // var updateResult = await collection.updateOne({
+//     //     //Selection criteria
+//     //     '_id': ObjectId(data.storeId)
+//     // }, {
+//     //     //Updated data
+//     //     $set: findResult
+//     // });
+
+//     await collection.updateOne({
+//         _id: ObjectId(storeId)
+//     }, {
+//         $push: {
+//             'profileData.products': productData
+//         }
+//     });
+
+//     // findResult = await collection.findOne({
+//     //     '_id': ObjectId(data.storeId)
+//     // });
+
+//     res.status(200).json({
+//         success: true,
+//         message: 'Successfully added product!',
+//         productId: productId
+//         // result: updateResult,
+//         // product: productData
+//     });
+// };
+
+const getStoreProducts = async function (req, res, next) {
+    let collectionProducts = await getMongoProductsCollection();
+    let storeId = req.params.storeId;
+    //TODO validate params
+    let searchTerm = req.query.search;
+    let priceMin = req.query.priceMin;
+    let priceMax = req.query.priceMax;
+
+    let findResult;
+    if (searchTerm && !priceMin && !priceMax) {
+        searchTerm = searchTerm.replace("-", " ");
+
+        findResult = await collectionProducts.find({
+            $and: [{
+                'storeId': storeId
+            }, {
+                $text: {
+                    $search: searchTerm
+                }
+            }]
+        }).project({
+            score: {
+                $meta: "textScore"
+            }
+        }).sort({
+            score: {
+                $meta: "textScore"
+            }
+        }).toArray();
+        //console.log("no search term provided.")
+    } else if (priceMin && priceMax && !searchTerm) {
+        console.log(priceMin)
+        //return 
+        findResult = await collectionProducts.find({
+            $and: [{
+                    'storeId': storeId
+                },
+                {
+                    'priceFloat': {
+                        $gte: parseFloat(priceMin),
+                        $lte: parseFloat(priceMax)
+                    }
+                }
+            ]
+        }).sort({
+            datetimeCreated: -1
+        }).toArray();
+        //
+    } else if (priceMin && priceMax && searchTerm) {
+        //console.log(priceMin)
+        findResult = await collectionProducts.find({
+            $and: [{
+                    $text: {
+                        $search: searchTerm
+                    }
+                }, {
+                    'storeId': storeId
+                },
+                {
+                    'priceFloat': {
+                        $gte: parseFloat(priceMin),
+                        $lte: parseFloat(priceMax)
+                    }
+                }
+            ]
+        }).project({
+            score: {
+                $meta: "textScore"
+            }
+        }).sort({
+            score: {
+                $meta: "textScore"
+            }
+        }).toArray();
+    } else {
+        findResult = await collectionProducts.find({
+                'storeId': storeId
+            },
+            // {
+            //     projection: {
+            //         imgSrc: 0
+            //     }
+            // }
+        ).sort({
+            datetimeCreated: -1
+        }).toArray();
+    }
+
+    res.status(200).json({
+        success: true,
+        message: 'Successfully fetched products!',
+        products: findResult
+    });
+};
+
 const createProduct = async function (req, res, next) {
-    let collection = await getMongoStoresCollection();
+    let collectionStores = await getMongoStoresCollection();
+    let collectionProducts = await getMongoProductsCollection();
     let data = req.body;
     let userEmail = req.userEmail;
     let storeId = req.params.storeId;
 
-    let findResult = await collection.findOne({
+    let findResult = await collectionStores.findOne({
         '_id': ObjectId(storeId)
     });
 
@@ -496,12 +697,12 @@ const createProduct = async function (req, res, next) {
     };
 
     //Define product id
-    let productId;
-    if (findResult.profileData.products.length === 0) {
-        productId = "0";
-    } else {
-        productId = (parseInt(findResult.profileData.products[findResult.profileData.products.length - 1].productId) + 1).toString();
-    }
+    // let productId;
+    // if (findResult.profileData.products.length === 0) {
+    //     productId = "0";
+    // } else {
+    //     productId = (parseInt(findResult.profileData.products[findResult.profileData.products.length - 1].productId) + 1).toString();
+    // }
 
     // findResult.profileData.products.push({
     //     "productId": productId.toString(),
@@ -513,22 +714,26 @@ const createProduct = async function (req, res, next) {
     //     "currency": data.currency,
     //     "currencySymbol": data.currencySymbol
     // });
-
+    //console.log(data.imageDetails)
     let options = {
-        "datetimeCreated": new Date(),
+        "datetimeCreated": new Date().toISOString(),
         "datetimeAdjusted": "",
-        "productId": productId.toString(),
+        //"productId": productId.toString(),
         "storeId": data.storeId,
         "title": data.title,
         "description": data.description,
         "imgSrc": data.imgSrc,
+        "imageDetails": data.imageDetails,
         "price": data.price,
+        //"priceFloat": parseFloat(data.price),
         "currency": data.currency,
         "currencySymbol": data.currencySymbol,
         "quantityType": data.quantityType,
         "quantityValue": data.quantityValue
     };
-    const productData = productModel.get(options)
+    //console.log(options.price)
+    const product = getProductModel(options)
+    //console.log(product.priceFloat)
     // var updateResult = await collection.updateOne({
     //     //Selection criteria
     //     '_id': ObjectId(data.storeId)
@@ -537,13 +742,7 @@ const createProduct = async function (req, res, next) {
     //     $set: findResult
     // });
 
-    await collection.updateOne({
-        _id: ObjectId(storeId)
-    }, {
-        $push: {
-            'profileData.products': productData
-        }
-    });
+    let insertResult = await collectionProducts.insertOne(product);
 
     // findResult = await collection.findOne({
     //     '_id': ObjectId(data.storeId)
@@ -552,20 +751,21 @@ const createProduct = async function (req, res, next) {
     res.status(200).json({
         success: true,
         message: 'Successfully added product!',
-        productId: productId
+        product: insertResult.ops[0]
         // result: updateResult,
         // product: productData
     });
 };
 
 const editProduct = async function (req, res, next) {
-    const collection = await getMongoStoresCollection();
+    const collectionStores = await getMongoStoresCollection();
+    const collectionProducts = await getMongoProductsCollection();
     let data = req.body;
     let storeId = req.params.storeId;
     let productId = req.params.productId;
     let userEmail = req.userEmail;
 
-    let findResult = await collection.findOne({
+    let findResult = await collectionStores.findOne({
         '_id': ObjectId(storeId)
     });
 
@@ -582,6 +782,19 @@ const editProduct = async function (req, res, next) {
             message: "User unauthorized to edit this store."
         });
     };
+
+    // let options = {
+    //     "datetimeAdjusted": new Date().toISOString(),
+    //     "title": data.title,
+    //     "description": data.description,
+    //     "imgSrc": data.imgSrc,
+    //     "price": data.price,
+    //     "currency": data.currency,
+    //     "currencySymbol": data.currencySymbol,
+    //     "quantityType": data.quantityType,
+    //     "quantityValue": data.quantityValue
+    // };
+    // const product = productModel.get(options)
 
     // var findResult = await collection.findOne({
     //     '_id': ObjectId(storeId)
@@ -622,49 +835,82 @@ const editProduct = async function (req, res, next) {
     //     upsert: false
     // });
 
-    let updateResult = await collection.updateOne({
-        "_id": ObjectId(storeId),
-        "profileData.products.productId": productId
-    }, {
-        $set: {
-            "profileData.products.$.title": data.title,
-            "profileData.products.$.description": data.description,
-            "profileData.products.$.price": data.price,
-            "profileData.products.$.imgSrc": data.imgSrc,
-            "profileData.products.$.quantityType": data.quantityType,
-            "profileData.products.$.quantityValue": data.quantityValue,
-            "profileData.products.$.datetimeAdjusted": new Date()
-        }
-    }, {
-        returnOriginal: false
-    });
+    // let updateResult = await collection.updateOne({
+    //     "_id": ObjectId(storeId),
+    //     "profileData.products.productId": productId
+    // }, {
+    //     $set: {
+    //         "profileData.products.$.title": data.title,
+    //         "profileData.products.$.description": data.description,
+    //         "profileData.products.$.price": data.price,
+    //         "profileData.products.$.imgSrc": data.imgSrc,
+    //         "profileData.products.$.quantityType": data.quantityType,
+    //         "profileData.products.$.quantityValue": data.quantityValue,
+    //         "profileData.products.$.datetimeAdjusted": new Date()
+    //     }
+    // }, {
+    //     returnOriginal: false
+    // });
 
-    if (!updateResult || !updateResult.result.nModified) {
+    let updateResult = await collectionProducts.findOneAndUpdate({
+            "_id": ObjectId(productId),
+            "storeId": storeId
+        }, {
+            $set: {
+                "datetimeAdjusted": new Date().toISOString(),
+                "title": data.title,
+                "description": data.description,
+                "imgSrc": data.imgSrc,
+                "imageDetails": data.imageDetails,
+                "price": data.price,
+                "priceFloat": parseFloat(data.price),
+                "currency": data.currency,
+                "currencySymbol": data.currencySymbol,
+                "quantityType": data.quantityType,
+                "quantityValue": data.quantityValue
+            }
+        }, {
+            returnOriginal: false,
+            // projection: {
+            //     imgSrc: 0
+            // }
+        },
+        // {
+        //     projection: {
+        //         imgSrc: 0
+        //     }
+        // }
+    );
+    //console.log(updateResult)
+    if (!updateResult || !updateResult.ok) {
         console.log("not updated")
         return next({
             status: 400,
             message: "Store not found or wrong ids provided. Product was not updated."
         });
     };
+    //console.log(updateResult);
 
     //console.log(updateResult)
     //let index = updateResult.value.profileData.products.findIndex(pr => pr.productId === productId);
     res.status(200).json({
         success: true,
         message: 'Product update successful!',
+        product: updateResult.value
         // modifiedCount: updateResult.modifiedCount,
         // product: updateResult.value.profileData.products[index]
     });
 };
 
 const updateStockAmount = async function (req, res, next) {
-    let collection = await getMongoStoresCollection();
+    const collectionStores = await getMongoStoresCollection();
+    const collectionProducts = await getMongoProductsCollection();
     let storeId = req.params.storeId;
     let productId = req.params.productId;
     let userEmail = req.userEmail;
     let data = req.body;
 
-    let findResult = await collection.findOne({
+    let findResult = await collectionStores.findOne({
         '_id': ObjectId(storeId)
     });
 
@@ -681,40 +927,50 @@ const updateStockAmount = async function (req, res, next) {
             message: "User unauthorized to edit this store."
         });
     };
+
+    let updateResult = await collectionProducts.findOneAndUpdate({
+        "_id": ObjectId(productId),
+        "storeId": storeId
+    }, {
+        $set: {
+            "stockAmount": parseInt(data.stockAmount)
+        }
+    });
+    //console.log(updateResult);
     //Check if stock amount was zero before to trigger the product availability notification system
-    let index = findResult.profileData.products.findIndex(pr => pr.productId === productId);
-    if (index === -1) {
-        return next({
-            status: 400,
-            message: "Wrong product id provided."
-        });
-    };
+    // let index = findResult.profileData.products.findIndex(pr => pr.productId === productId);
+    // if (index === -1) {
+    //     return next({
+    //         status: 400,
+    //         message: "Wrong product id provided."
+    //     });
+    // };
 
     // var setString = "profileData.products.$.productId[" + productId.toString() + "].stockAmount"
     // console.log(setString)
-    let updateResult = await collection.updateOne({
-        "_id": ObjectId(storeId),
-        "profileData.products.productId": productId
-    }, {
-        $set: {
-            //setString: data.stockAmount
-            "profileData.products.$.stockAmount": parseInt(data.stockAmount)
-        }
-    }, {
-        upsert: false
-    });
+    // let updateResult = await collection.updateOne({
+    //     "_id": ObjectId(storeId),
+    //     "profileData.products.productId": productId
+    // }, {
+    //     $set: {
+    //         //setString: data.stockAmount
+    //         "profileData.products.$.stockAmount": parseInt(data.stockAmount)
+    //     }
+    // }, {
+    //     upsert: false
+    // });
 
-    if (!updateResult || !updateResult.result.nModified) {
+    if (!updateResult) {
         console.log("not updated")
         return next({
             status: 400,
-            message: "Store not found or wrong ids provided. Product was not updated."
+            message: "Store or product not found."
         });
     };
 
-    if (index > -1 && findResult.profileData.products[index].stockAmount === 0) {
+    if (updateResult.value.stockAmount === 0) {
         console.log("trigger notification");
-        controller_prdctAvNotif.sendNotifications(storeId, productId);
+        sendNotifications(storeId, productId);
     };
 
     // console.log(updateResult.modifiedCount)
@@ -734,14 +990,80 @@ const updateStockAmount = async function (req, res, next) {
     });
 };
 
+// const deleteProduct = async function (req, res, next) {
+//     let collection = await getMongoStoresCollection();
+//     let storeId = req.params.storeId;
+//     let productId = req.params.productId;
+//     let userEmail = req.userEmail;
+//     //var data = req.body;
+
+//     let findResult = await collection.findOne({
+//         '_id': ObjectId(storeId)
+//     });
+
+//     //Guard to make sure that only the store owner is able to edit this store
+//     if (findResult.userEmail !== userEmail) {
+//         return next({
+//             status: 400,
+//             message: "User unauthorized to edit this store."
+//         });
+//     };
+
+//     //identify store
+//     // var findResult = await collection.findOne({
+//     //     '_id': ObjectId(storeId)
+//     // });
+
+//     // for (var i = 0; i < findResult.profileData.products.length; i++) {
+//     //     if (findResult.profileData.products[i].productId == productId) {
+//     //         findResult.profileData.products.splice(i, 1);
+//     //         break
+//     //     };
+//     // };
+//     let updateResult = await collection.updateOne({
+//         _id: ObjectId(storeId)
+//     }, {
+//         $pull: {
+//             'profileData.products': {
+//                 productId: productId
+//             }
+//         }
+//     });
+
+//     if (!updateResult || !updateResult.result.nModified) {
+//         console.log("not updated")
+//         return next({
+//             status: 400,
+//             message: "Store not found or wrong ids provided. Product was not updated."
+//         });
+//     };
+//     //update store (=delete product)
+//     // var updateResult = await collection.updateOne({
+//     //     //Selection criteria
+//     //     '_id': ObjectId(storeId)
+//     // }, {
+//     //     //Updated data
+//     //     $set: findResult
+//     // });
+//     //console.log(updateResult)
+//     res.status(200).json({
+//         success: true,
+//         message: 'Successfully deleted the product!',
+//         //result: updateResult
+//     });
+// };
+
 const deleteProduct = async function (req, res, next) {
-    let collection = await getMongoStoresCollection();
+    const collectionStores = await getMongoStoresCollection();
+    const collectionProducts = await getMongoProductsCollection();
     let storeId = req.params.storeId;
     let productId = req.params.productId;
+    console.log(storeId)
+    console.log(productId)
     let userEmail = req.userEmail;
     //var data = req.body;
 
-    let findResult = await collection.findOne({
+    let findResult = await collectionStores.findOne({
         '_id': ObjectId(storeId)
     });
 
@@ -764,21 +1086,26 @@ const deleteProduct = async function (req, res, next) {
     //         break
     //     };
     // };
-    let updateResult = await collection.updateOne({
-        _id: ObjectId(storeId)
-    }, {
-        $pull: {
-            'profileData.products': {
-                productId: productId
-            }
-        }
-    });
+    // let updateResult = await collection.updateOne({
+    //     _id: ObjectId(storeId)
+    // }, {
+    //     $pull: {
+    //         'profileData.products': {
+    //             productId: productId
+    //         }
+    //     }
+    // });
 
-    if (!updateResult || !updateResult.result.nModified) {
+    let deletionResult = await collectionProducts.deleteOne({
+        "_id": ObjectId(productId),
+        "storeId": storeId
+    })
+
+    if (!deletionResult) {
         console.log("not updated")
         return next({
             status: 400,
-            message: "Store not found or wrong ids provided. Product was not updated."
+            message: "Store not deleted."
         });
     };
     //update store (=delete product)
@@ -913,7 +1240,7 @@ const addReview = async function (req, res, next) {
         "rating": data.rating,
         "text": data.text
     };
-    let reviewData = reviewModel.get(options);
+    let reviewData = getReviewModel(options);
     //findResult.profileData.reviews = [];
     // findResult.profileData.reviews.unshift({
     //     "reviewId": reviewId.toString(),
@@ -1077,16 +1404,104 @@ function calculateAverage(array) {
 };
 
 const getImageBuffer = async function (req, res, next) {
-    let image = req.file;
+    let file = req.file;
     //console.log(image.buffer)
-    let bufferString = Buffer.from(image.buffer).toString('base64');
+    let bufferString = Buffer.from(file.buffer).toString('base64');
+    console.log(bufferString.length)
     // let bytes = new Uint8Array(image.buffer);
     // let binary = bytes.reduce((data, b) => data += String.fromCharCode(b), '');
-    let final = "data:image/jpeg;base64," + bufferString;
+    let finalBuffer = "data:image/jpeg;base64," + bufferString;
     //console.log(final)
-    res.status(200).send(final)
+    res.status(200).json({
+        buffer: finalBuffer,
+        imageDetails: {
+            originalname: file.originalname,
+            name: file.originalname,
+            size: file.size,
+            mimetype: file.mimetype
+        }
+    })
 };
 
+const getImageBufferResized = async function (req, res, next) {
+    let file = req.file;
+
+    //console.log(image.buffer)
+    let metadataIn = await sharp(file.buffer).metadata();
+    console.log(`Input Metadata: size ${metadataIn.size}, width ${metadataIn.width}, height ${metadataIn.height}, aspect ratio ${metadataIn.width/metadataIn.height}`);
+    let imageResult = await sharp(file.buffer)
+        .resize({
+            fit: sharp.fit.contain,
+            width: parseInt(metadataIn.width / 5),
+            //height: 517
+        })
+        .toBuffer();
+    let metadataOut = await sharp(imageResult).metadata();
+    console.log(`Output Metadata: size ${metadataOut.size}, width ${metadataOut.width}, height ${metadataOut.height}, aspect ratio ${metadataOut.width/metadataOut.height}`);
+
+    //console.log(imageResult);
+    //console.log(bufferString.length())
+    let bufferString = Buffer.from(imageResult).toString('base64');
+    //console.log(bufferString.length)
+    let finalBuffer = "data:image/jpeg;base64," + bufferString;
+    //console.log(final)
+    res.status(200).json({
+        buffer: finalBuffer,
+        imageDetails: {
+            originalname: file.originalname,
+            name: file.originalname,
+            size: file.size,
+            mimetype: file.mimetype
+        }
+    })
+};
+
+const getImageResized = async function (req, res, next) {
+    let file = req.file;
+    console.log(req.body.text)
+    //console.log(image.buffer)
+    let metadataIn = await sharp(file.buffer).metadata();
+    console.log(`Input Metadata: size ${metadataIn.size}, width ${metadataIn.width}, height ${metadataIn.height}, aspect ratio ${metadataIn.width/metadataIn.height}`);
+
+    let resizedImg = await sharp(file.buffer)
+        .resize({
+            fit: sharp.fit.contain,
+            width: parseInt(metadataIn.width / 5),
+            //height: 517
+        }).toBuffer();
+
+    let metadataOut = await sharp(resizedImg).metadata()
+    console.log(`Output Metadata: size ${metadataOut.size}, width ${metadataOut.width}, height ${metadataOut.height}, aspect ratio ${metadataOut.width/metadataOut.height}`);
+
+    await sharp(resizedImg).toFile('output.jpg')
+
+    res.sendFile('C:\\Users\\i514032\\OneDrive - SAP SE\\p\\prjct\\backend\\output.jpg');
+
+    // let metadataOut = await sharp(imageResult).metadata();
+    // console.log(`Output Metadata: size ${metadataOut.size}, width ${metadataOut.width}, height ${metadataOut.height}, aspect ratio ${metadataOut.width/metadataOut.height}`);
+    // await sharp(file.buffer).resize({
+    //     width: 381,
+    //     height: 517
+    // }).toFile('C:\Users\i514032\OneDrive - SAP SE\p\prjct\assets\store_images\output.png')
+
+    //console.log(imageResult);
+    //console.log(bufferString.length())
+    // let bufferString = Buffer.from(imageResult).toString('base64');
+    // //console.log(bufferString.length)
+    // let finalBuffer = "data:image/jpeg;base64," + bufferString;
+    // //console.log(final)
+    // res.status(200).json({
+    //     buffer: finalBuffer,
+    //     imageDetails: {
+    //         originalname: file.originalname,
+    //         name: file.originalname,
+    //         size: file.size,
+    //         mimetype: file.mimetype
+    //     }
+    // })
+};
+
+//Get the image of a product to display it in the shopping cart (because images are not stored in the cart anymore -> local storage size)
 const getProductImage = async function (req, res, next) {
     let collectionStores = await getMongoStoresCollection();
     let storeId = req.params.storeId;
@@ -1141,10 +1556,13 @@ module.exports = {
     createProduct,
     editProduct,
     deleteProduct,
+    getStoreProducts,
     updateStockAmount,
     geoCodeTest,
     getStoresByLocation,
     uploadImagesTest,
     getImageBuffer,
+    getImageBufferResized,
+    getImageResized,
     getProductImage
 };

@@ -1,20 +1,17 @@
 "use strict";
-const mongodb = require('../../mongodb');
-const config = require('../../config');
-const ObjectId = require('mongodb').ObjectId;
 
-const nodemailer = require('../../mailing/nodemailer');
+import {
+    ObjectId
+} from 'mongodb';
 
-const {
-    prdctAvNotifModel
-} = require('../../data-models');
+import {
+    sendNodemailerMail
+} from '../../mailing/nodemailer';
 
-async function getMongoPrdctNotifCollection() {
-    return mongodb.getClient().db(config.mongodb_name).collection("prdctNotif");
-};
-async function getMongoStoresCollection() {
-    return mongodb.getClient().db(config.mongodb_name).collection("stores");
-};
+import {
+    getMongoPrdctNotifCollection,
+    getMongoStoresCollection
+} from '../../mongodb/collections';
 
 const rgstrPrdctAvNotif = async function (req, res, next) {
     const collection = await getMongoPrdctNotifCollection();
@@ -122,7 +119,7 @@ async function sendNotifications(storeId, productId) {
             product: product
         };
         try {
-            await nodemailer.sendMail(mailOptions);
+            await sendNodemailerMail(mailOptions);
         } catch (error) {
             console.log(error)
             // return next({
@@ -148,10 +145,6 @@ async function deleteNotifications(storeId, productId) {
     return;
 };
 
-module.exports = {
-    rgstrPrdctAvNotif,
-    checkNotificationsEndpoint,
-    checkNotificationsFct,
-    sendNotificationsEndpoint,
-    sendNotifications
-};
+//===================================================================================================
+export { rgstrPrdctAvNotif, checkNotificationsEndpoint, checkNotificationsFct, sendNotificationsEndpoint, sendNotifications  };
+//===================================================================================================

@@ -1,4 +1,4 @@
-function getMailContent(verificationToken) {
+function getContentRegVerification(verificationToken) {
     let htmlBody =
         `<b>Hello User</b><br/> <br/> 
 
@@ -6,9 +6,8 @@ function getMailContent(verificationToken) {
     return htmlBody;
 };
 
-let subject = "E-Mail Verification";
+const subjectRegVerification = "E-Mail Verification";
 
-module.exports = {
-    getMailContent,
-    subject
-};
+//===================================================================================================
+export { getContentRegVerification, subjectRegVerification };
+//===================================================================================================

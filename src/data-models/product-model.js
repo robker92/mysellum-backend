@@ -1,13 +1,15 @@
-function get(options) {
+export function getProductModel(options) {
     const model = {
-        "productId": options.productId,
+        //"productId": options.productId,
         "storeId": options.storeId,
         "datetimeCreated": options.datetimeCreated,
         "datetimeAdjusted": options.datetimeAdjusted,
         "title": options.title,
         "description": options.description,
         "imgSrc": options.imgSrc,
+        "imageDetails": options.imageDetails,
         "price": options.price,
+        "priceFloat": parseFloat(options.price),
         "currency": options.currency,
         "currencySymbol": options.currencySymbol,
         "quantityType": options.quantityType,
@@ -16,7 +18,3 @@ function get(options) {
     };
     return model;
 };
-
-module.exports = {
-    get
-}

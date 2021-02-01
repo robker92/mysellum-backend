@@ -1,4 +1,4 @@
-function get(options) {
+export function getUserModel(options) {
     const model = {
         "firstName": options.firstName,
         "lastName": options.lastName,
@@ -22,7 +22,3 @@ function get(options) {
     };
     return model;
 };
-
-module.exports = {
-    get
-}

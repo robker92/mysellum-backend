@@ -1,11 +1,12 @@
 "use strict";
 
-const jwt = require('jsonwebtoken');
-
-const config = require('./config');
-const {
+import jwt from "jsonwebtoken";
+import {
+    JWT_SECRET_KEY
+} from './config';
+import {
     ValidationError
-} = require('express-validation');
+} from 'express-validation';
 
 const allowCrossDomain = (req, res, next) => {
     res.header('Access-Control-Allow-Origin', "http://localhost:8080");
@@ -33,7 +34,7 @@ const checkAuthentication = (req, res, next) => {
         });
     }
     // verifies secret and checks exp
-    jwt.verify(token, config.secretKey, (err, decoded) => {
+    jwt.verify(token, JWT_SECRET_KEY, (err, decoded) => {
         if (err) {
             return res.status(401).send({
                 error: 'TokenInvalid',
@@ -109,8 +110,6 @@ const errorHandler = (err, req, res, next) => {
 
 };
 
-module.exports = {
-    allowCrossDomain,
-    checkAuthentication,
-    errorHandler
-};
+//=============================================================================
+export { allowCrossDomain, checkAuthentication, errorHandler };
+//=============================================================================

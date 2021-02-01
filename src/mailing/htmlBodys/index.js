@@ -1,11 +1,4 @@
-const testMail = require('./testMail');
-const resetPasswordMail = require('./passwordResetMail');
-const registrationVerificationMail = require('./registrationVerificationMail');
-const prdctAvNotifMail = require('./prdctAvNotifMail');
-
-module.exports = {
-    testMail,
-    resetPasswordMail,
-    registrationVerificationMail,
-    prdctAvNotifMail
-}
+export * from "./testMail";
+export * from "./passwordResetMail";
+export * from "./registrationVerificationMail";
+export * from "./prdctAvNotifMail";
