@@ -1,22 +1,21 @@
 "use strict";
 
-import api from "../api";
+import api from "../src/api";
 import request from 'supertest';
-import {getMongoUsersCollection} from "../mongodb/collections";
+import {getMongoUsersCollection} from "../src/mongodb/collections";
 import {
     StatusCodes
 } from 'http-status-codes';
 
-import {connectMongoDBClient, disconnectMongoDBClient, getClient} from "../mongodb/setup"
+import {connectMongoDBClient, disconnectMongoDBClient, getClient} from "../src/mongodb/setup"
 
-jest.mock("../mailing/nodemailer", () => (
+jest.mock("../src/mailing/nodemailer", () => (
     {
-        ...(jest.requireActual("../mailing/nodemailer")),
+        ...(jest.requireActual("../src/mailing/nodemailer")),
         sendNodemailerMail: jest.fn()
     }
 ));
-
-import { sendNodemailerMail } from "../mailing/nodemailer"
+import { sendNodemailerMail } from "../src/mailing/nodemailer"
 // jest.mock('../mailing/nodemailer', () => ({
 //     sendNodemailerMail: jest.fn()
 // }))
