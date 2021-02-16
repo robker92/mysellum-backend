@@ -31,7 +31,8 @@ import {
 
 import {
     getMongoStoresCollection,
-    getMongoUsersCollection
+    getMongoUsersCollection,
+    getMongoProductsCollection
 } from '../mongodb/collections';
 
 // const {
@@ -59,6 +60,7 @@ const getSingleUser = async function (req, res, next) {
     });
 
     res.send(result);
+    return;
 }
 
 const registerUser = async function (req, res, next) {
@@ -127,7 +129,7 @@ const registerUser = async function (req, res, next) {
     };
 
     try {
-        await sendNodemailerMail(mailOptions);
+        //await sendNodemailerMail(mailOptions);
     } catch (error) {
         console.log(error)
         return next({
@@ -165,6 +167,7 @@ const registerUser = async function (req, res, next) {
         success: true,
         message: 'Registration verification e-mail successfully sent!'
     });
+    return;
 };
 
 const verifyRegistration = async function (req, res, next) {
@@ -254,7 +257,7 @@ const verifyRegistration = async function (req, res, next) {
             });
         };
     });
-
+    return;
 
     // updates[i] = collectionStores.findOneAndUpdate({
     //     "_id": ObjectId(products[i][0].storeId),
@@ -430,6 +433,7 @@ const addToShoppingCart = async function (req, res, next) {
     //payload: params: email, body:{product,amount}
     let collectionUsers = await getMongoUsersCollection();
     let collectionStores = await getMongoStoresCollection();
+    let collectionProducts = await getMongoProductsCollection();
     let email = req.params.email;
     let addedProduct = req.body.product;
     let addedAmount = parseInt(req.body.amount);
@@ -447,10 +451,13 @@ const addToShoppingCart = async function (req, res, next) {
         });
     };
     //retrieve the product from the store document
-    let productFromDB = store.profileData.products.filter(obj => {
-        return obj.productId === addedProduct.productId
-    })[0];
+    // let productFromDB = store.profileData.products.filter(obj => {
+    //     return obj._id === addedProduct._id
+    // })[0];
 
+    let productFromDB = await collectionProducts.findOne({
+        _id: ObjectId(addedProduct._id)
+    });
     if (!productFromDB) {
         //when no product was found -> wrong product id
         return next({
@@ -465,7 +472,6 @@ const addToShoppingCart = async function (req, res, next) {
     let user = await collectionUsers.findOne({
         'email': email
     });
-
     if (!user) {
         //when no user was found -> wrong email
         return next({
@@ -473,14 +479,14 @@ const addToShoppingCart = async function (req, res, next) {
             message: "Wrong email provided."
         });
     };
-
+ 
     let currentShoppingCart = user.shoppingCart;
     //Check if product is already inside cart
     let found = false;
     if (currentShoppingCart.length > 0) {
         for (let i = 0; i < currentShoppingCart.length; i++) {
             //Check if added product is already in cart and increase amount if yes
-            if (currentShoppingCart[i][0].productId === productFromDB.productId && currentShoppingCart[i][0].storeId === productFromDB.storeId) {
+            if (ObjectId(currentShoppingCart[i][0]._id).toString() === productFromDB._id.toString() && currentShoppingCart[i][0].storeId === productFromDB.storeId) {
                 currentShoppingCart[i][1] = currentShoppingCart[i][1] + addedAmount;
                 currentShoppingCart[i].splice(0, 1, productFromDB);
                 found = true;
@@ -511,9 +517,9 @@ const addToShoppingCart = async function (req, res, next) {
 };
 
 const removeFromShoppingCart = async function (req, res, next) {
-    //payload: params: email, body:{product,amount}
     let collection = await getMongoUsersCollection();
     let collectionStores = await getMongoStoresCollection();
+    let collectionProducts = await getMongoProductsCollection();
     let email = req.params.email;
     let removedProduct = req.body.product;
     let removedAmount = req.body.amount;
@@ -529,10 +535,10 @@ const removeFromShoppingCart = async function (req, res, next) {
             message: "Wrong store id provided."
         });
     };
-    //retrieve the product from the store document
-    let productFromDB = store.profileData.products.filter(obj => {
-        return obj.productId === removedProduct.productId
-    })[0];
+    //retrieve the product
+    let productFromDB = await collectionProducts.findOne({
+        _id: ObjectId(removedProduct._id)
+    });
     if (!productFromDB) {
         //when no product was found -> wrong product id
         return next({
@@ -540,6 +546,7 @@ const removeFromShoppingCart = async function (req, res, next) {
             message: "Wrong product id provided."
         });
     };
+
     //delete the image to save localstorage space
     delete productFromDB["imgSrc"];
 
@@ -558,7 +565,7 @@ const removeFromShoppingCart = async function (req, res, next) {
     let found = false;
     for (let i = 0; i < currentShoppingCart.length; i++) {
         //Check if added product exists in cart
-        if (currentShoppingCart[i][0].productId === productFromDB.productId && currentShoppingCart[i][0].storeId === productFromDB.storeId) {
+        if (currentShoppingCart[i][0]._id.toString() === productFromDB._id.toString() && currentShoppingCart[i][0].storeId === productFromDB.storeId) {
             currentShoppingCart[i][1] = currentShoppingCart[i][1] - removedAmount;
             currentShoppingCart[i].splice(0, 1, productFromDB);
             //Delete the array element if amount == 0
@@ -607,7 +614,7 @@ const updateShoppingCart = async function (req, res, next) {
     //Run through the array, get every product from the database, push it to the payload array and save the cart to the user
     for (let i = 0; i < shoppingCart.length; i++) {
         storeId = shoppingCart[i][0].storeId;
-        productId = shoppingCart[i][0].productId;
+        productId = shoppingCart[i][0]._id;
 
         let store = await collectionStores.findOne({
             _id: ObjectId(storeId)
@@ -621,7 +628,7 @@ const updateShoppingCart = async function (req, res, next) {
         };
         //retrieve the product from the store document
         let productFromDB = store.profileData.products.filter(obj => {
-            return obj.productId === productId
+            return obj._id === productId
         })[0];
         if (!productFromDB) {
             //when no product was found -> wrong product id

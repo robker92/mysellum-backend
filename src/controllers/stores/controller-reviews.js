@@ -60,13 +60,12 @@ const addReview = async function (req, res, next) {
             message: "User not found."
         });
     };
-
+    console.log(findResultUser);
     let options = {
         "reviewId": reviewId.toString(),
         "userEmail": req.userEmail,
         "userFirstName": findResultUser.firstName,
         "userLastName": findResultUser.lastName,
-        "userName": findResultUser.lastName + ", " + findResultUser.firstName,
         "datetimeCreated": new Date(),
         "datetimeAdjusted": "",
         "rating": data.rating,

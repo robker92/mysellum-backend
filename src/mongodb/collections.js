@@ -14,7 +14,14 @@ async function getMongoUsersCollection() {
 async function getMongoProductsCollection() {
     return getMongoDBClient().db(MONGODB_NAME).collection("products");
 };
+async function getMongoOrdersCollection() {
+    return getMongoDBClient().db(MONGODB_NAME).collection("orders");
+};
+async function getMongoPrdctNotifCollection() {
+    return getMongoDBClient().db(MONGODB_NAME).collection("prdctNotif");
+};
 
 //===================================================================================================
-export { getMongoStoresCollection, getMongoUsersCollection, getMongoProductsCollection };
+export { getMongoStoresCollection, getMongoUsersCollection, getMongoProductsCollection, 
+    getMongoOrdersCollection, getMongoPrdctNotifCollection };
 //===================================================================================================

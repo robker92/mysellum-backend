@@ -12,8 +12,8 @@ POST http://localhost:3000/users/loginUser HTTP/1.1
 content-type: application/json
 
 {
-    "email": "TestEmail4211@web.de",
-    "password": "Test1!----"
+    "email": "TestEmail1@web.de",
+    "password": "TestPassword1!"
 }
 ###
 

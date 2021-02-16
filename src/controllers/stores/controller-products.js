@@ -41,7 +41,7 @@ const createProduct = async function (req, res, next) {
         "datetimeCreated": new Date().toISOString(),
         "datetimeAdjusted": "",
         //"productId": productId.toString(),
-        "storeId": data.storeId,
+        "storeId": storeId,
         "title": data.title,
         "description": data.description,
         "imgSrc": data.imgSrc,
@@ -328,6 +328,7 @@ const getStoreProducts = async function (req, res, next) {
 //Get the image of a product to display it in the shopping cart (because images are not stored in the cart anymore -> local storage size)
 const getProductImage = async function (req, res, next) {
     let collectionStores = await getMongoStoresCollection();
+    let collectionProducts = await getMongoProductsCollection();
     let storeId = req.params.storeId;
     let productId = req.params.productId;
 
@@ -340,14 +341,17 @@ const getProductImage = async function (req, res, next) {
             message: "Store not found."
         });
     };
-    let index = findResult.profileData.products.findIndex(pr => pr.productId === productId);
-    if (index === -1) {
+    let findResultProduct = await collectionProducts.findOne({
+        '_id': ObjectId(productId)
+    });
+    //let index = findResult.profileData.products.findIndex(pr => pr.productId === productId);
+    if (!findResultProduct) {
         return next({
             status: 400,
             message: "Wrong product id provided."
         });
     };
-    let image = findResult.profileData.products[index].imgSrc;
+    let image = findResultProduct.imgSrc;
     //console.log(image.buffer)
     // let bytes = new Uint8Array(image.buffer);
     // let binary = bytes.reduce((data, b) => data += String.fromCharCode(b), '');

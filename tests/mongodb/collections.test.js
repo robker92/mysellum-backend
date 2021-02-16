@@ -1,6 +1,6 @@
 import { getMongoStoresCollection, getMongoUsersCollection, getMongoProductsCollection } from '../../src/mongodb/collections'
 import { connectMongoDBClient, disconnectMongoDBClient } from '../../src/mongodb/setup'
-describe('Tests for the MongoDB setup module', () => {
+describe('Tests for the MongoDB collection get functions', () => {
     beforeAll(async function () {
         await connectMongoDBClient();
     });

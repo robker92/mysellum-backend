@@ -5,7 +5,7 @@ import {
 } from '../../mongodb/collections';
 
 
-function checkActivationSteps(store) {
+async function checkActivationSteps(store) {
     const collectionStores = await getMongoStoresCollection();
 
     
@@ -34,6 +34,7 @@ function checkActivationSteps(store) {
 }
 
 function checkProfileCompletion(store){
+    //TODO
     if(store.title.length > 0 && store.description.length > 0 && store.tags.length > 0 && store.images > 0 ) {
         return true;
     }

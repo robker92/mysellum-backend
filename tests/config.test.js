@@ -3,7 +3,7 @@ import { PORT, MONGODB_URL,MONGODB_NAME,JWT_SECRET_KEY,JWT_KEY_EXPIRE,
     MAIL_PW,JSON_LIMIT,URL_ENCODED_LIMIT, MULTER_LIMIT } from '../src/config'
 
 
-describe('Tests for the MongoDB setup module', () => {
+describe('Tests for the config', () => {
     beforeAll(async function () {
     });
     afterAll(async function () {

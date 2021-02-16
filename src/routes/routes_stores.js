@@ -1,5 +1,8 @@
 "use strict";
 
+// Dev data factory
+import { createFakeData, createFakeDataEndpoint } from '../dev-data-factory/dev-data-factory'
+
 import {
     MULTER_LIMIT
 } from '../config';
@@ -130,5 +133,7 @@ routerStores.get("/product-image/:storeId/:productId", excHandler(getProductImag
 routerStores.post("/geoCodeTest", excHandler(controller_stores.geoCodeTest));
 routerStores.post("/uploadImagesTest", parserUrlEncodedLimit, upload.array('images', 12), excHandler(controller_stores.uploadImagesTest));
 
+routerStores.get("/create-fake-data", createFakeData)
+routerStores.get("/delete-all-data", createFakeDataEndpoint)
 //console.log(router)
 export { routerStores };

@@ -148,7 +148,7 @@ const createOrder = async function (req, res, next) {
         //Find stores with contained products in DB
         foundStoresPromiseArray[i] = collectionStores.findOne({
             "_id": ObjectId(products[i][0].storeId),
-            "profileData.products.productId": products[i][0].productId
+            "profileData.products._id": products[i][0]._id
         });
     };
     //TODO single store id false?
@@ -163,16 +163,16 @@ const createOrder = async function (req, res, next) {
             message: "Wrong store Ids provided."
         });
     };
-    //TODO remove store duplicates?
+    
     removeDuplicatesFromArray(foundStores);
-    onsole.log(foundStores);
+    console.log(foundStores);
 
     // console.log(foundStores)
     let productsOutOfStock = [];
     for (let i = 0; i < foundStores.length; i++) {
         //Get the ordered product from the store which was fetched from the db
         let orderedProductFromStore = foundStores[i].profileData.products.find(obj => {
-            return obj.productId === products[i][0].productId
+            return obj._id === products[i][0]._id
         });
         console.log(orderedProductFromStore)
         if (!orderedProductFromStore) {
@@ -211,7 +211,7 @@ const createOrder = async function (req, res, next) {
                 //check if 
                 updates[i] = collectionStores.findOneAndUpdate({
                     "_id": ObjectId(products[i][0].storeId),
-                    "profileData.products.productId": products[i][0].productId
+                    "profileData.products._id": products[i][0]._id
                 }, {
                     $inc: {
                         "profileData.products.$.stockAmount": -products[i][1] //reduce stock amount by purchased amount

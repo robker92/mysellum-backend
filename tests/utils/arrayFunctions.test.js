@@ -1,7 +1,7 @@
 import {removeDuplicatesFromArray} from '../../src/utils/arrayFunctions'
 
 
-describe('Tests for the MongoDB setup module', () => {
+describe('Tests for the array utility functions', () => {
     beforeAll(async function () {
     });
     afterAll(async function () {

@@ -13,8 +13,8 @@ export function getStoreModel(options) {
             },
             "img": options.mapImg,
             "location": {
-                "lat": options.latitude,
-                "lng": options.longitude
+                "lat": options.lat,
+                "lng": options.lng
             },
             "mapIcon": options.mapIcon
         },
@@ -38,8 +38,8 @@ export function getStoreModel(options) {
         "notifications:": {
             "receivedOrder": false,
             "productOutOfStock": {
-                "atAmount": 0,
-                "registered": false
+                "registered": false,
+                "atAmount": 0                
             }
         },
         "shipping": {},

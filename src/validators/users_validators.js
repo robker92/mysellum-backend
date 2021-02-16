@@ -31,13 +31,16 @@ const cartProductValidation = {
     body: Joi.object({
         email: Joi.string().email().required(),
         product: Joi.object({
-            productId: Joi.number().required(),
+            _id: Joi.string().required(),
+            productId: Joi.number().optional(),
             storeId: Joi.string().regex(/^[A-Za-z0-9]*$/).required(),
             addDate: Joi.string().optional(),
             title: Joi.string().optional(),
             description: Joi.string().optional(),
             imgSrc: Joi.string().optional(),
+            imageDetails: Joi.object().optional(),
             price: Joi.string().optional(),
+            priceFloat: Joi.number().optional(),
             currency: Joi.string().optional(),
             currencySymbol: Joi.string().optional(),
             quantityType: Joi.string().optional(),
@@ -55,13 +58,16 @@ const cartUpdateValidation = {
         shoppingCart: Joi.array().items(
             Joi.array().items(
                 Joi.object({
-                    productId: Joi.number().required(),
+                    _id: Joi.string().required(),
+                    productId: Joi.number().optional(),
                     storeId: Joi.string().regex(/^[A-Za-z0-9]*$/).required(),
                     addDate: Joi.string().optional(),
                     title: Joi.string().optional(),
                     description: Joi.string().optional(),
                     imgSrc: Joi.string().optional(),
+                    imageDetails: Joi.object().optional(),
                     price: Joi.string().optional(),
+                    priceFloat: Joi.number().optional(),
                     currency: Joi.string().optional(),
                     currencySymbol: Joi.string().optional(),
                     quantityType: Joi.string().optional(),

@@ -6,6 +6,7 @@ dotenv.config()
 const PORT = process.env.PORT || '3000';
 //MongoDB
 const MONGODB_URL = process.env.MONGODB_URL || 'mongodb://localhost:27017';
+//const MONGODB_NAME = process.env.MONGODB_NAME_TEST;
 const MONGODB_NAME = process.env.NODE_ENV !== "test" ? process.env.MONGODB_NAME_DEV : process.env.MONGODB_NAME_TEST;
 //const MONGODB_NAME = process.env.JEST_WORKER_ID === undefined ? process.env.MONGODB_NAME_DEV : process.env.MONGODB_NAME_TEST;
 console.log(MONGODB_NAME)

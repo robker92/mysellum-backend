@@ -47,13 +47,16 @@ import {
 //Get Users
 routerUsers.get("/:email", excHandler(getSingleUser));
 routerUsers.get("/", excHandler(getAllUsers));
+
 //Login, Register
 routerUsers.post("/loginUser", parserJsonLimit, validate(loginUserValidation, opts), excHandler(loginUser));
 routerUsers.post("/registerUser", parserJsonLimit, validate(registerUserValidation, opts), excHandler(registerUser));
 routerUsers.post("/verifyRegistration/:verificationToken", parserJsonLimit, excHandler(verifyRegistration));
+
 //Update and Delete
 routerUsers.delete("/:email", excHandler(deleteUser));
 routerUsers.patch("/:email", parserJsonLimit, excHandler(updateUserInfo));
+
 //Shopping Cart
 routerUsers.patch("/cart/:email", parserJsonLimit, checkAuthentication, validate(cartProductValidation, opts), excHandler(addToShoppingCart));
 routerUsers.patch("/cartRemove/:email", parserJsonLimit, checkAuthentication, validate(cartProductValidation, opts), excHandler(removeFromShoppingCart));

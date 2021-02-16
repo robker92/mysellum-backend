@@ -16,7 +16,9 @@ import {
     ObjectId
 } from 'mongodb';
 
-const config = require('../config');
+import {
+    MONGODB_NAME
+} from '../config';
 
 import {
     sendNotifications
@@ -37,14 +39,14 @@ const geoCodeTest = async function (req, res, next) {
 
 
 async function getMongoStoresCollection() {
-    return getMongoDBClient().db(config.mongodb_name).collection("stores");
+    return getMongoDBClient().db(MONGODB_NAME).collection("stores");
 };
 // Get the MongoDB users collection
 async function getMongoUsersCollection() {
-    return getMongoDBClient().db(config.mongodb_name).collection("users");
+    return getMongoDBClient().db(MONGODB_NAME).collection("users");
 }
 async function getMongoProductsCollection() {
-    return getMongoDBClient().db(config.mongodb_name).collection("products");
+    return getMongoDBClient().db(MONGODB_NAME).collection("products");
 };
 
 const getSingleStore = async function (req, res, next) {

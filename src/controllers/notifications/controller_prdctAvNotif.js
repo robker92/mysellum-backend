@@ -1,6 +1,10 @@
 "use strict";
 
 import {
+    StatusCodes
+} from 'http-status-codes';
+
+import {
     ObjectId
 } from 'mongodb';
 
@@ -10,11 +14,14 @@ import {
 
 import {
     getMongoPrdctNotifCollection,
-    getMongoStoresCollection
+    getMongoStoresCollection,
+    getMongoProductsCollection
 } from '../../mongodb/collections';
 
 const rgstrPrdctAvNotif = async function (req, res, next) {
-    const collection = await getMongoPrdctNotifCollection();
+    const collectionNotif = await getMongoPrdctNotifCollection();
+    const collectionStores = await getMongoStoresCollection();
+    const collectionProducts = await getMongoProductsCollection();
     let email = req.body.email;
     let storeId = req.body.storeId;
     let productId = req.body.productId;
@@ -28,10 +35,37 @@ const rgstrPrdctAvNotif = async function (req, res, next) {
         storeId: storeId,
         productId: productId
     };
+    console.log(storeId);
+    const resultStore = await collectionStores.findOne({
+        "_id": ObjectId(storeId)
+    });
+    console.log(resultStore);
+    if(!resultStore) {
+        // store not found
+        return next({
+            status: StatusCodes.BAD_REQUEST,
+            message: "Store id invalid."
+        });
+    }
 
-    let result = await collection.insertOne(payload)
-    //console.log(result)
+    const resultProduct = await collectionProducts.findOne({
+        "_id": ObjectId(productId),
+        "storeId": storeId
+    });
+    if(!resultProduct) {
+        return next({
+            status: StatusCodes.BAD_REQUEST,
+            message: "Product id invalid."
+        });
+    }
 
+    const resultNotif = await collectionNotif.insertOne(payload);
+    if(!resultNotif) {
+        return next({
+            status: StatusCodes.BAD_REQUEST,
+            message: "Product notification registration unsuccessful."
+        });
+    }
     res.status(200).json({
         success: true,
         message: 'Product notification successfully registered!'

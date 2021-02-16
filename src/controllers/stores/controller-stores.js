@@ -31,6 +31,12 @@ const getSingleStore = async function (req, res, next) {
     let result = await collection.findOne({
         '_id': ObjectId(req.params.id)
     });
+    if(!result) {
+        return next({
+            status: 400,
+            message: "Store not found."
+        });
+    };
     console.log(result)
     //var result = await collection.findOne(ObjectId(req.params.id));
     //console.log(result);
