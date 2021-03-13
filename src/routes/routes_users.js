@@ -42,7 +42,7 @@ import {
     checkResetToken,
     resetPassword,
     sendTestMail
-} from "../controllers/controller_users"
+} from "../controller/controller_users"
 
 //Get Users
 routerUsers.get("/:email", excHandler(getSingleUser));

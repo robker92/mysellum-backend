@@ -77,7 +77,7 @@ const cartUpdateValidation = {
                     datetimeAdjusted: Joi.string().allow(null, "").optional(),
                 }).required(),
                 Joi.number().required()
-            )
+            ).optional()
         ),
     })
 };

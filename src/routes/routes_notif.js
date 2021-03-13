@@ -19,7 +19,7 @@ import {
     rgstrPrdctAvNotif,
     checkNotificationsEndpoint,
     sendNotificationsEndpoint
-} from '../controllers/notifications/controller_prdctAvNotif';
+} from '../controller/notifications/controller_prdctAvNotif';
 
 import { registerProductAvailabilityNotificationVal } from "../validators/notif_validators.js";
 const opts = {

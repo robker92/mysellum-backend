@@ -1,15 +1,11 @@
-"use strict";
+'use strict'
 
-import express from "express";
-const routerOrders = express.Router();
+import express from 'express'
+const routerOrders = express.Router()
 
-import excHandler from "express-async-handler";
-import {
-    checkAuthentication
-} from '../middlewares';
-import {
-    parserJsonLimit
-} from '../utils/bodyParsers';
+import errHandler from 'express-async-handler'
+import { checkAuthentication } from '../middlewares'
+import { parserJsonLimit } from '../utils/bodyParsers'
 
 // Controller products
 import {
@@ -19,16 +15,27 @@ import {
     getAllOrders,
     createOrder,
     deleteOrder,
-    updateOrder
-}
-from "../controllers/controller_orders";
+    updateOrder,
+} from '../controller/controller_orders'
 
-routerOrders.get("/singleOrder/:id", checkAuthentication, excHandler(getSingleOrder));
-routerOrders.get("/getUsersOrders", checkAuthentication, excHandler(getUsersOrders));
-routerOrders.get("/getStoresOrders/:storeId", checkAuthentication, excHandler(getStoresOrders));
-routerOrders.get("/", excHandler(getAllOrders));
-routerOrders.post("/createOrder", parserJsonLimit, excHandler(createOrder));
-routerOrders.delete("/:id", excHandler(deleteOrder));
-routerOrders.patch("/:id", parserJsonLimit, excHandler(updateOrder));
+routerOrders.get(
+    '/singleOrder/:id',
+    checkAuthentication,
+    errHandler(getSingleOrder)
+)
+routerOrders.get(
+    '/getUsersOrders',
+    checkAuthentication,
+    errHandler(getUsersOrders)
+)
+routerOrders.get(
+    '/stores-orders/:storeId',
+    checkAuthentication,
+    errHandler(getStoresOrders)
+)
+routerOrders.get('/', errHandler(getAllOrders))
+routerOrders.post('/createOrder', parserJsonLimit, errHandler(createOrder))
+routerOrders.delete('/:id', errHandler(deleteOrder))
+routerOrders.patch('/:id', parserJsonLimit, errHandler(updateOrder))
 
-export { routerOrders };
+export { routerOrders }

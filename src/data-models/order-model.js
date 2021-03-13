@@ -16,14 +16,14 @@ export function getProductModel(options) {
                 inDelivery: ""
             }
         },
-        products: "",
-        totalSum: "",
-        currency: "",
-        currencySymbols: "",
-        billingAddress: "",
-        shippingAddress: "",
+        products: [],
+        totalSum: options.totalSum,
+        currency: options.currency,
+        currencySymbol: options.currencySymbol,
+        payment: options.payment,
+        billingAddress: options.billingAddress,
+        shippingAddress: options.shippingAddress,
         
-
     }
     return model;
 };

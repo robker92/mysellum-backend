@@ -3,8 +3,8 @@ GET http://localhost:3000/users HTTP/1.1
 ###
 
 #Get Single User
-GET http://localhost:3000/users/TestEmail14@web.de HTTP/1.1
-x-access-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjVmMDczMTA2YjRhZmM5NjNjMGM5MjVkYiIsImVtYWlsIjoiVGVzdEVtYWlsMTRAd2ViLmRlIiwiaWF0IjoxNjA2MDgwMzcxLCJleHAiOjE2MDYxNjY3NzF9.SI9_-W92a672_VUM5BBnoB07OMfirAPMOo8gfuDzyRE
+GET http://localhost:3000/users/TestEmail5@web.de HTTP/1.1
+x-access-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjYwMjU5M2JlMWJkYTJkNzk1YzhhMGNhOSIsImVtYWlsIjoiVGVzdEVtYWlsNUB3ZWIuZGUiLCJpYXQiOjE2MTQ3OTA5NjcsImV4cCI6MTYxNTM5NTc2N30.l984HwwxVldvuQdkDhZrb2yiaSeWcsmoT8Fr1S1F-7w
 ###
 
 #Login User

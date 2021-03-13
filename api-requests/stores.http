@@ -51,58 +51,23 @@ x-access-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjVmYzNjMDEyZDRlZmY
 ###
 
 #Create Store
-POST http://localhost:3000/stores/createStore HTTP/1.1
+POST http://localhost:3000/stores/store HTTP/1.1
 content-type: application/json
-x-access-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjVmMDczMTA2YjRhZmM5NjNjMGM5MjVkYiIsImVtYWlsIjoiVGVzdEVtYWlsMTRAd2ViLmRlIiwiaWF0IjoxNjEwMjkxODE3LCJleHAiOjE2MTAzNzgyMTd9.p3g3Ry0JsvOZN9bt1ySKX8T9DaBqp15v6TliwrJjPwY
+x-access-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjYwMjU5M2JlMWJkYTJkNzk1YzhhMGNhOSIsImVtYWlsIjoiVGVzdEVtYWlsNUB3ZWIuZGUiLCJpYXQiOjE2MTQ3OTA5NjcsImV4cCI6MTYxNTM5NTc2N30.l984HwwxVldvuQdkDhZrb2yiaSeWcsmoT8Fr1S1F-7w
 
 {
-    "userEmail": "TestEmail15@web.de",
     "title": "Test Store 4",
     "subtitle": "",
     "description": "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam.",
     "tags": ["meat", "steak", "cow", "beer"],
     "images": [
         {
+            "id": 0,
             "src": "https://www.peta.de/mediadb/cache/1800x1200/kuh-claudio-schwarz-purzlbaum-uR5w1Y9-8yE-unsplash.jpg",
             "title": "cow"
         },
         {   
-            "src":"https://encrypted-tbn0.gstatic.com/images?q=tbn%3AANd9GcTeVo04Xgsk_YB77MpuYU2jA3MRZ13TNP4IMWh0LiGMaGrUG5LLXSiH1K1ywA&usqp=CAc",
-            "title": "meat"
-        }
-    ],
-    "address": {
-        "postcode": "80689",
-        "city": "München",
-        "addressLine1": "Fischer-von-Erlach-Straße 9",
-        "country": "Germany"
-    },
-    "mapIcon": "fish",
-    "location": {
-        "lat": "48.139911",
-        "lng": "11.480547"
-    }
-    
-}
-###
-
-#Create Store
-POST http://localhost:3000/stores/createStore HTTP/1.1
-content-type: multipart/form-data
-x-access-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjVmMDczMTA2YjRhZmM5NjNjMGM5MjVkYiIsImVtYWlsIjoiVGVzdEVtYWlsMTRAd2ViLmRlIiwiaWF0IjoxNjEwMjkxODE3LCJleHAiOjE2MTAzNzgyMTd9.p3g3Ry0JsvOZN9bt1ySKX8T9DaBqp15v6TliwrJjPwY
-
-{
-    "userEmail": "TestEmail15@web.de",
-    "title": "Test Store 4",
-    "subtitle": "",
-    "description": "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam.",
-    "tags": ["meat", "steak", "cow", "beer"],
-    "images": [
-        {
-            "src": "https://www.peta.de/mediadb/cache/1800x1200/kuh-claudio-schwarz-purzlbaum-uR5w1Y9-8yE-unsplash.jpg",
-            "title": "cow"
-        },
-        {   
+            "id": 1,
             "src":"https://encrypted-tbn0.gstatic.com/images?q=tbn%3AANd9GcTeVo04Xgsk_YB77MpuYU2jA3MRZ13TNP4IMWh0LiGMaGrUG5LLXSiH1K1ywA&usqp=CAc",
             "title": "meat"
         }
@@ -123,8 +88,9 @@ x-access-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjVmMDczMTA2YjRhZmM
 ###
 
 #Delete Store
-DELETE http://localhost:3000/stores/deleteStore/5fc41998982b4a2eb89214d5 HTTP/1.1
+DELETE http://localhost:3000/stores/6041fc7d67e3e258c42574f6 HTTP/1.1
 content-type: application/json
+x-access-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjYwMjU5M2JlMWJkYTJkNzk1YzhhMGNhOSIsImVtYWlsIjoiVGVzdEVtYWlsNUB3ZWIuZGUiLCJpYXQiOjE2MTQ3OTA5NjcsImV4cCI6MTYxNTM5NTc2N30.l984HwwxVldvuQdkDhZrb2yiaSeWcsmoT8Fr1S1F-7w
 ###
 
 #Add Product
@@ -133,7 +99,7 @@ content-type: application/json
 x-access-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjVmMDczMTA2YjRhZmM5NjNjMGM5MjVkYiIsImVtYWlsIjoiVGVzdEVtYWlsMTRAd2ViLmRlIiwiaWF0IjoxNjEwODEzNzQxLCJleHAiOjE2MTA5MDAxNDF9.psFugvow4RNotcTqfCMj-Ta91PWhRfsNif15Nz8PSZw
 
 {
-    "title": "Product 2",
+    "title": "Ich dich auch",
     "description": "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam",
     "imgSrc": "http://t2.gstatic.com/images?q=tbn:ANd9GcSBt4zB0dG24tS2BYvgTESt9nMTmIgYcKqQjO3KBHXgbjwNuipSgSaFecgStaLb-l6hqwOTC1gceewd5SitD24",
     "price": "20.00",
@@ -206,6 +172,7 @@ x-access-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjVmMDczMTA2YjRhZmM
 #Geo Code Test "address": "Magdalena-Herrle-Straße 15, 85051 Ingolstadt, Deutschland",
 POST http://localhost:3000/stores/geoCodeTest HTTP/1.1
 content-type: application/json
+x-access-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjYwMjU5M2JlMWJkYTJkNzk1YzhhMGNhOSIsImVtYWlsIjoiVGVzdEVtYWlsNUB3ZWIuZGUiLCJpYXQiOjE2MTQ3OTA5NjcsImV4cCI6MTYxNTM5NTc2N30.l984HwwxVldvuQdkDhZrb2yiaSeWcsmoT8Fr1S1F-7w
 
 {
     //"zipcode": "85051",
