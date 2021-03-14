@@ -1,8 +1,9 @@
 import * as paypal from '@paypal/checkout-server-sdk';
-import { paypalBnCode } from '../../config';
+import { PAYPAL_BN_CODE } from '../../config';
 import { paypalClient } from './paypal-sdk-client';
 import { getCreateOrderBody } from './bodys/create-order-body';
 
+import { createOrderDataStructure } from '../internal/controller_orders';
 export { createPaypalOrder, capturePaypalOrder };
 
 /**
@@ -11,11 +12,11 @@ export { createPaypalOrder, capturePaypalOrder };
  */
 async function createPaypalOrder(orderData) {
     console.log(orderData);
-    const requestBody = getCreateOrderBody(orderData);
+    const requestBody = await getCreateOrderBody(orderData);
     console.log(JSON.stringify(requestBody));
 
     const request = new paypal.orders.OrdersCreateRequest();
-    request.headers['PayPal-Partner-Attribution-Id'] = paypalBnCode;
+    request.headers['PayPal-Partner-Attribution-Id'] = PAYPAL_BN_CODE;
     // request.prefer('return=representation');
     request.requestBody(requestBody);
 
@@ -29,13 +30,13 @@ async function createPaypalOrder(orderData) {
  * Capture the created order
  * @param {String} orderId the id of the before created order
  */
-async function capturePaypalOrder(orderId) {
+async function capturePaypalOrder(orderId, orderData) {
     const request = new paypal.orders.OrdersCaptureRequest(orderId);
     // Test the flow when of a failing funding source
     // request.headers[
     //     'PayPal-Mock-Response'
     // ] = `{'mock_application_codes': 'INSTRUMENT_DECLINED'}`;
-    request.headers['PayPal-Partner-Attribution-Id'] = paypalBnCode;
+    request.headers['PayPal-Partner-Attribution-Id'] = PAYPAL_BN_CODE;
     request.requestBody({});
     const capture = await paypalClient().execute(request);
 

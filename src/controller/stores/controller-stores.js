@@ -19,7 +19,7 @@ import {
 
 import { getStoreModel } from '../../data-models';
 
-import { createSignUpLink } from '../../payment/paypal/paypal-client';
+import { createSignUpLink } from '../../payment/paypal/paypal-rest-client';
 
 import {
     checkProfileComplete,
@@ -166,7 +166,7 @@ const createStore = async function (req, res, next) {
                 },
                 { session }
             );
-            //Write Store Id to user
+            // Write Store Id to user
             await collectionUsers.updateOne(
                 {
                     email: userEmail,

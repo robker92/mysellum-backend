@@ -58,7 +58,7 @@ import {
     getStoresDelivery,
 } from '../controller/stores/controller-search';
 
-import { paypalEndpoint } from '../payment/paypal/paypal-client';
+import { paypalEndpoint } from '../payment/paypal/paypal-rest-client';
 
 // Controller Images
 import {

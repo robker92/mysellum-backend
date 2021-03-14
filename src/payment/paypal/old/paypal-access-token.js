@@ -4,10 +4,10 @@ import axios from 'axios';
 import qs from 'qs';
 
 import {
-    paypalBaseURL,
-    paypalClientId,
-    paypalClientSecret,
-} from '../../config';
+    PAYPAL_BASE_URL,
+    PAYPAL_CLIENT_ID,
+    PAYPAL_CLIENT_SECRET,
+} from '../../../config';
 
 export { getAccessToken };
 
@@ -17,7 +17,7 @@ let cachedAccessToken = {
 };
 
 const paypalClient = axios.create({
-    baseURL: paypalBaseURL,
+    baseURL: PAYPAL_BASE_URL,
     headers: {
         'Content-Type': 'application/json',
         Accept: 'application/json',
@@ -42,8 +42,8 @@ async function fetchAccessToken() {
                 'Accept-Language': 'en_US',
             },
             auth: {
-                username: paypalClientId,
-                password: paypalClientSecret,
+                username: PAYPAL_CLIENT_ID,
+                password: PAYPAL_CLIENT_SECRET,
             },
         });
     } catch (error) {

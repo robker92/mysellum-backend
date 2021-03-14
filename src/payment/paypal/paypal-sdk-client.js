@@ -1,6 +1,6 @@
 'use strict';
 
-import { paypalClientId, paypalClientSecret } from '../../config';
+import { PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET } from '../../config';
 import * as checkoutNodeJssdk from '@paypal/checkout-server-sdk';
 export { paypalClient, prettyPrint };
 
@@ -19,11 +19,16 @@ function paypalClient() {
  */
 function environment() {
     return new checkoutNodeJssdk.core.SandboxEnvironment(
-        paypalClientId,
-        paypalClientSecret
+        PAYPAL_CLIENT_ID,
+        PAYPAL_CLIENT_SECRET
     );
 }
 
+/**
+ * Pretty Prints a json objects (e.g. useful to see in console)
+ * @param {Object} jsonData
+ * @param {*} pre
+ */
 async function prettyPrint(jsonData, pre = '') {
     let pretty = '';
     function capitalize(string) {

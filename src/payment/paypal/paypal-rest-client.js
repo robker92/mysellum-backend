@@ -4,7 +4,7 @@ import axios from 'axios';
 
 import { getPartnerReferralBody } from './bodys/partner-referral-body';
 import { getCreateOrderBody } from './bodys/create-order-body';
-import { getAccessToken } from './paypal-access-token';
+import { getAccessToken } from './old/paypal-access-token';
 import { paypalBaseURL } from '../../config';
 
 export { createSignUpLink, createPaypalOrder, capturePaypalOrder };
@@ -25,7 +25,7 @@ const paypalClient = axios.create({
  * @param {String} trackingId id which will be used to track the onboarding status; = our store id
  */
 async function createSignUpLink(returnLink, trackingId) {
-    const requestBody = getPartnerReferralBody(returnLink, trackingId);
+    const requestBody = getPartnerReferralBody('', trackingId);
     const accessToken = await getAccessToken();
 
     let response;

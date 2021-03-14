@@ -3,7 +3,7 @@
 import {
     getMongoDBClient,
     getMongoDBTransactionWriteOptions,
-} from '../mongodb/setup';
+} from '../../mongodb/setup';
 
 import { ObjectId } from 'mongodb';
 
@@ -12,13 +12,13 @@ import {
     getMongoOrdersCollection,
     getMongoProductsCollection,
     getMongoUsersCollection,
-} from '../mongodb/collections';
+} from '../../mongodb/collections';
 
-import { removeDuplicatesFromArray } from '../utils/arrayFunctions';
+import { removeDuplicatesFromArray } from '../../utils/arrayFunctions';
 
-import { sendNodemailerMail } from '../mailing/nodemailer';
+import { sendNodemailerMail } from '../../mailing/nodemailer';
 
-import { getProductModel } from '../data-models/order-model';
+import { getOrderModel } from '../../data-models/order-model';
 
 const getSingleOrder = async function (req, res, next) {
     let collection = await getMongoOrdersCollection();
@@ -218,13 +218,13 @@ async function createOrderArray(orderObject, data) {
             billingAddress: data.billingAddress,
             shippingAddress: data.shippingAddress,
         };
-        const order = getProductModel(orderOptions);
+        const order = getOrderModel(orderOptions);
 
         let totalSum;
         //iterate over products
         for (let i = 0; i < productArray.length; i++) {
             //check if product exists and use it in the order
-            let product = await fetchProduct(productArray[i]);
+            let product = await fetchAndValidateProduct(productArray[i]);
             order.products.push(product);
             totalSum = totalSum + product.priceFloat;
         }
@@ -234,7 +234,7 @@ async function createOrderArray(orderObject, data) {
     return orderArray;
 }
 
-async function fetchProduct(data) {
+async function fetchAndValidateProduct(data) {
     const collectionProducts = await getMongoProductsCollection();
     let orderedProduct = data.product;
     let orderedAmount = data.amount;

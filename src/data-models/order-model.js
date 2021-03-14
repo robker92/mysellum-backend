@@ -1,4 +1,4 @@
-export function getProductModel(options) {
+export function getOrderModel(options) {
     const model = {
         storeId: options.storeId,
         user: {
@@ -9,12 +9,12 @@ export function getProductModel(options) {
         shippingType: options.shippingType,
         status: {
             finished: false,
-            successfully: false, 
+            successfully: false,
             steps: {
-                orderReceived: "",
-                paymentReceived: "",
-                inDelivery: ""
-            }
+                orderReceived: '',
+                paymentReceived: '',
+                inDelivery: '',
+            },
         },
         products: [],
         totalSum: options.totalSum,
@@ -23,7 +23,6 @@ export function getProductModel(options) {
         payment: options.payment,
         billingAddress: options.billingAddress,
         shippingAddress: options.shippingAddress,
-        
-    }
+    };
     return model;
-};
+}

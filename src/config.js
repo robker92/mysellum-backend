@@ -39,10 +39,13 @@ const URL_ENCODED_LIMIT = process.env.BP_URL_ENCODED_LIMIT || '50mb';
 const MULTER_LIMIT = parseInt(process.env.MULTER_LIMIT) || 4000000; //4mb
 
 //Paypal
-const paypalBaseURL = process.env.PAYPAL_BASE_URL;
-const paypalClientId = process.env.PAYPAL_CLIENT_ID;
-const paypalClientSecret = process.env.PAYPAL_CLIENT_SECRET;
-const paypalBnCode = process.env.PAYPAL_BN_CODE; // also called Attribution Id
+const PAYPAL_BASE_URL = process.env.PAYPAL_BASE_URL;
+const PAYPAL_CLIENT_ID = process.env.PAYPAL_CLIENT_ID;
+const PAYPAL_CLIENT_SECRET = process.env.PAYPAL_CLIENT_SECRET;
+const PAYPAL_BN_CODE = process.env.PAYPAL_BN_CODE; // also called Attribution Id
+const PAYPAL_REF_ID_HASH_NUM_BYTES = parseInt(
+    process.env.PAYPAL_REF_ID_HASH_NUM_BYTES
+);
 
 //=============================================================================
 export {
@@ -58,9 +61,10 @@ export {
     JSON_LIMIT,
     URL_ENCODED_LIMIT,
     MULTER_LIMIT,
-    paypalBaseURL,
-    paypalClientId,
-    paypalClientSecret,
-    paypalBnCode,
+    PAYPAL_BASE_URL,
+    PAYPAL_CLIENT_ID,
+    PAYPAL_CLIENT_SECRET,
+    PAYPAL_BN_CODE,
+    PAYPAL_REF_ID_HASH_NUM_BYTES,
 };
 //=============================================================================

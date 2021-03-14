@@ -11,10 +11,10 @@ grant_type=client_credentials
 #Create Paypal Signup Link
 POST https://api-m.sandbox.paypal.com/v2/customer/partner-referrals HTTP/1.1
 content-type: application/json
-Authorization: Bearer A21AAK6erHfhdYtqz80fjZIsgiVFrqSMrVLBCtkzC1079NPD4EJninDftWb0Q_-rDoKoLHvKblvbMI1FrWo3Jm59kK6o3T0sg
+Authorization: Bearer A21AAKgLKLqsNbYTZY-w3PMDS428LcmbvUdovdjaZCNpj9IJwfARby0t4jxizN6sZpMUkOOd2a-oAtczcM4EXKxGyL2NVXDvw
 
 {
-    "tracking_id": "<Tracking-ID>",
+    "tracking_id": "6042541d40aa5c7b38dc3807",
     "operations": [
       {
         "operation": "API_INTEGRATION",
@@ -40,21 +40,20 @@ Authorization: Bearer A21AAK6erHfhdYtqz80fjZIsgiVFrqSMrVLBCtkzC1079NPD4EJninDftW
         "type": "SHARE_DATA_CONSENT",
         "granted": true
       }
-    ],
-    "partner_config_override/return_url": ""
+    ]
 }
-###
+### "partner_config_override/return_url": ""
 
 # Retrieve Merchant Id (= id of registered store)
 GET https://api-m.sandbox.paypal.com/v1/customer/partners/CAD3FBJY72FE8/merchant-integrations?tracking_id=6042541d40aa5c7b38dc3807 HTTP/1.1
 content-type: application/json
-Authorization: Bearer A21AALQTrE0qtO1eMDwyJNxkm-rzJBIXs8UpYNvR1cqTqZaapqycyope2K3HfQOJ3VnMLoE9SIyhw4I9XtAsIuD8AJkXS42SQ
+Authorization: Bearer A21AAKgLKLqsNbYTZY-w3PMDS428LcmbvUdovdjaZCNpj9IJwfARby0t4jxizN6sZpMUkOOd2a-oAtczcM4EXKxGyL2NVXDvw
 ###
 
 # Check Onboarding Status
-GET https://api-m.sandbox.paypal.com/v1/customer/partners/CAD3FBJY72FE8/merchant-integrations/5FHJ5NA2X94VG HTTP/1.1
+GET https://api-m.sandbox.paypal.com/v1/customer/partners/CAD3FBJY72FE8/merchant-integrations/UW8X6XK7RGLP8 HTTP/1.1
 content-type: application/json
-Authorization: Bearer A21AALQTrE0qtO1eMDwyJNxkm-rzJBIXs8UpYNvR1cqTqZaapqycyope2K3HfQOJ3VnMLoE9SIyhw4I9XtAsIuD8AJkXS42SQ
+Authorization: Bearer A21AAKgLKLqsNbYTZY-w3PMDS428LcmbvUdovdjaZCNpj9IJwfARby0t4jxizN6sZpMUkOOd2a-oAtczcM4EXKxGyL2NVXDvw
 ###
 
 #Create Order

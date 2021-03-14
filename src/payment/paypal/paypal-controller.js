@@ -4,7 +4,7 @@ import {
     createSignUpLink,
     // createPaypalOrder,
     // capturePaypalOrder,
-} from './paypal-client';
+} from './paypal-rest-client';
 import { createPaypalOrder, capturePaypalOrder } from './paypal-sdk-service';
 
 export {
@@ -52,10 +52,11 @@ const createPaypalOrderController = async function (req, res, next) {
 
 const capturePaypalOrderController = async function (req, res, next) {
     const orderId = req.body.orderId;
+    const orderData = req.body.orderData;
 
     let captureId;
     try {
-        captureId = await capturePaypalOrder(orderId);
+        captureId = await capturePaypalOrder(orderId, orderData);
     } catch (error) {
         // Catch the funding source failed error
         if (
