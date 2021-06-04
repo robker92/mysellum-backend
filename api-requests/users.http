@@ -73,3 +73,17 @@ content-type: application/json
     "mailAddress": "rkerscher@gmx.de"
 }
 ###
+
+
+# Testing Endpoint
+POST http://localhost:3000/users/user-testing HTTP/1.1
+content-type: application/json
+
+{
+    "id": "6042541b40aa5c7b38dc3806",
+    "email": "TestEmail6@web.de",
+    "user": {
+        "email": "TestEmail6@web.de"
+    }
+}
+###

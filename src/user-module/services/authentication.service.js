@@ -1,0 +1,342 @@
+'use strict';
+// database operations
+import {
+    readOneOperation,
+    updateOneOperation,
+    updateOneAndReturnOperation,
+    readManyOperation,
+    deleteOneOperation,
+    deleteManyOperation,
+    createOneOperation,
+    databaseEntity,
+} from '../../storage/database-operations';
+import {
+    JWT_SECRET_KEY,
+    JWT_KEY_EXPIRE,
+    PW_HASH_SALT_ROUNDS,
+    PW_RESET_TOKEN_NUM_BYTES,
+} from '../../config';
+import { sendNodemailerMail } from '../../mailing/nodemailer';
+import { getUserModel } from '../../data-models';
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
+// var moment = require('moment');
+// import moment from 'moment';
+// import moment from 'moment/src/moment';
+
+export {
+    loginUserService,
+    registerUserService,
+    verifyRegistrationService,
+    sendPasswordResetMailService,
+    checkResetTokenService,
+    resetPasswordService,
+};
+
+// Create a token from a payload
+function createToken(payload) {
+    var expiresIn = JWT_KEY_EXPIRE;
+    return jwt.sign(payload, JWT_SECRET_KEY, {
+        expiresIn,
+    });
+}
+// Verify the token
+function verifyToken(token) {
+    return jwt.verify(token, JWT_SECRET_KEY);
+}
+
+function convertBirthdate(birthdate) {
+    // return moment(birthdate, 'DD.MM.YYYY', true);
+    return birthdate.replaceAll('-', '.');
+}
+
+async function loginUserService(email, password) {
+    // Verify email address & fetch user
+    const user = await readOneOperation(databaseEntity.USERS, {
+        email: email,
+    });
+    if (!user) {
+        throw new Error({
+            type: 'incorrect',
+            message: 'Combination of username and password was incorrect.',
+        });
+    }
+    if (user.emailVerified === false) {
+        throw new Error({
+            type: 'verification',
+            message: 'E-mail address was not verified.',
+        });
+    }
+    if (user.blocked === true || user.deleted === true) {
+        throw new Error('User can not be accessed.');
+    }
+
+    // Verify password
+    const match = await bcrypt.compare(password, user.password);
+
+    // Password does not match
+    if (!match) {
+        throw new Error({
+            type: 'incorrect',
+            message: 'Combination of username and password was incorrect.',
+        });
+    }
+
+    const accessToken = createToken({
+        id: user._id.toString(),
+        email: user.email,
+    });
+
+    let counter = 0;
+    // for (let i = 0; i < user.shoppingCart.length; i++) {
+    //     counter = counter + user.shoppingCart[i][1];
+    // }
+    for (const element of user.shoppingCart) {
+        counter = counter + element[1];
+    }
+
+    // TODO
+    const responseObject = {
+        user: {
+            authorizationRole: 'Role1',
+            email: user.email,
+            name: {
+                firstName: user.firstName,
+                lastName: user.lastName,
+            },
+            ownedStoreId: user.ownedStoreId,
+            shoppingCart: user.shoppingCart,
+            productCounter: counter,
+        },
+        shoppingCart: user.shoppingCart,
+        productCounter: counter,
+    };
+    return { accessToken, responseObject };
+}
+
+async function registerUserService(data) {
+    const user = await readOneOperation(databaseEntity.USERS, {
+        email: data.email,
+    });
+    // Email already registered
+    if (user) {
+        throw {
+            status: 401,
+            type: 'alreadyUsed',
+            message: 'E-Mail already used.',
+        };
+    }
+
+    const passwordHash = await bcrypt.hash(data.password, PW_HASH_SALT_ROUNDS);
+    const verificationToken = crypto
+        .randomBytes(PW_RESET_TOKEN_NUM_BYTES)
+        .toString('hex');
+
+    // get user data model function
+    const options = {
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: data.email,
+        passwordHash: passwordHash,
+        city: data.city,
+        postcode: data.postcode,
+        addressLine1: data.addressLine1,
+        birthdate: data.birthdate,
+        verificationToken: verificationToken,
+        datetimeCreated: new Date().toISOString(),
+    };
+    const userData = getUserModel(options);
+
+    // Create the user
+    const insertResult = await createOneOperation(
+        databaseEntity.USERS,
+        userData
+    );
+    if (!insertResult) {
+        throw {
+            status: 500,
+            type: 'failed',
+            message: 'Registration failed!',
+        };
+    }
+    // const createdUser = insertResult.ops[0];
+
+    //send email confirmation mail
+    const mailOptions = {
+        email: data.email,
+        contentType: 'registrationVerification',
+        verificationToken: verificationToken,
+    };
+
+    try {
+        await sendNodemailerMail(mailOptions);
+    } catch (error) {
+        // TODO User is created, but no mail is sent...
+        console.log(error);
+        throw {
+            status: 500,
+            type: 'whileMailSending',
+            message: 'Error while sending!',
+        };
+    }
+
+    return;
+}
+
+async function verifyRegistrationService(verificationToken) {
+    const queryObject = {
+        verifyRegistrationToken: verificationToken,
+        verifyRegistrationExpires: {
+            $gt: Date.now(),
+        },
+    };
+    const updateObject = {
+        verifyRegistrationToken: null,
+        verifyRegistrationExpires: null,
+        emailVerified: true,
+    };
+
+    let user;
+    try {
+        user = await updateOneAndReturnOperation(
+            databaseEntity.USERS,
+            queryObject,
+            updateObject,
+            'set'
+        );
+    } catch (error) {
+        console.log(error);
+        throw {
+            status: 500,
+            type: 'verification',
+            message: 'E-Mail verification failed.',
+        };
+    }
+
+    const accessToken = createToken({
+        id: user._id.toString(),
+        email: user.email,
+    });
+
+    const responseObject = {
+        message: 'Registration successful!',
+        user: {
+            authorizationRole: 'Role1',
+            email: user.email,
+            name: {
+                firstName: user.firstName,
+                lastName: user.lastName,
+            },
+            ownedStoreId: '',
+            shoppingCart: [],
+            productCounter: 0,
+        },
+        shoppingCart: user.shoppingCart,
+        // productCounter: counter
+    };
+
+    return { accessToken, responseObject };
+}
+
+async function sendPasswordResetMailService(email, birthdate) {
+    console.log(email);
+    console.log(birthdate);
+    console.log(convertBirthdate(birthdate));
+    birthdate = convertBirthdate(birthdate);
+    const user = await readOneOperation(databaseEntity.USERS, {
+        email: email,
+        birthdate: birthdate,
+    });
+    if (!user) {
+        console.log(`User not found`);
+        throw {
+            status: 500,
+            type: 'notFound',
+            message: 'User was not found!',
+        };
+    }
+
+    const resetPasswordToken = crypto
+        .randomBytes(PW_RESET_TOKEN_NUM_BYTES)
+        .toString('hex');
+    const resetPasswordExpires = Date.now() + 3600000; //Current time in milliseconds + one hour
+    console.log(resetPasswordToken);
+    console.log(resetPasswordExpires);
+
+    //save token and expire date to user
+    await updateOneOperation(
+        databaseEntity.USERS,
+        {
+            email: email,
+            birthdate: birthdate,
+        },
+        {
+            resetPasswordToken: resetPasswordToken,
+            resetPasswordExpires: resetPasswordExpires,
+        },
+        'set'
+    );
+
+    //send mail to user email
+    const mailOptions = {
+        email: email,
+        contentType: 'resetPassword',
+        resetPasswordToken: resetPasswordToken,
+    };
+
+    let mailInfo;
+    try {
+        mailInfo = await sendNodemailerMail(mailOptions);
+    } catch (error) {
+        console.log(error);
+        throw {
+            status: 500,
+            type: 'whileSending',
+            message: 'Error while sending!',
+        };
+    }
+
+    return mailInfo;
+}
+
+async function checkResetTokenService(receivedToken) {
+    const user = await readOneOperation(databaseEntity.USERS, {
+        resetPasswordToken: receivedToken,
+        resetPasswordExpires: {
+            $gt: Date.now(),
+        },
+    });
+    if (!user) {
+        //Invalid Token or expired
+        throw {
+            status: 500,
+            type: 'invalid',
+            message: 'Password reset link is invalid or has expired.',
+        };
+    }
+
+    return;
+}
+
+async function resetPasswordService(receivedToken, password) {
+    const passwordHash = await bcrypt.hash(password, PW_HASH_SALT_ROUNDS);
+
+    await updateOneOperation(
+        databaseEntity.USERS,
+        {
+            resetPasswordToken: receivedToken,
+            resetPasswordExpires: {
+                $gt: Date.now(),
+            },
+        },
+        {
+            resetPasswordToken: null,
+            resetPasswordExpires: null,
+            password: passwordHash,
+        },
+        'set'
+    );
+
+    return;
+}

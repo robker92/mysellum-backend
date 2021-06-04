@@ -1,27 +1,63 @@
-import {
-    getMongoDBClient
-} from '../mongodb/setup';
-import {
-    MONGODB_NAME
-} from '../config';
+import { getMongoDbClient } from './setup';
+import { MONGODB_NAME, COSMOSDB_NAME } from '../config';
+
+const databaseName = COSMOSDB_NAME;
+
+function getMongoDbCollection(collection) {
+    return getMongoDbClient().db(databaseName).collection(collection);
+}
 
 async function getMongoStoresCollection() {
-    return getMongoDBClient().db(MONGODB_NAME).collection("stores");
-};
+    return getMongoDbClient().db(databaseName).collection('stores');
+}
 async function getMongoUsersCollection() {
-    return getMongoDBClient().db(MONGODB_NAME).collection("users");
-};
+    return getMongoDbClient().db(databaseName).collection('users');
+}
 async function getMongoProductsCollection() {
-    return getMongoDBClient().db(MONGODB_NAME).collection("products");
-};
+    return getMongoDbClient().db(databaseName).collection('products');
+}
 async function getMongoOrdersCollection() {
-    return getMongoDBClient().db(MONGODB_NAME).collection("orders");
-};
+    return getMongoDbClient().db(databaseName).collection('orders');
+}
 async function getMongoPrdctNotifCollection() {
-    return getMongoDBClient().db(MONGODB_NAME).collection("prdctNotif");
-};
+    return getMongoDbClient().db(databaseName).collection('prdctNotif');
+}
+function getMongoUsersCollection2() {
+    return getMongoDbClient().db(databaseName).collection('users');
+}
+
+// New
+function getMongoCollectionUsers() {
+    return getMongoDbClient().db(databaseName).collection('users');
+}
+function getMongoCollectionStores() {
+    return getMongoDbClient().db(databaseName).collection('stores');
+}
+function getMongoCollectionProducts() {
+    return getMongoDbClient().db(databaseName).collection('products');
+}
+function getMongoCollectionOrders() {
+    return getMongoDbClient().db(databaseName).collection('orders');
+}
+function getMongoCollectionPrdctNotif() {
+    return getMongoDbClient().db(databaseName).collection('prdctNotif');
+}
 
 //===================================================================================================
-export { getMongoStoresCollection, getMongoUsersCollection, getMongoProductsCollection, 
-    getMongoOrdersCollection, getMongoPrdctNotifCollection };
+export {
+    getMongoDbCollection,
+    //
+    getMongoStoresCollection,
+    getMongoUsersCollection,
+    getMongoProductsCollection,
+    getMongoOrdersCollection,
+    getMongoPrdctNotifCollection,
+    getMongoUsersCollection2,
+    // New
+    getMongoCollectionUsers,
+    getMongoCollectionStores,
+    getMongoCollectionProducts,
+    getMongoCollectionOrders,
+    getMongoCollectionPrdctNotif,
+};
 //===================================================================================================

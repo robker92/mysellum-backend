@@ -1,9 +1,27 @@
-import { nodemailerTransporter } from './mailTransporter'
-import {
-    MAIL_USER
-} from '../config';
+import { nodemailerTransporter } from './mailTransporter';
+import { MAIL_USER } from '../config';
 
-import { getContentPrdctAvNotif, subjectPrdctAvNotif, getContentRegVerification, subjectRegVerification, getContentPasswordReset, subjectPasswordReset, getContentTest, subjectTest } from './htmlBodys'
+import {
+    getContentPrdctAvNotif,
+    subjectPrdctAvNotif,
+    getContentRegVerification,
+    subjectRegVerification,
+    getContentPasswordReset,
+    subjectPasswordReset,
+    getContentTest,
+    subjectTest,
+    getContentOrderStatusInDelivery,
+    subjectOrderStatusInDelivery,
+    getContentOrderCreatedStore,
+    subjectOrderCreatedStore,
+    getContentOrderCreatedCustomer,
+    subjectOrderCreatedCustomer,
+    getContentCustomerContact,
+    subjectCustomerContact,
+} from './htmlBodys';
+
+import { contentType } from './enums/contentType';
+import { validateContentType } from './validators/validateContentType';
 // let transporter = nodemailer.createTransport({
 //     host: 'mail.gmx.net',
 //     port: 587,
@@ -19,6 +37,12 @@ import { getContentPrdctAvNotif, subjectPrdctAvNotif, getContentRegVerification,
 //     console.log(verify);
 // });
 
+/**
+ * The function receives and options object and sends then the respective email.
+ * @param {object} options contains 'contentType', 'email' and - depending on the email which should be send
+ * 'resetPasswordToken' or 'verificationToken'
+ * @returns
+ */
 async function sendNodemailerMail(options) {
     // let testAccount = await nodemailer.createTestAccount();
     // let transporterTest = nodemailer.createTransport({
@@ -35,58 +59,89 @@ async function sendNodemailerMail(options) {
     let verify = await transporter.verify();
     console.log(verify);
 
+    try {
+        validateContentType(options.contentType);
+    } catch (error) {
+        console.log(error);
+        return error;
+    }
+
     //Switch for mail html bodys
     let toAddress;
     let mailContent;
     let mailSubject;
     switch (options.contentType) {
-        case "testMail":
+        case contentType.TEST_MAIL:
             mailContent = getContentTest();
             mailSubject = subjectTest;
             toAddress = options.email;
             break;
-        case "resetPassword":
+        // case 'resetPassword':
+        case contentType.RESET_PASSWORD:
             mailContent = getContentPasswordReset(options.resetPasswordToken);
             mailSubject = subjectPasswordReset;
-            //toAddress = options.email;
-            toAddress = "rkerscher@gmx.de";
+            toAddress = options.email;
             break;
-        case "registrationVerification":
+        // case 'registrationVerification':
+        case contentType.REGISTRATION_VERIFICATION:
             mailContent = getContentRegVerification(options.verificationToken);
             mailSubject = subjectRegVerification;
-            //toAddress = options.email;
-            toAddress = "rkerscher@gmx.de";
+            toAddress = options.email;
             break;
-        case "prdctAvNotif":
+        // case 'prdctAvNotif':
+        case contentType.PRODUCT_AVAILABILITY_NOTIF:
             mailContent = getContentPrdctAvNotif(options);
             mailSubject = subjectPrdctAvNotif;
             toAddress = options.email;
-            //toAddress = "rkerscher@gmx.de";
             break;
-    };
+        // case 'orderCreatedCustomer':
+        case contentType.ORDER_CREATED_CUSTOMER:
+            mailContent = getContentOrderCreatedCustomer(options);
+            mailSubject = subjectOrderCreatedCustomer;
+            toAddress = options.email;
+            break;
+        // case 'orderCreatedStore':
+        case contentType.ORDER_CREATED_STORE:
+            mailContent = getContentOrderCreatedStore(options);
+            mailSubject = subjectOrderCreatedStore;
+            toAddress = options.email;
+            break;
+        // case 'orderStatusInDelivery':
+        case contentType.ORDER_STATUS_IN_DELIVERY:
+            mailContent = getContentOrderStatusInDelivery(options);
+            mailSubject = subjectOrderStatusInDelivery;
+            toAddress = options.email;
+            break;
+        case contentType.CUSTOMER_CONTACT:
+            mailContent = getContentCustomerContact(options);
+            mailSubject = subjectCustomerContact;
+            toAddress = options.email;
+            break;
+    }
+
+    if (process.env.NODE_ENV === 'development') {
+        toAddress = 'rkerscher@gmx.de';
+    }
 
     let mailOptions = {
-        from: `"Awesome Website AMK! 👻" <${MAIL_USER}>`,
+        from: `"Awesome Website! 👻" <${MAIL_USER}>`,
         to: toAddress,
         subject: mailSubject,
         //text: 'That was easy!', //Text only content
-        html: mailContent //HTML content
+        html: mailContent, //HTML content
     };
 
     let info;
     try {
         info = await transporter.sendMail(mailOptions);
-        console.log("Message sent: %s", info.messageId);
+        console.log('Message sent: %s', info.messageId);
         //console.log('Preview URL: ' + nodemailer.getTestMessageUrl(info));
         return info;
     } catch (error) {
+        console.log(error);
         return error;
-        // return next({
-        //     status: 500,
-        //     message: "Error while sending!"
-        // })
-    };
-};
+    }
+}
 
 //===================================================================================================
 export { sendNodemailerMail };

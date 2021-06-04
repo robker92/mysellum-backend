@@ -8,7 +8,7 @@ GET http://localhost:3000/stores HTTP/1.1
 ###
 
 #Get Single Store
-GET http://localhost:3000/stores/single-store/5f31406deae5b044240a57c8 HTTP/1.1
+GET http://localhost:3000/stores/single-store/6042541d40aa5c7b38dc3807 HTTP/1.1
 ###
 
 #Get Filtered Stores
@@ -53,7 +53,7 @@ x-access-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjVmYzNjMDEyZDRlZmY
 #Create Store
 POST http://localhost:3000/stores/store HTTP/1.1
 content-type: application/json
-x-access-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjYwMjU5M2JlMWJkYTJkNzk1YzhhMGNhOSIsImVtYWlsIjoiVGVzdEVtYWlsNUB3ZWIuZGUiLCJpYXQiOjE2MTQ3OTA5NjcsImV4cCI6MTYxNTM5NTc2N30.l984HwwxVldvuQdkDhZrb2yiaSeWcsmoT8Fr1S1F-7w
+x-access-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjYwNDI1NDFhNDBhYTVjN2IzOGRjMzgwMyIsImVtYWlsIjoiVGVzdEVtYWlsMkB3ZWIuZGUiLCJpYXQiOjE2MTU3NTg1NDAsImV4cCI6MTYxNjM2MzM0MH0.StwdnaW9PFuQHksSRx23jqun8PEgdAJoDo1JKzkrbFw
 
 {
     "title": "Test Store 4",
@@ -154,9 +154,9 @@ x-access-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjVmMDczMTA2YjRhZmM
 
 #Get Stores Products ?search=1
 # ?priceMin=10&priceMax=30
-GET http://localhost:3000/stores/get-store-products/5f31406deae5b044240a57c8? HTTP/1.1
+GET http://localhost:3000/stores/store-products/6042541d40aa5c7b38dc3807? HTTP/1.1
 content-type: application/json
-x-access-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjVmMDczMTA2YjRhZmM5NjNjMGM5MjVkYiIsImVtYWlsIjoiVGVzdEVtYWlsMTRAd2ViLmRlIiwiaWF0IjoxNjEwODEzNzQxLCJleHAiOjE2MTA5MDAxNDF9.psFugvow4RNotcTqfCMj-Ta91PWhRfsNif15Nz8PSZw
+x-access-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjYwNDI1NDFiNDBhYTVjN2IzOGRjMzgwNiIsImVtYWlsIjoiVGVzdEVtYWlsNUB3ZWIuZGUiLCJpYXQiOjE2MTYyNzY2OTAsImV4cCI6MTYxNjg4MTQ5MH0.RHPWtbCYUjvnmbfgn3J17Ff-IQEz_ZSX7FSkYgcz2KI
 ###
 
 #Update Stock Amount

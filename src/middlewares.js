@@ -103,7 +103,7 @@ const errorHandler = (err, req, res, next) => {
     console.log(err);
     //console.log(req.body)
     console.log('error handler');
-
+    console.log(err instanceof ValidationError);
     if (err instanceof ValidationError) {
         return res.status(400).send({
             message: err.message,
@@ -132,7 +132,6 @@ const errorHandler = (err, req, res, next) => {
     //res.render("error", { error: err });
     //console.log(err.status)
     //console.log(err.message)
-
     // res.json({
     //     message: err.message,
     //     error: err

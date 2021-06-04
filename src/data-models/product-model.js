@@ -14,7 +14,9 @@ export function getProductModel(options) {
         currencySymbol: options.currencySymbol,
         quantityType: options.quantityType,
         quantityValue: options.quantityValue,
-        stockAmount: 1
+        delivery: options.delivery,
+        pickup: options.pickup,
+        stockAmount: 1,
     };
     return model;
-};
+}

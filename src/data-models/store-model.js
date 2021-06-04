@@ -2,6 +2,9 @@ export function getStoreModel(options) {
     const model = {
         userEmail: options.userEmail,
         adminActivation: true,
+        deleted: false,
+        delivery: options.delivery,
+        pickup: options.pickup,
         datetimeCreated: options.datetimeCreated,
         datetimeAdjusted: options.datetimeAdjusted,
         mapData: {
@@ -11,7 +14,6 @@ export function getStoreModel(options) {
                 city: options.city,
                 country: options.country,
             },
-            img: options.mapImg,
             location: {
                 lat: options.lat,
                 lng: options.lng,
@@ -24,7 +26,7 @@ export function getStoreModel(options) {
             description: options.description,
             tags: options.tags,
             images: options.images,
-            products: options.products,
+            // products: options.products,
             reviews: options.reviews,
             avgRating: options.avgRating,
         },
@@ -45,6 +47,7 @@ export function getStoreModel(options) {
         },
         shipping: {},
         payment: {
+            registered: false,
             // https://developer.paypal.com/docs/platforms/seller-onboarding/before-payment/
             paypal: {
                 common: {

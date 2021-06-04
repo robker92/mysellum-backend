@@ -1,28 +1,41 @@
-export function getOrderModel(options) {
+//  { getOrderModel };
+
+export function getOrderModel(data) {
     const model = {
-        storeId: options.storeId,
+        storeId: data.storeId,
         user: {
-            email: options.userEmail,
+            email: data.userEmail,
         },
-        datetimeCreated: options.datetimeCreated,
-        datetimeAdjusted: options.datetimeAdjusted,
-        shippingType: options.shippingType,
+        datetimeCreated: data.datetimeCreated,
+        datetimeAdjusted: data.datetimeAdjusted,
+        shippingType: data.shippingType,
         status: {
+            paypal: data.paypalStatus,
             finished: false,
             successfully: false,
             steps: {
-                orderReceived: '',
-                paymentReceived: '',
-                inDelivery: '',
+                orderReceived: false,
+                paymentReceived: false,
+                inDelivery: false,
             },
         },
         products: [],
-        totalSum: options.totalSum,
-        currency: options.currency,
-        currencySymbol: options.currencySymbol,
-        payment: options.payment,
-        billingAddress: options.billingAddress,
-        shippingAddress: options.shippingAddress,
+        totalSum: data.totalSum,
+        totalTax: 0,
+        totalShippingCosts: 0,
+        currencyCode: data.currencyCode,
+        // payment: data.payment,
+        payment: {
+            method: 'paypal',
+            details: {
+                paypalRefId: `${data.storeId}~${data.arrayIndex}`,
+                paypalOrderId: data.paypalOrderId,
+                paypalCaptureIds: [],
+            },
+            payer: {},
+        },
+        billingAddress: data.billingAddress,
+        shippingAddress: data.shippingAddress,
     };
     return model;
 }

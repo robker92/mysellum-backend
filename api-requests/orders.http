@@ -42,13 +42,25 @@ content-type: application/json
 ###
 
 #Get Stores Orders
-GET http://localhost:3000/orders/getStoresOrders/5f31406deae5b044240a57c8 HTTP/1.1
+GET http://localhost:3000/orders/stores-orders/6042541d40aa5c7b38dc3807 HTTP/1.1
 content-type: application/json
-x-access-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjVmMDczMTA2YjRhZmM5NjNjMGM5MjVkYiIsImVtYWlsIjoiVGVzdEVtYWlsMTRAd2ViLmRlIiwiaWF0IjoxNjA5ODgyNDY0LCJleHAiOjE2MDk5Njg4NjR9.DAKNQfHdYHDzZR7d43-hsHCZkViHzB5ycBG3tBBxD3k
+x-access-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjYwNDI1NDFiNDBhYTVjN2IzOGRjMzgwNiIsImVtYWlsIjoiVGVzdEVtYWlsNUB3ZWIuZGUiLCJpYXQiOjE2MTYyNzY2OTAsImV4cCI6MTYxNjg4MTQ5MH0.RHPWtbCYUjvnmbfgn3J17Ff-IQEz_ZSX7FSkYgcz2KI
 ###
 
 #Get Users Orders
-GET http://localhost:3000/orders/getUsersOrders HTTP/1.1
+GET http://localhost:3000/orders/users-orders HTTP/1.1
 content-type: application/json
-x-access-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjVmMDczMTA2YjRhZmM5NjNjMGM5MjVkYiIsImVtYWlsIjoiVGVzdEVtYWlsMTRAd2ViLmRlIiwiaWF0IjoxNjA5ODgyNDY0LCJleHAiOjE2MDk5Njg4NjR9.DAKNQfHdYHDzZR7d43-hsHCZkViHzB5ycBG3tBBxD3k
+x-access-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjYwNDI1NDFiNDBhYTVjN2IzOGRjMzgwNiIsImVtYWlsIjoiVGVzdEVtYWlsNUB3ZWIuZGUiLCJpYXQiOjE2MTY2MjI2MTYsImV4cCI6MTYxNzIyNzQxNn0.ZgMw2GYgghdLSXIFasbvPtdeX6H0YftTLihVEsfQpl8
+###
+
+#Get Users Orders
+GET http://localhost:3000/orders HTTP/1.1
+content-type: application/json
+x-access-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjYwNDI1NDFiNDBhYTVjN2IzOGRjMzgwNiIsImVtYWlsIjoiVGVzdEVtYWlsNUB3ZWIuZGUiLCJpYXQiOjE2MTYyNzY2OTAsImV4cCI6MTYxNjg4MTQ5MH0.RHPWtbCYUjvnmbfgn3J17Ff-IQEz_ZSX7FSkYgcz2KI
+###
+
+#Search Stores Orders
+GET http://localhost:3000/orders/search-store-order?search=Test HTTP/1.1
+content-type: application/json
+x-access-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjYwNDI1NDFhNDBhYTVjN2IzOGRjMzgwMiIsImVtYWlsIjoiVGVzdEVtYWlsMUB3ZWIuZGUiLCJpYXQiOjE2MTc5OTU5MzgsImV4cCI6MTYxODYwMDczOH0.nYjHjhiyqW44QTrdKijZXCqdBZCFjjfSAMJSx0H75NI
 ###

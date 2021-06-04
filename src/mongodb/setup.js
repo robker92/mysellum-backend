@@ -1,33 +1,29 @@
 import MongoClient from 'mongodb';
-import { MONGODB_URL } from '../config';
+import { MONGODB_URL, COSMOSDB_URL, COSMOSDB_NAME } from '../config';
 
 let _client;
 
-const connectMongoDBClient = async function () {
+async function connectMongoDbClient() {
     try {
-        const client = await MongoClient.connect(MONGODB_URL, {
+        const client = await MongoClient.connect(COSMOSDB_URL, {
             useUnifiedTopology: true,
         });
-        // let client = await MongoClient.connect(MONGODB_URL, {
-        //     useUnifiedTopology: true,
-        // });
-        //await client.connect();
-        await client.db('testdatabase').command({ ping: 1 });
+        await client.db(COSMOSDB_NAME).command({ ping: 1 });
         _client = client;
     } catch (err) {
         throw err;
     }
-};
+}
 
-const getMongoDBClient = function () {
+function getMongoDbClient() {
     return _client;
-};
+}
 
-const disconnectMongoDBClient = function () {
+function disconnectMongoDbClient() {
     _client.close();
-};
+}
 
-const getMongoDBTransactionWriteOptions = function () {
+function getMongoDbTransactionWriteOptions() {
     const transactionOptions = {
         readPreference: 'primary',
         readConcern: {
@@ -38,13 +34,13 @@ const getMongoDBTransactionWriteOptions = function () {
         },
     };
     return transactionOptions;
-};
+}
 
 //===================================================================================================
 export {
-    connectMongoDBClient,
-    getMongoDBClient,
-    disconnectMongoDBClient,
-    getMongoDBTransactionWriteOptions,
+    connectMongoDbClient,
+    getMongoDbClient,
+    disconnectMongoDbClient,
+    getMongoDbTransactionWriteOptions,
 };
 //===================================================================================================
