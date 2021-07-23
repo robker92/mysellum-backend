@@ -3,7 +3,7 @@
 import { databaseEntity } from '../../../storage/utils/database-entity';
 import { readOneOperation } from '../../../storage/database-operations/read-one-operation';
 
-export { fetchAndValidateStore, validateStoreOwner };
+export { fetchAndValidateStore, fetchAndValidateProduct, validateStoreOwner };
 
 /**
  * Fetches a store by its storeId and returns it. Throws an error if the store was not found.
@@ -15,6 +15,24 @@ async function fetchAndValidateStore(storeId) {
     });
     if (!findResult) {
         throw new Error(`Store with the id ${storeId} not found.`);
+    }
+    return findResult;
+}
+
+/**
+ * The function fetches the product and throws an error if the id was not found
+ * @param {Object} orderedProduct
+ */
+async function fetchAndValidateProduct(id) {
+    const findResult = await readOneOperation(
+        'products',
+        {
+            _id: id,
+        },
+        { imageDetails: 0, imgSrc: 0 }
+    );
+    if (!findResult) {
+        throw new Error(`Wrong product id (${orderedProduct._id}) provided!`);
     }
     return findResult;
 }

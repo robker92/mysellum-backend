@@ -6,7 +6,11 @@
 
 'use strict';
 
-import { createSignUpLink } from './rest/paypal-rest-client';
+import {
+    createSignUpLink,
+    validatePaypalMerchantId,
+    fetchWebhookPaypalMerchantId,
+} from './rest/paypal-rest-client';
 
 import {
     createPaypalOrder,
@@ -14,6 +18,10 @@ import {
 } from './sdk/paypal-sdk-service';
 
 import {
+    saveWebhookData,
+    saveMerchantId,
+    onboardingDataService,
+    onboardingData2Service,
     createOrderDataStructure,
     saveCaptureIdsToOrders,
     handleIncompleteCaptures,
@@ -27,10 +35,13 @@ import { validateCurrencyCode } from './validators/currency-code-validator';
 
 export {
     createSignUpLinkController,
+    onboardingDataController,
+    onboardingData2Controller,
     createPaypalOrderController,
     capturePaypalOrderController,
     fetchMerchantIdsController,
-    testController,
+    paypalOnboardingWebhookController,
+    paypalWebhookTestController,
 };
 
 const createSignUpLinkController = async function (req, res, next) {
@@ -41,7 +52,6 @@ const createSignUpLinkController = async function (req, res, next) {
     try {
         responseData = await createSignUpLink(returnLink, trackingId);
     } catch (error) {
-        console.log(`hi3`);
         console.log(error);
         return next({
             status: 500,
@@ -53,6 +63,110 @@ const createSignUpLinkController = async function (req, res, next) {
         message: 'Sign-up link creation successful!',
         data: responseData,
     });
+};
+
+const onboardingDataController = async function (req, res, next) {
+    // const storeId = req.params.storeId;
+    // const userEmail = req.userEmail;
+    // const merchantId = req.body.merchantId;
+    // const merchantIdInPayPal = req.body.merchantIdInPayPal;
+    // const permissionsGranted = req.body.permissionsGranted;
+    // const consentStatus = req.body.consentStatus;
+    // const productIntentId = req.body.productIntentId;
+    // const productIntentID = req.body.productIntentID;
+    // const isEmailConfirmed = req.body.isEmailConfirmed;
+    // const accountStatus = req.body.accountStatus;
+
+    const {
+        storeId,
+        userEmail,
+        merchantId,
+        merchantIdInPayPal,
+        permissionsGranted,
+        consentStatus,
+        productIntentId,
+        productIntentID,
+        isEmailConfirmed,
+        accountStatus,
+    } = req.body;
+
+    // const {
+    //     merchantId,
+    //     merchantIdInPayPal,
+    //     permissionsGranted,
+    //     consentStatus,
+    //     productIntentId,
+    //     productIntentID,
+    //     isEmailConfirmed,
+    //     accountStatus,
+    // } = req.body;
+
+    try {
+        // Validate Paypal Ids
+        await validatePaypalMerchantId(merchantIdInPayPal);
+        // Validate store id & store owner & check if values are not already set
+        // save data to store (paypal + status)
+
+        // TODO check activation
+        await onboardingDataService(
+            storeId,
+            userEmail,
+            merchantId,
+            merchantIdInPayPal,
+            permissionsGranted,
+            consentStatus,
+            productIntentId,
+            productIntentID,
+            isEmailConfirmed,
+            accountStatus
+        );
+    } catch (error) {
+        console.log(error);
+        return next({
+            status: 500,
+            message: 'Error while saving the onboarding data.',
+        });
+    }
+    return res.sendStatus(200);
+};
+
+const onboardingData2Controller = async function (req, res, next) {
+    const storeId = req.params.storeId;
+    const userEmail = req.userEmail;
+
+    let result;
+    try {
+        // validate store -> check user; check if payment already registered
+        // TODO
+        // Validate Paypal Ids
+        result = await validatePaypalMerchantId('', storeId);
+        // Validate store id & store owner & check if values are not already set
+        // save data to store (paypal + status)
+
+        await onboardingData2Service(storeId, userEmail, result.merchant_id);
+        // save paypal data and adjust store status
+
+        // TODO check activation
+        // await onboardingDataService(
+        //     storeId,
+        //     userEmail,
+        //     merchantId,
+        //     merchantIdInPayPal,
+        //     permissionsGranted,
+        //     consentStatus,
+        //     productIntentId,
+        //     productIntentID,
+        //     isEmailConfirmed,
+        //     accountStatus
+        // );
+    } catch (error) {
+        console.log(error);
+        return next({
+            status: 500,
+            message: 'Error while saving the onboarding data.',
+        });
+    }
+    return res.sendStatus(200);
 };
 
 const createPaypalOrderController = async function (req, res, next) {
@@ -194,8 +308,55 @@ const paypalRefundController = async function (req, res, next) {
     });
 };
 
-const testController = async function (req, res, next) {
-    const body = req.body;
-    console.log(body);
+const paypalOnboardingWebhookController = async function (req, res, next) {
+    const webhookData = req.body;
+    // verify that webhook is valid and not malicious &
+    // Execute provided Get link to receive tracking id (= internal store id)
+    let resultObjct;
+    try {
+        resultObjct = await fetchWebhookPaypalMerchantId(
+            webhookData.resource.links[0].href
+        );
+    } catch (error) {
+        console.log(error);
+        return next({
+            status: 500,
+            message: 'Invalid Paypal URL received.',
+        });
+    }
+
+    const merchantId = resultObjct.merchant_id;
+    const trackingId = resultObjct.tracking_id;
+
+    // TODO activation status
+    // save merchant id and update activation status
+    try {
+        await saveMerchantId(merchantId, trackingId);
+    } catch (error) {
+        console.log(error);
+        return next({
+            status: 500,
+            message: 'Error while saving merchant id.',
+        });
+    }
+
+    // Save webhook data
+    try {
+        await saveWebhookData(webhookData);
+    } catch (error) {
+        console.log(error);
+        return next({
+            status: 500,
+            message: 'Error while saving webhook data.',
+        });
+    }
+
+    console.log(webhookData);
+    return res.sendStatus(200);
+};
+
+const paypalWebhookTestController = async function (req, res, next) {
+    console.log(req.body);
+    const data = req.body;
     return res.sendStatus(200);
 };

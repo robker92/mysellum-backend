@@ -11,7 +11,7 @@ import {
 } from '../../storage/database-operations';
 
 import { getProductModel } from '../../data-models';
-import { setActivationMinOneProduct } from './activation.service';
+import { storeActivationRoutine } from './activation.service';
 import { sendNotificationsService } from './product-avail-notif.service';
 import {
     setStoreDistribtuionValue,
@@ -79,7 +79,7 @@ async function createProductService(data, userEmail, storeId) {
         product
     );
     // TODO Transaction
-    await setActivationMinOneProduct(storeId, true);
+    await storeActivationRoutine(storeId);
 
     // set the store's distribution type when the value is true
     if (data.delivery === true) {
@@ -183,12 +183,12 @@ async function deleteProductService(userEmail, storeId, productId) {
         storeId: storeId,
     });
 
-    const products = await readManyOperation(databaseEntity.PRODUCTS, {
-        storeId: storeId,
-    });
-    if (products.length === 0) {
-        await setActivationMinOneProduct(storeId, false);
-    }
+    // const products = await readManyOperation(databaseEntity.PRODUCTS, {
+    //     storeId: storeId,
+    // });
+
+    // Trigger the store activation routine
+    await storeActivationRoutine(storeId);
 
     // check the distribution values and update them
     await updateStoreDistribtuionValues(storeId);

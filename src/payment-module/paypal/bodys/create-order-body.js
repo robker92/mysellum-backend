@@ -48,8 +48,10 @@ function createPurchaseUnitArray(orderData, orderObject) {
 
     for (let i = 0; i < storeIds.length; i++) {
         const orderElement = orderObject[storeIds[i]];
+        console.log(`Order Element: `);
+        console.log(orderElement);
         // for (const storeId of storeIds) {
-        let productArray = orderElement.products;
+        const productArray = orderElement.products;
 
         // const hashRefId = crypto
         //     .randomBytes(PAYPAL_REF_ID_HASH_NUM_BYTES)
@@ -69,8 +71,8 @@ function createPurchaseUnitArray(orderData, orderObject) {
             // custom_id: 'CUST-HighFashions',
             // soft_descriptor: 'HighFashions',
             payee: {
-                email_address: orderElement.store.merchantEmailInPayPal,
-                // merchant_id: orderObject[storeId].store.merchantIdInPayPal,
+                // email_address: orderElement.store.merchantEmailInPayPal,
+                merchant_id: orderElement.store.merchantIdInPayPal,
             },
             amount: amountObject,
             items: itemArray,

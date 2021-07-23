@@ -15,6 +15,7 @@ import {
     JWT_KEY_EXPIRE,
     PW_HASH_SALT_ROUNDS,
     PW_RESET_TOKEN_NUM_BYTES,
+    USER_VERIFICATION_TOKEN_EXPIRES,
 } from '../../config';
 import { sendNodemailerMail } from '../../mailing/nodemailer';
 import { getUserModel } from '../../data-models';
@@ -97,7 +98,8 @@ async function loginUserService(email, password) {
     }
 
     // TODO
-    const responseObject = {
+    console.log(user.favoriteStores);
+    const userData = {
         user: {
             authorizationRole: 'Role1',
             email: user.email,
@@ -111,8 +113,9 @@ async function loginUserService(email, password) {
         },
         shoppingCart: user.shoppingCart,
         productCounter: counter,
+        favoriteStores: user.favoriteStores,
     };
-    return { accessToken, responseObject };
+    return { accessToken, userData };
 }
 
 async function registerUserService(data) {
@@ -144,6 +147,7 @@ async function registerUserService(data) {
         addressLine1: data.addressLine1,
         birthdate: data.birthdate,
         verificationToken: verificationToken,
+        verificationExpires: Date.now() + USER_VERIFICATION_TOKEN_EXPIRES, //Date now + 60min
         datetimeCreated: new Date().toISOString(),
     };
     const userData = getUserModel(options);
@@ -185,6 +189,7 @@ async function registerUserService(data) {
 }
 
 async function verifyRegistrationService(verificationToken) {
+    console.log(verificationToken);
     const queryObject = {
         verifyRegistrationToken: verificationToken,
         verifyRegistrationExpires: {
@@ -213,13 +218,14 @@ async function verifyRegistrationService(verificationToken) {
             message: 'E-Mail verification failed.',
         };
     }
-
+    console.log(user);
     const accessToken = createToken({
         id: user._id.toString(),
         email: user.email,
     });
 
-    const responseObject = {
+    console.log(user.favoriteStores);
+    const userData = {
         message: 'Registration successful!',
         user: {
             authorizationRole: 'Role1',
@@ -233,10 +239,11 @@ async function verifyRegistrationService(verificationToken) {
             productCounter: 0,
         },
         shoppingCart: user.shoppingCart,
+        favoriteStores: user.favoriteStores ?? [],
         // productCounter: counter
     };
 
-    return { accessToken, responseObject };
+    return { accessToken, userData };
 }
 
 async function sendPasswordResetMailService(email, birthdate) {

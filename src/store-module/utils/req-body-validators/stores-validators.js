@@ -47,6 +47,105 @@ const editStoreVal = {
             lat: Joi.number().optional(),
             lng: Joi.number().optional(),
         }).optional(),
+        shippingMethod: Joi.string()
+            .valid('free', 'fixed', 'threshold')
+            .required(),
+        shippingCosts: Joi.number().required(),
+        shippingThresholdValue: Joi.number().required(),
+        openingHours: Joi.object({
+            monday: Joi.object({
+                opened: Joi.boolean().required(),
+                times: Joi.object({
+                    open: Joi.string()
+                        .length(5)
+                        .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/)
+                        .required(),
+                    close: Joi.string()
+                        .length(5)
+                        .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/)
+                        .required(),
+                }),
+            }).required(),
+            tuesday: Joi.object({
+                opened: Joi.boolean().required(),
+                times: Joi.object({
+                    open: Joi.string()
+                        .length(5)
+                        .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/)
+                        .required(),
+                    close: Joi.string()
+                        .length(5)
+                        .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/)
+                        .required(),
+                }),
+            }).required(),
+            wednesday: Joi.object({
+                opened: Joi.boolean().required(),
+                times: Joi.object({
+                    open: Joi.string()
+                        .length(5)
+                        .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/)
+                        .required(),
+                    close: Joi.string()
+                        .length(5)
+                        .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/)
+                        .required(),
+                }),
+            }).required(),
+            thursday: Joi.object({
+                opened: Joi.boolean().required(),
+                times: Joi.object({
+                    open: Joi.string()
+                        .length(5)
+                        .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/)
+                        .required(),
+                    close: Joi.string()
+                        .length(5)
+                        .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/)
+                        .required(),
+                }),
+            }).required(),
+            friday: Joi.object({
+                opened: Joi.boolean().required(),
+                times: Joi.object({
+                    open: Joi.string()
+                        .length(5)
+                        .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/)
+                        .required(),
+                    close: Joi.string()
+                        .length(5)
+                        .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/)
+                        .required(),
+                }),
+            }).required(),
+            saturday: Joi.object({
+                opened: Joi.boolean().required(),
+                times: Joi.object({
+                    open: Joi.string()
+                        .length(5)
+                        .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/)
+                        .required(),
+                    close: Joi.string()
+                        .length(5)
+                        .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/)
+                        .required(),
+                }),
+            }).required(),
+            sunday: Joi.object({
+                opened: Joi.boolean().required(),
+                times: Joi.object({
+                    open: Joi.string()
+                        .length(5)
+                        .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/)
+                        .required(),
+                    close: Joi.string()
+                        .length(5)
+                        .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/)
+                        .required(),
+                }),
+            }).required(),
+        }).required(),
+        hasOpened: Joi.boolean().optional(),
     }),
 };
 
@@ -85,5 +184,10 @@ const createStoreVal = {
             lat: Joi.number().optional(),
             lng: Joi.number().optional(),
         }).optional(),
+        shippingMethod: Joi.string()
+            .valid('free', 'fixed', 'threshold')
+            .optional(),
+        shippingCosts: Joi.number().optional(),
+        shippingThresholdValue: Joi.number().optional(),
     }),
 };

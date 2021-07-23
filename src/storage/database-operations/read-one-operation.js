@@ -18,6 +18,6 @@ async function readOneOperation(entity, queryObject, projectionObject = {}) {
 
     const projection = { projection: projectionObject };
     const result = await collection.findOne(queryObject, projection);
-
+    // const result = await collection.find(queryObject).project(projectionObject);
     return result;
 }

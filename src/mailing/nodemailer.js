@@ -2,20 +2,33 @@ import { nodemailerTransporter } from './mailTransporter';
 import { MAIL_USER } from '../config';
 
 import {
+    // Product Availability Notification
     getContentPrdctAvNotif,
     subjectPrdctAvNotif,
+    // Registration Verification
     getContentRegVerification,
     subjectRegVerification,
+    attachmentsRegVerification,
+    // Password reset
     getContentPasswordReset,
     subjectPasswordReset,
+    attachmentsPasswordReset,
+    // Test
     getContentTest,
     subjectTest,
+    // Order Status in Delivery
     getContentOrderStatusInDelivery,
     subjectOrderStatusInDelivery,
+    attachmentsOrderStatusInDelivery,
+    // Order Created - Store
     getContentOrderCreatedStore,
     subjectOrderCreatedStore,
+    attachmentsOrderCreatedStore,
+    // Order Created - Customer
     getContentOrderCreatedCustomer,
     subjectOrderCreatedCustomer,
+    attachmentsOrderCreatedCustomer,
+    // Customer Contact
     getContentCustomerContact,
     subjectCustomerContact,
 } from './htmlBodys';
@@ -66,10 +79,13 @@ async function sendNodemailerMail(options) {
         return error;
     }
 
+    // console.log(`dirname in mailer function: ${__dirname}`);
+
     //Switch for mail html bodys
     let toAddress;
     let mailContent;
     let mailSubject;
+    let attachments;
     switch (options.contentType) {
         case contentType.TEST_MAIL:
             mailContent = getContentTest();
@@ -81,11 +97,13 @@ async function sendNodemailerMail(options) {
             mailContent = getContentPasswordReset(options.resetPasswordToken);
             mailSubject = subjectPasswordReset;
             toAddress = options.email;
+            attachments = attachmentsPasswordReset;
             break;
         // case 'registrationVerification':
         case contentType.REGISTRATION_VERIFICATION:
             mailContent = getContentRegVerification(options.verificationToken);
             mailSubject = subjectRegVerification;
+            attachments = attachmentsRegVerification;
             toAddress = options.email;
             break;
         // case 'prdctAvNotif':
@@ -98,18 +116,21 @@ async function sendNodemailerMail(options) {
         case contentType.ORDER_CREATED_CUSTOMER:
             mailContent = getContentOrderCreatedCustomer(options);
             mailSubject = subjectOrderCreatedCustomer;
+            attachments = attachmentsOrderCreatedCustomer;
             toAddress = options.email;
             break;
         // case 'orderCreatedStore':
         case contentType.ORDER_CREATED_STORE:
             mailContent = getContentOrderCreatedStore(options);
             mailSubject = subjectOrderCreatedStore;
+            attachments = attachmentsOrderCreatedStore;
             toAddress = options.email;
             break;
         // case 'orderStatusInDelivery':
         case contentType.ORDER_STATUS_IN_DELIVERY:
             mailContent = getContentOrderStatusInDelivery(options);
             mailSubject = subjectOrderStatusInDelivery;
+            attachments = attachmentsOrderStatusInDelivery;
             toAddress = options.email;
             break;
         case contentType.CUSTOMER_CONTACT:
@@ -119,16 +140,19 @@ async function sendNodemailerMail(options) {
             break;
     }
 
+    // set receiver address to this one during development
     if (process.env.NODE_ENV === 'development') {
         toAddress = 'rkerscher@gmx.de';
     }
 
-    let mailOptions = {
-        from: `"Awesome Website! 👻" <${MAIL_USER}>`,
+    const mailOptions = {
+        // from: `"Awesome Website! 👻" <${MAIL_USER}>`,
+        from: `"Mysellum" <${MAIL_USER}>`,
         to: toAddress,
         subject: mailSubject,
         //text: 'That was easy!', //Text only content
         html: mailContent, //HTML content
+        attachments: attachments,
     };
 
     let info;
@@ -136,11 +160,11 @@ async function sendNodemailerMail(options) {
         info = await transporter.sendMail(mailOptions);
         console.log('Message sent: %s', info.messageId);
         //console.log('Preview URL: ' + nodemailer.getTestMessageUrl(info));
-        return info;
     } catch (error) {
         console.log(error);
         return error;
     }
+    return info;
 }
 
 //===================================================================================================

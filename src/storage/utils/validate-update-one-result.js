@@ -9,7 +9,6 @@ export { validateUpdateOneResult };
  * @returns true when a document was updated correctly and false if not
  */
 function validateUpdateOneResult(result, entity, queryObject, updateObject) {
-    // console.log(result);
     if (
         result.result.n !== 0 &&
         result.result.ok !== 0

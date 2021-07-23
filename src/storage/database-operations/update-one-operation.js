@@ -33,6 +33,9 @@ async function updateOneOperation(
         case 'inc':
             operation = { $inc: updateObject };
             break;
+        case 'push':
+            operation = { $push: updateObject };
+            break;
         case 'pull':
             operation = { $pull: updateObject };
             break;

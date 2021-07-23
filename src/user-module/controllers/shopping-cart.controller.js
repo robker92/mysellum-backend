@@ -5,6 +5,7 @@ import {
     removeFromShoppingCartService,
     updateShoppingCartService,
 } from '../services/shopping-cart.service';
+import { getShippingCostsService } from '../../store-module/services/shipping.service';
 
 export {
     addToShoppingCartController,
@@ -17,21 +18,23 @@ const addToShoppingCartController = async function (req, res, next) {
     const addedProduct = req.body.product;
     const addedAmount = parseInt(req.body.amount);
 
-    let result;
+    let shoppingCart;
+    let shippingCosts;
     try {
-        result = await addToShoppingCartService(
+        shoppingCart = await addToShoppingCartService(
             email,
             addedProduct,
             addedAmount
         );
+        shippingCosts = await getShippingCostsService(shoppingCart);
     } catch (error) {
         console.log(error);
         return next(error);
     }
 
     return res.status(StatusCodes.OK).json({
-        message: 'Products successfully added to cart!',
-        shoppingCart: result,
+        shoppingCart: shoppingCart,
+        shippingCosts: shippingCosts,
     });
 };
 
@@ -40,21 +43,23 @@ const removeFromShoppingCartController = async function (req, res, next) {
     const removedProduct = req.body.product;
     const removedAmount = req.body.amount;
 
-    let result;
+    let shoppingCart;
+    let shippingCosts;
     try {
-        result = await removeFromShoppingCartService(
+        shoppingCart = await removeFromShoppingCartService(
             email,
             removedProduct,
             removedAmount
         );
+        shippingCosts = await getShippingCostsService(shoppingCart);
     } catch (error) {
         console.log(error);
         return next(error);
     }
 
     return res.status(StatusCodes.OK).json({
-        message: 'Products successfully removed from cart!',
-        shoppingCart: result,
+        shoppingCart: shoppingCart,
+        shippingCosts: shippingCosts,
     });
 };
 
@@ -62,12 +67,14 @@ const updateShoppingCartController = async function (req, res, next) {
     const email = req.params.email;
     const shoppingCart = req.body.shoppingCart;
 
+    let shippingCosts;
     try {
         await updateShoppingCartService(email, shoppingCart);
+        shippingCosts = await getShippingCostsService(shoppingCart);
     } catch (error) {
         console.log(error);
         return next(error);
     }
 
-    return res.sendStatus(StatusCodes.OK);
+    return res.status(StatusCodes.OK).json({ shippingCosts: shippingCosts });
 };

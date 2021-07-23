@@ -11,6 +11,8 @@ import {
     databaseEntity,
 } from '../../storage/database-operations';
 
+import { FRONTEND_BASE_URL_PROD } from '../../config';
+
 // MongoDB transaction
 import {
     getMongoDbClient,
@@ -27,16 +29,13 @@ const geoCoder = NodeGeocoder(geoCodeOptions);
 import { getStoreModel } from '../../data-models';
 import { createSignUpLink } from '../../payment-module/paypal/rest/paypal-rest-client';
 
-import {
-    checkProfileComplete,
-    checkShippingRegistered,
-    checkPaymentMethodRegistered,
-} from '../../utils/checkActivation';
+import { storeActivationRoutine } from '../services/activation.service';
 
 import {
     fetchAndValidateStore,
     validateStoreOwner,
 } from '../utils/operations/store-checks';
+import moment from 'moment-timezone';
 
 export {
     getSingleStoreService,
@@ -96,7 +95,7 @@ async function createStoreService(data, userEmail) {
     let storeOptions = {
         userEmail: userEmail,
         // Both (delivery and pickup) are false initially. They will be set when products are added.
-        deivery: false,
+        delivery: false,
         pickup: false,
         datetimeCreated: new Date().toISOString(),
         datetimeAdjusted: '',
@@ -144,7 +143,9 @@ async function createStoreService(data, userEmail) {
     // Other option: use user email and not store id
     console.log(store._id);
     const paypalLinks = await createSignUpLink(
-        `http://127.0.0.1:8080/en/store-profile/${store._id}`,
+        // `https://prjct-frontend.azurewebsites.net/store-profile/${store._id}`,
+        `${FRONTEND_BASE_URL_PROD}/store-profile/${store._id}`,
+        // `http://127.0.0.1:8080/store-profile/${store._id}`,
         // '/',
         store._id
     );
@@ -175,6 +176,9 @@ async function createStoreService(data, userEmail) {
         'set'
         // session
     );
+
+    await storeActivationRoutine(store._id);
+
     //     }, getMongoDbTransactionWriteOptions());
     // } catch (e) {
     //     // session.abortTransaction();
@@ -197,6 +201,7 @@ async function createStoreService(data, userEmail) {
  * @returns
  */
 async function editStoreService(data, storeId, userEmail) {
+    console.log(data);
     const store = await fetchAndValidateStore(storeId);
     validateStoreOwner(userEmail, store.userEmail);
     // const findResult = await readOneOperation(databaseEntity.STORES, {
@@ -223,14 +228,9 @@ async function editStoreService(data, storeId, userEmail) {
         );
     }
 
-    const activationProfileCompleteValue = checkProfileComplete(
-        data.title,
-        data.description,
-        data.tags,
-        data.images
-    );
-    const activationShippingValue = checkShippingRegistered();
-    const activationPaymentMethodValue = checkPaymentMethodRegistered();
+    await storeActivationRoutine(storeId);
+
+    const openingHours = validateOpeningHours(data.openingHours);
 
     await updateOneOperation(
         databaseEntity.STORES,
@@ -249,15 +249,74 @@ async function editStoreService(data, storeId, userEmail) {
             'mapData.mapIcon': data.mapIcon,
             'mapData.location.lat': geoCodeResult[0].latitude,
             'mapData.location.lng': geoCodeResult[0].longitude,
-            'activationSteps.profileComplete': activationProfileCompleteValue,
-            'activationSteps.shippingRegistered': activationShippingValue,
-            'activationSteps.paymentMethodRegistered':
-                activationPaymentMethodValue,
+            'shipping.method': data.shippingMethod,
+            'shipping.costs': data.shippingCosts,
+            'shipping.thresholdValue': data.shippingThresholdValue,
+            openingHours: openingHours,
+            // 'activationSteps.profileComplete': activationProfileCompleteValue,
+            // 'activationSteps.shippingRegistered': activationShippingValue,
+            // 'activationSteps.paymentMethodRegistered':
+            //     activationPaymentMethodValue,
         },
         'set'
     );
 
     return;
+}
+
+function validateOpeningHours(openingHours) {
+    // deep copy the original object
+    let returnObject = JSON.parse(JSON.stringify(openingHours));
+
+    // get weekday array
+    const days = Object.keys(openingHours);
+
+    // iterate over day keys
+    for (const day of days) {
+        // current day object
+        const currentDay = openingHours[day];
+        // validate open time
+        if (
+            !currentDay.times.open ||
+            !validateTimeFormat(currentDay.times.open)
+        ) {
+            returnObject[day].opened = false;
+            returnObject[day].times.open = '00:00';
+        }
+        // validate close time
+        if (
+            !currentDay.times.close ||
+            !validateTimeFormat(currentDay.times.close)
+        ) {
+            returnObject[day].close = false;
+            returnObject[day].times.close = '00:00';
+        }
+        // validate if open is before close time
+        if (
+            !validateOpenBeforeCloseTime(
+                currentDay.times.open,
+                currentDay.times.close
+            ) &&
+            currentDay.times.open !== '00:00' &&
+            currentDay.times.close !== '00:00'
+        ) {
+            returnObject[day].close = false;
+            returnObject[day].times.open = '00:00';
+            returnObject[day].times.close = '00:00';
+        }
+    }
+    console.log(returnObject);
+    return returnObject;
+}
+
+function validateTimeFormat(time) {
+    return moment(time, 'HH:mm', true).isValid();
+}
+function validateOpenBeforeCloseTime(open, close) {
+    const openTime = moment(open, 'HH:mm', true);
+    const closeTime = moment(close, 'HH:mm', true);
+
+    return openTime.isBefore(closeTime);
 }
 
 /**

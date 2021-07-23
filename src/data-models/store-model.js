@@ -31,13 +31,39 @@ export function getStoreModel(options) {
             avgRating: options.avgRating,
         },
         activationSteps: {
-            profileComplete: options.activation?.profileComplete ?? false,
+            // profileComplete: options.activation?.profileComplete ?? false,
+            profileComplete: true, // init is true since validations are done during creation
             minOneProduct: options.activation?.minOneProduct ?? false,
             shippingRegistered: options.activation?.shippingRegistered ?? false,
             paymentMethodRegistered:
                 options.activation?.paymentMethodRegistered ?? false,
         },
         activation: false,
+        openingHours: {
+            monday: {
+                opened: false,
+                times: { open: '00:00', close: '00:00' },
+            },
+            tuesday: {
+                opened: false,
+                times: { open: '00:00', close: '00:00' },
+            },
+            wednesday: {
+                opened: false,
+                times: { open: '00:00', close: '00:00' },
+            },
+            thursday: {
+                opened: false,
+                times: { open: '00:00', close: '00:00' },
+            },
+            friday: { opened: false, times: { open: '00:00', close: '00:00' } },
+            saturday: {
+                opened: false,
+                times: { open: '00:00', close: '00:00' },
+            },
+            sunday: { opened: false, times: { open: '00:00', close: '00:00' } },
+        },
+        hasOpened: false,
         notifications: {
             receivedOrder: false,
             productOutOfStock: {
@@ -45,7 +71,12 @@ export function getStoreModel(options) {
                 atAmount: 0,
             },
         },
-        shipping: {},
+        shipping: {
+            method: 'free', // Methods: free, threshold, fixed
+            thresholdValue: 0,
+            costs: 0,
+            currency: 'EUR',
+        },
         payment: {
             registered: false,
             // https://developer.paypal.com/docs/platforms/seller-onboarding/before-payment/

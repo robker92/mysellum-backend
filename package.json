@@ -17,7 +17,9 @@
   "license": "",
   "dependencies": {
     "@paypal/checkout-server-sdk": "^1.0.2",
+    "@sinonjs/fake-timers": "^7.1.2",
     "axios": "^0.21.1",
+    "babel-node": "*",
     "bcrypt": "^5.0.1",
     "bcryptjs": "^2.4.3",
     "body-parser": "^1.18.2",

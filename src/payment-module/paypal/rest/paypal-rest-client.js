@@ -5,11 +5,17 @@ import axios from 'axios';
 import { getPartnerReferralBody } from '../bodys/partner-referral-body';
 import { getCreateOrderBody } from '../bodys/create-order-body';
 import { getAccessToken } from './paypal-access-token';
-import { PAYPAL_BASE_URL, PAYPAL_CLIENT_ID } from '../../../config';
+import {
+    PAYPAL_BASE_URL,
+    PAYPAL_CLIENT_ID,
+    PAYPAL_PLATFORM_MERCHANT_ID,
+} from '../../../config';
 import { v4 as uuidv4 } from 'uuid';
 
 export {
     createSignUpLink,
+    validatePaypalMerchantId,
+    fetchWebhookPaypalMerchantId,
     createPaypalOrder,
     capturePaypalOrder,
     refundPaypalOrder,
@@ -51,6 +57,66 @@ async function createSignUpLink(returnLink, trackingId) {
         // console.log(error);
         throw error;
     }
+    return response.data;
+}
+
+/**
+ * The function checks if the provided merchant id exists in paypal and is therefore valid.
+ * An error is thrown, when the status code from paypal is 404 - Not Found.
+ * @param {string} merchantIdInPaypal provide an empty string to use the tracking id in query.
+ * If provided, it will be used to get the entity from paypal
+ * @param {string} trackingId the tracking id which should be used as query param
+ */
+async function validatePaypalMerchantId(merchantIdInPaypal, trackingId) {
+    const url = `/v1/customer/partners/${PAYPAL_PLATFORM_MERCHANT_ID}/merchant-integrations`;
+    if (!merchantIdInPaypal) {
+        url = url + `?tracking_id=${trackingId}`;
+    } else {
+        url = url + `/${merchantIdInPaypal}`;
+    }
+
+    let response;
+    try {
+        const accessToken = await getAccessToken();
+        response = await paypalClient.get(url, {
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+            },
+        });
+    } catch (error) {
+        console.log(error);
+        throw error;
+    }
+
+    if (response.status === 404) {
+        throw new Error('Invalid Paypal Merchant Id provided!');
+    }
+
+    if (!merchantIdInPaypal) {
+        return;
+    } else {
+        return response.data;
+    }
+}
+
+/**
+ * The function gets the url from the webhook event data and fetches it. If the url is false, an error is thrown.
+ * @param {string} url
+ */
+async function fetchWebhookPaypalMerchantId(url) {
+    let response;
+    try {
+        const accessToken = await getAccessToken();
+        response = await paypalClient.get(url, {
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+            },
+        });
+    } catch (error) {
+        console.log(error);
+        throw error;
+    }
+
     return response.data;
 }
 

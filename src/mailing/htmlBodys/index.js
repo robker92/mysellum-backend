@@ -6,3 +6,4 @@ export * from './orderCreatedCustomer';
 export * from './orderCreatedStore';
 export * from './orderStatusInDelivery';
 export * from './customerContact';
+// export * from './templateTestEmail';

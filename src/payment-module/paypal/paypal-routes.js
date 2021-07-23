@@ -9,15 +9,19 @@ import { parserJsonLimit } from '../../utils/bodyParsers';
 
 import {
     createSignUpLinkController,
+    onboardingDataController,
+    onboardingData2Controller,
     createPaypalOrderController,
     capturePaypalOrderController,
     fetchMerchantIdsController,
-    testController,
+    paypalOnboardingWebhookController,
+    paypalWebhookTestController,
 } from './paypal-controller';
 
 //Validation
 import {
     createSignUpLinkValidation,
+    onboardingDataValidation,
     createPaypalOrderValidation,
     capturePaypalOrderValidation,
     fetchMerchantIdsValidation,
@@ -40,7 +44,7 @@ routerPaypal.post(
     '/create-order',
     parserJsonLimit,
     checkAuthentication,
-    validate(createPaypalOrderValidation, opts),
+    // validate(createPaypalOrderValidation, opts),
     excHandler(createPaypalOrderController)
 );
 
@@ -48,7 +52,7 @@ routerPaypal.post(
     '/capture-order',
     parserJsonLimit,
     checkAuthentication,
-    validate(capturePaypalOrderValidation, opts),
+    // validate(capturePaypalOrderValidation, opts),
     excHandler(capturePaypalOrderController)
 );
 
@@ -68,12 +72,36 @@ routerPaypal.post(
 //     excHandler(getPaypalOrderController)
 // );
 
-// Paypal Webhook Test
+// Paypal Webhook Merchant Onboarding Completed
 routerPaypal.post(
     '/onboarding-completed',
     parserJsonLimit,
     //validate(cartProductValidation, opts),
-    excHandler(testController)
+    excHandler(paypalOnboardingWebhookController)
+);
+
+// Paypal Webhook Test - All Events
+routerPaypal.post(
+    '/webhook-test',
+    parserJsonLimit,
+    //validate(cartProductValidation, opts),
+    excHandler(paypalWebhookTestController)
+);
+
+routerPaypal.post(
+    '/onboarding-data/:storeId',
+    parserJsonLimit,
+    checkAuthentication,
+    validate(onboardingDataValidation, opts),
+    excHandler(onboardingDataController)
+);
+
+routerPaypal.post(
+    '/onboarding-data2/:storeId',
+    parserJsonLimit,
+    checkAuthentication,
+    validate(onboardingDataValidation, opts),
+    excHandler(onboardingData2Controller)
 );
 
 export { routerPaypal };

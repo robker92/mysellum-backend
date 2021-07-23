@@ -4,4 +4,5 @@ export const databaseEntity = Object.freeze({
     PRODUCTS: 'products',
     ORDERS: 'orders',
     PRODUCT_NOTIFICATIONS: 'prdctNotif',
+    PAYPAL_WEBHOOKS: 'paypalWebhooks',
 });

@@ -10,6 +10,10 @@ import { updateOneOperation } from '../../storage/database-operations/update-one
 import { createOneOperation } from '../../storage/database-operations/create-one-operation';
 
 export {
+    onboardingDataService,
+    onboardingData2Service,
+    saveWebhookData,
+    saveMerchantId,
     createOrderDataStructure,
     saveCaptureIdsToOrders,
     handleIncompleteCaptures,
@@ -20,6 +24,138 @@ export {
     emptyShoppingCart,
     sendNotificationEmails,
 };
+
+async function onboardingDataService(
+    storeId,
+    userEmail,
+    merchantId,
+    merchantIdInPayPal,
+    permissionsGranted,
+    consentStatus,
+    productIntentId,
+    productIntentID,
+    isEmailConfirmed,
+    accountStatus
+) {
+    // Validate store id & check if values are not already set
+    const store = await fetchAndValidateStore(storeId);
+    if (store.payment.paypal.common.merchantIdInPayPal) {
+        throw new Error(
+            'There is already a merchantIdInPayPal stored for this store.'
+        );
+    }
+    if (store.userEmail !== userEmail) {
+        throw new Error('User not authorized to edit this store.');
+    }
+
+    // save data to store (paypal + status)
+    // TODO check status
+    try {
+        await updateOneOperation(
+            'stores',
+            {
+                _id: storeId,
+            },
+            {
+                'payment.registered': true,
+                'payment.paypal.common.merchantId': merchantId,
+                'payment.paypal.common.merchantIdInPayPal': merchantIdInPayPal,
+                'payment.paypal.common.permissionsGranted': permissionsGranted,
+                'payment.paypal.common.consentStatus': consentStatus,
+                'payment.paypal.common.productIntentId': productIntentId,
+                'payment.paypal.common.productIntentID': productIntentID,
+                'payment.paypal.common.consentStatus': consentStatus,
+                'payment.paypal.common.isEmailConfirmed': isEmailConfirmed,
+                'payment.paypal.common.accountStatus': accountStatus,
+                'activationSteps.paymentMethodRegistered': true,
+            },
+            'set'
+        );
+    } catch (error) {
+        console.log(error);
+        throw error;
+    }
+    return;
+}
+
+/**
+ * The function validates if the user is the owner of the store and it updates the store (= save the merchant id and updates the status)
+ * @param {string} storeId
+ * @param {string} userEmail
+ * @param {string} merchantIdInPayPal
+ * @returns
+ */
+async function onboardingData2Service(storeId, userEmail, merchantIdInPayPal) {
+    // Validate store id & check if values are not already set
+    const store = await fetchAndValidateStore(storeId);
+    if (store.payment.paypal.common.merchantIdInPayPal) {
+        throw new Error(
+            'There is already a merchantIdInPayPal stored for this store.'
+        );
+    }
+    if (store.userEmail !== userEmail) {
+        throw new Error('User not authorized to edit this store.');
+    }
+
+    // save data to store (paypal + status)
+    // TODO check status
+    try {
+        await updateOneOperation(
+            'stores',
+            {
+                _id: storeId,
+            },
+            {
+                'payment.paypal.common.merchantIdInPayPal': merchantIdInPayPal,
+                'activationSteps.paymentMethodRegistered': true,
+            },
+            'set'
+        );
+    } catch (error) {
+        console.log(error);
+        throw error;
+    }
+    return;
+}
+
+/**
+ * The function saves the merchant id to the stoer with the provided tracking id (=store id)
+ * @param {string} merchantId
+ * @param {string} trackingId
+ */
+async function saveMerchantId(merchantId, trackingId) {
+    const store = await fetchAndValidateStore(trackingId);
+    if (store.payment.paypal.common.merchantIdInPayPal) {
+        throw new Error(
+            'There is already a merchantIdInPayPal stored for this store.'
+        );
+    }
+    // console.log(merchantId);
+    // console.log(trackingId);
+    await updateOneOperation(
+        'stores',
+        {
+            _id: trackingId,
+        },
+        {
+            'payment.paypal.common.merchantIdInPayPal': merchantId,
+            'activationSteps.paymentMethodRegistered': true,
+        },
+        'set'
+    );
+
+    return;
+}
+
+/**
+ * The function saves the data object received from a paypal webhook.
+ * @param {object} webhookData
+ */
+async function saveWebhookData(webhookData) {
+    await createOneOperation('paypalWebhooks', webhookData);
+
+    return;
+}
 
 /**
  * The function creates the order Object out of the cart data ([[{ProductObject}, PurchasedAmount],[{ProductObject}, PurchasedAmount]])
@@ -85,7 +221,7 @@ async function fetchAndValidateProduct(orderedProduct, orderedAmount) {
         {
             _id: orderedProduct._id,
         },
-        { projection: { imgSrc: false, imageDetails: false } }
+        { imageDetails: 0, imgSrc: 0 }
     );
 
     if (!findResult) {

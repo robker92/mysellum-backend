@@ -48,15 +48,21 @@ Authorization: Bearer A21AALlvc4WhwKYcFG5WIFjZyE57CYgZWvPmyCMFmM4WJ-CLlDG6nq8pnd
 ### "partner_config_override/return_url": ""
 
 # Retrieve Merchant Id (= id of registered store)
-GET https://api-m.sandbox.paypal.com/v1/customer/partners/CAD3FBJY72FE8/merchant-integrations?tracking_id=60a8137fefddc767a87d05fd HTTP/1.1
+GET https://api-m.sandbox.paypal.com/v1/customer/partners/CAD3FBJY72FE8/merchant-integrations?tracking_id=60bb6b1c5722982870c1677c HTTP/1.1
 content-type: application/json
-Authorization: Bearer A21AALlvc4WhwKYcFG5WIFjZyE57CYgZWvPmyCMFmM4WJ-CLlDG6nq8pndfTJ9ecc4s1MjsubNym3mn8I8dw2Nca4YAdKUpbQ
+Authorization: Bearer A21AAKG55WMgFojQNsh7MkYu8nrO6VOHhNgvleW-NdAVVxZhi7EV1j6FUdh4QoRTqsA3HYNfK8ib5B1fBg08ic2y89mTvm6RQ
 ###
 
-# Check Onboarding Status
-GET https://api-m.sandbox.paypal.com/v1/customer/partners/CAD3FBJY72FE8/merchant-integrations/UW8X6XK7RGLP8 HTTP/1.1
+# Retrieve Merchant Id (= id of registered store)
+GET https://api-m.sandbox.paypal.com/v1/customer/partners/CAD3FBJY72FE8/merchant-integrations?tracking_id=60bab1a623dd065d88e41a1b HTTP/1.1
 content-type: application/json
-Authorization: Bearer A21AAKgLKLqsNbYTZY-w3PMDS428LcmbvUdovdjaZCNpj9IJwfARby0t4jxizN6sZpMUkOOd2a-oAtczcM4EXKxGyL2NVXDvw
+Authorization: Bearer A21AAJHK5BpuMge-9iO5xkxehubs9nEvb9MVw22rBDOjHKz_epAMxk1TQEE-dkZW6rLX79V6flfvYAX9C5D6s4CvBlx2YvLEQ
+###
+
+# Track Seller Onboarding Status
+GET https://api-m.sandbox.paypal.com/v1/customer/partners/CAD3FBJY72FE8/merchant-integrations/5FHJ5NA2X94VG HTTP/1.1
+content-type: application/json
+Authorization: Bearer A21AAJrI3cItb32sJc6siN7ZxK89himhR-oktZ1eIg4jWRQ5jW3WFfHPu5axxZRQQMO8ctw0AQfCkFLoyM3MbFzjYIB4nRhVg
 ###
 
 # Create Order
@@ -114,7 +120,7 @@ Authorization: Bearer A21AAI4_26bkb9CYisOWrRtYTtzmksbaHWBf-n8Pf2ZWKl4MIutppzqZfA
 # Create Paypal SIgnup Link
 POST http://localhost:3000/paypal/signup-link HTTP/1.1
 content-type: application/json
-x-access-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjYwMjU5M2JlMWJkYTJkNzk1YzhhMGNhOSIsImVtYWlsIjoiVGVzdEVtYWlsNUB3ZWIuZGUiLCJpYXQiOjE2MTQ3OTA5NjcsImV4cCI6MTYxNTM5NTc2N30.l984HwwxVldvuQdkDhZrb2yiaSeWcsmoT8Fr1S1F-7w
+x-access-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjYwYmI2YWU3NTcyMjk4Mjg3MGMxNjc3YiIsImVtYWlsIjoiVGVzdEVtYWlsMTNAd2ViLmRlIiwiaWF0IjoxNjIyODk1NDU4LCJleHAiOjE2MjM1MDAyNTh9.rmqj3YLxEGsuie5IKajv9CAu7kHjjSl76cp9K3_2a6s
 
 {
   "returnUrl": "/",
@@ -125,7 +131,7 @@ x-access-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjYwMjU5M2JlMWJkYTJ
 # Create Paypal Order
 POST http://localhost:3000/paypal/create-order HTTP/1.1
 content-type: application/json
-x-access-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjYwMjU5M2JlMWJkYTJkNzk1YzhhMGNhOSIsImVtYWlsIjoiVGVzdEVtYWlsNUB3ZWIuZGUiLCJpYXQiOjE2MTQ3OTA5NjcsImV4cCI6MTYxNTM5NTc2N30.l984HwwxVldvuQdkDhZrb2yiaSeWcsmoT8Fr1S1F-7w
+x-access-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjYwYmI2YWU3NTcyMjk4Mjg3MGMxNjc3YiIsImVtYWlsIjoiVGVzdEVtYWlsMTNAd2ViLmRlIiwiaWF0IjoxNjIyODk1NDU4LCJleHAiOjE2MjM1MDAyNTh9.rmqj3YLxEGsuie5IKajv9CAu7kHjjSl76cp9K3_2a6s
 
 # Falsch: dieser call wird dann erst vom server geschickt
 {
@@ -154,8 +160,33 @@ x-access-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjYwMjU5M2JlMWJkYTJ
 # Capture Paypal Order
 POST http://localhost:3000/paypal/capture-order HTTP/1.1
 content-type: application/json
-x-access-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjYwMjU5M2JlMWJkYTJkNzk1YzhhMGNhOSIsImVtYWlsIjoiVGVzdEVtYWlsNUB3ZWIuZGUiLCJpYXQiOjE2MTQ3OTA5NjcsImV4cCI6MTYxNTM5NTc2N30.l984HwwxVldvuQdkDhZrb2yiaSeWcsmoT8Fr1S1F-7w
+x-access-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjYwYmI2YWU3NTcyMjk4Mjg3MGMxNjc3YiIsImVtYWlsIjoiVGVzdEVtYWlsMTNAd2ViLmRlIiwiaWF0IjoxNjIyODk1NDU4LCJleHAiOjE2MjM1MDAyNTh9.rmqj3YLxEGsuie5IKajv9CAu7kHjjSl76cp9K3_2a6s
 
 {
+}
+###
+
+# Simulate Webhook
+POST http://localhost:3000/paypal/onboarding-completed HTTP/1.1
+content-type: application/json
+
+{
+  "id": "WH-2WR32451HC0233532-67976317FL4543714",
+  "create_time": "2016-08-01T21:41:28Z",
+  "resource_type": "merchant-onboarding",
+  "event_type": "MERCHANT.ONBOARDING.COMPLETED",
+  "resource": {
+    "partner_client_id": "AdZ3f8z-zIFM6t6Yilxvk3q4Iwx4ITRBjGR07q9wPJWms0z3G4ohajp7LdvpaLCeVLBmp5aVQ717YIw0",
+    "links": [
+      {
+        "href": "https://api-m.sandbox.paypal.com/v1/customer/partners/CAD3FBJY72FE8/merchant-integrations/5FHJ5NA2X94VG",
+        "rel": "self",
+        "method": "GET",
+        "description": "Get the merchant status information of merchants onboarded by this partner"
+      }
+    ],
+    "merchant_id": "ELAMYJUN78D6G"
+  },
+  "links": []
 }
 ###

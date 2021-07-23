@@ -1,6 +1,10 @@
 'use strict';
 import { StatusCodes } from 'http-status-codes';
 import {
+    getAuthTokenCookieOptions,
+    getAuthControlCookieOptions,
+} from '../utils/cookieOptions';
+import {
     loginUserService,
     registerUserService,
     verifyRegistrationService,
@@ -8,6 +12,7 @@ import {
     checkResetTokenService,
     resetPasswordService,
 } from '../services/authentication.service';
+import { getShippingCostsService } from '../../store-module/services/shipping.service';
 
 export {
     loginUserController,
@@ -25,15 +30,23 @@ const loginUserController = async function (req, res, next) {
     let result;
     try {
         result = await loginUserService(email, password);
+        const shippingCosts = await getShippingCostsService(
+            result.userData.shoppingCart
+        );
+        result.userData.shippingCosts = shippingCosts;
     } catch (error) {
         console.log(error);
         return next(error);
     }
     console.log(result.accessToken);
-    return res
-        .status(StatusCodes.OK)
-        .cookie('authToken', result.accessToken)
-        .json(result.responseObject);
+
+    return (
+        res
+            .status(StatusCodes.OK)
+            // .cookie('authToken', result.accessToken, getAuthTokenCookieOptions())
+            // .cookie('authControl', true, getAuthControlCookieOptions()) //maxAge: 1000 * 60 * 10,
+            .json({ userData: result.userData, authToken: result.accessToken })
+    );
 };
 
 const registerUserController = async function (req, res, next) {
@@ -63,15 +76,19 @@ const verifyRegistrationController = async function (req, res, next) {
     let result;
     try {
         result = await verifyRegistrationService(verificationToken);
+        result.userData.shippingCosts = 0;
     } catch (error) {
         console.log(error);
         return next(error);
     }
 
-    return res
-        .status(StatusCodes.OK)
-        .cookie('authToken', result.accessToken)
-        .json(result.responseObject);
+    return (
+        res
+            .status(StatusCodes.OK)
+            // .cookie('authToken', result.accessToken, getAuthTokenCookieOptions())
+            // .cookie('authControl', true, getAuthControlCookieOptions()) //maxAge: 1000 * 60 * 10,
+            .json({ userData: result.userData, authToken: result.accessToken })
+    );
 };
 
 const sendPasswordResetMailController = async function (req, res, next) {

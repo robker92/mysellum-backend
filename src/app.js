@@ -14,9 +14,14 @@ import {
     routerProducts,
     routerReviews,
     routerSearch,
-} from './store-module/routes';
+    routerShipping,
+} from './store-module/routes/index';
 import { routerAdmin } from './admin-module';
-import { routerAuthentication, routerShoppingCart } from './user-module/routes';
+import {
+    routerAuthentication,
+    routerShoppingCart,
+    routerUsers,
+} from './user-module/routes';
 import { routerContact } from './contact-module/contact.routes';
 import { routerPaypal } from './payment-module/paypal/paypal-routes';
 import { errorHandler } from './middlewares/ErrorHandler';
@@ -32,14 +37,16 @@ if (process.env.NODE_ENV === 'development') {
     corsWhitelist.push('http://127.0.0.1:8080');
     corsWhitelist.push('http://localhost:8080');
 }
-console.log(corsWhitelist);
+// console.log(corsWhitelist);
 app.use(
     cors({
         origin: corsWhitelist,
         // origin: 'https://prjct-frontend.azurewebsites.net/*',
         credentials: true,
-        // methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-        //allowedHeaders: 'Content-Type,Authorization,ETag',
+        // preflightContinue: true,
+        methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+        allowedHeaders: 'Content-Type,Authorization,ETag,x-access-token',
+        optionsSuccessStatus: 204,
         //exposedHeaders: ['Content-Type,Authorization,Content-Length,ETag']
     })
 );
@@ -67,11 +74,13 @@ app.use('/', routerNotif);
 app.use('/', routerProducts);
 app.use('/', routerReviews);
 app.use('/', routerSearch);
+app.use('/', routerShipping);
 
 // User Context
 app.use('/', routerAuthentication);
 app.use('/', routerShoppingCart);
 app.use('/', routerContact);
+app.use('/', routerUsers);
 
 // Global Error Handler
 app.use(errorHandler);

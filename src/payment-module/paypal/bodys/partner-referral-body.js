@@ -23,6 +23,13 @@ export function getPartnerReferralBody(returnUrl, trackingId) {
                 granted: true,
             },
         ],
+        partner_config_override: {
+            return_url: returnUrl,
+            return_url_description:
+                'the url to return the merchant after the paypal onboarding process.',
+            partner_logo_url:
+                'https://i.pinimg.com/originals/0f/5b/6f/0f5b6f679050f784e42ebb778dc395e5.png',
+        },
         // TODO
         // partner_config_override: {
         //     return_url: returnUrl,
