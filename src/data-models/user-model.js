@@ -3,6 +3,7 @@ export function getUserModel(options) {
         firstName: options.firstName,
         lastName: options.lastName,
         email: options.email,
+        phoneNumber: options.phoneNumber,
         password: options.passwordHash,
         // "address": {
         addressLine1: options.addressLine1,

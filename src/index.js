@@ -5,6 +5,10 @@ import {
     connectMongoDbClient,
     getMongoDbClient,
 } from './mongodb/setup';
+
+// SEQUELIZE
+import { db } from './pg/sequelize';
+
 // import { connectPgClient, disconnectPgClient } from './pg/client';
 // import { checkConnection } from './pg/sequelize';
 
@@ -23,26 +27,16 @@ import {
 // process.on('uncaughtException', gracefulShutdown('uncaughtException'));
 
 connectMongoDbClient().then(() => {
-    // connectPgClient().then(() => {
-    app.listen(PORT, function () {
-        console.log('Server started on port ' + PORT);
+    const syncOptions = {
+        alter: true,
+        // force: true
+    };
+    db.sequelize.sync(syncOptions).then(() => {
+        app.listen(PORT, function () {
+            console.log('Server started on port ' + PORT);
+        });
+        printAllRoutes();
     });
-
-    // printAllRoutes();
-
-    // getMongoDbClient()
-    //     .db(COSMOSDB_NAME)
-    //     .collection('users')
-    //     .find({})
-    //     .toArray()
-    //     .then((res) => {
-    //         console.log(res);
-    //     });
-
-    //     checkConnection().then(() => {
-    //         console.log(`hi`);
-    //     });
-    // });
 });
 
 function printAllRoutes() {

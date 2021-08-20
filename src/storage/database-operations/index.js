@@ -5,4 +5,5 @@ export { readManyOperation } from './read-many-operation';
 export { deleteOneOperation } from './delete-one-operation';
 export { deleteManyOperation } from './delete-many-operation';
 export { createOneOperation } from './create-one-operation';
+export { countDocumentsOperation } from './count-documents';
 export { databaseEntity } from '../utils/database-entity';

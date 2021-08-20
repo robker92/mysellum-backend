@@ -26,6 +26,8 @@ import { routerContact } from './contact-module/contact.routes';
 import { routerPaypal } from './payment-module/paypal/paypal-routes';
 import { errorHandler } from './middlewares/ErrorHandler';
 
+import { routerPgTest } from './pg/endpoint';
+
 const app = express();
 app.use(helmet());
 app.use(cookieParser());
@@ -81,6 +83,9 @@ app.use('/', routerAuthentication);
 app.use('/', routerShoppingCart);
 app.use('/', routerContact);
 app.use('/', routerUsers);
+
+// PG Test
+app.use('/', routerPgTest);
 
 // Global Error Handler
 app.use(errorHandler);

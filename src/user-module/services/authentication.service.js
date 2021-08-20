@@ -1,4 +1,5 @@
 'use strict';
+import { ObjectId } from 'mongodb';
 // database operations
 import {
     readOneOperation,
@@ -8,6 +9,7 @@ import {
     deleteOneOperation,
     deleteManyOperation,
     createOneOperation,
+    countDocumentsOperation,
     databaseEntity,
 } from '../../storage/database-operations';
 import {
@@ -89,10 +91,20 @@ async function loginUserService(email, password) {
         email: user.email,
     });
 
+    // if the user is a store owner, calculate the unfinished orders counter
+    console.log(`store id: ${typeof user.ownedStoreId}`);
+    let orderCount;
+    if (user.ownedStoreId) {
+        orderCount = await countDocumentsOperation(databaseEntity.ORDERS, {
+            $and: [
+                { storeId: user.ownedStoreId.toString() },
+                { 'status.finished': false },
+            ],
+        });
+    }
+    console.log(`order count: ${orderCount}`);
+
     let counter = 0;
-    // for (let i = 0; i < user.shoppingCart.length; i++) {
-    //     counter = counter + user.shoppingCart[i][1];
-    // }
     for (const element of user.shoppingCart) {
         counter = counter + element[1];
     }
@@ -114,6 +126,7 @@ async function loginUserService(email, password) {
         shoppingCart: user.shoppingCart,
         productCounter: counter,
         favoriteStores: user.favoriteStores,
+        orderCount: user.ownedStoreId ? orderCount : 0,
     };
     return { accessToken, userData };
 }
@@ -135,6 +148,12 @@ async function registerUserService(data) {
     const verificationToken = crypto
         .randomBytes(PW_RESET_TOKEN_NUM_BYTES)
         .toString('hex');
+    if (!verificationToken) {
+        throw {
+            status: 401,
+            message: 'Verification token invalid.',
+        };
+    }
 
     // get user data model function
     const options = {

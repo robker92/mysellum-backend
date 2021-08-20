@@ -9,7 +9,7 @@ export { readOneOperation };
  * @param {string} entity
  * @param {object} queryObject
  * @param {object} projectionObject
- * @returns true when a user was updated and false if not
+ * @returns the user or an empty object if nothing was not found
  */
 async function readOneOperation(entity, queryObject, projectionObject = {}) {
     const collection = switchCollections(entity);

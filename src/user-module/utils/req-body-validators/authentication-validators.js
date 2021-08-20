@@ -7,6 +7,7 @@ export { registerUserValidation, loginUserValidation };
 
 const registerUserValidation = {
     body: Joi.object({
+        phoneNumber: Joi.string().min(5).max(30).required(),
         email: Joi.string().email().required(),
         //password: Joi.string().regex(/[a-zA-Z0-9]{8,30}/).required(),
         //at least 1 number, 1 lower, 1 upper and 1 special character

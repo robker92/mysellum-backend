@@ -22,14 +22,14 @@ const attachmentsPasswordReset = [
     twitterAtt,
 ];
 
-function getContentPasswordReset2(resetToken) {
-    let htmlBody = `<b>Hello User</b><br/> <br/> 
+// function getContentPasswordReset2(resetToken) {
+//     let htmlBody = `<b>Hello User</b><br/> <br/>
 
-    you requested a password reset. Please follow this link: <a href="${FRONTEND_BASE_URL}/${resetToken}">Reset your password</a>`;
-    return htmlBody;
-}
+//     you requested a password reset. Please follow this link: <a href="${FRONTEND_BASE_URL}/${resetToken}">Reset your password</a>`;
+//     return htmlBody;
+// }
 
-function getContentPasswordReset(options) {
+function getContentPasswordReset(resetToken) {
     let htmlTemplate = `
         <!DOCTYPE html
         PUBLIC "-//W3C//DTD XHTML 1.0 Transitional //EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
@@ -341,7 +341,7 @@ function getContentPasswordReset(options) {
                                                         style="padding-top:10px;padding-right:10px;padding-bottom:10px;padding-left:10px;">
                                                         <!--[if mso]><table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-spacing: 0; border-collapse: collapse; mso-table-lspace:0pt; mso-table-rspace:0pt;"><tr><td style="padding-top: 10px; padding-right: 10px; padding-bottom: 10px; padding-left: 10px" align="center"><v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="www.example.com" style="height:45pt;width:224.25pt;v-text-anchor:middle;" arcsize="17%" strokeweight="1.5pt" strokecolor="#3F4D75" fillcolor="#ffffff"><w:anchorlock/><v:textbox inset="0,0,0,0"><center style="color:#3f4d75; font-family:Arial, sans-serif; font-size:18px"><![endif]-->
                                                         <a
-                                                            href="${FRONTEND_BASE_URL}/${options.resetToken}"
+                                                            href="${FRONTEND_BASE_URL}/password-reset/${resetToken}"
                                                             style="-webkit-text-size-adjust: none; text-decoration: none; display: inline-block; color: #3f4d75; background-color: #ffffff; border-radius: 10px; -webkit-border-radius: 10px; -moz-border-radius: 10px; width: auto; width: auto; border-top: 2px solid #3F4D75; border-right: 2px solid #3F4D75; border-bottom: 2px solid #3F4D75; border-left: 2px solid #3F4D75; padding-top: 10px; padding-bottom: 10px; font-family: Roboto Slab, Arial, Helvetica Neue, Helvetica, sans-serif; text-align: center; mso-border-alt: none; word-break: keep-all;"
                                                             target="_blank"><span
                                                                 style="padding-left:25px;padding-right:25px;font-size:18px;display:inline-block;letter-spacing:undefined;"><span

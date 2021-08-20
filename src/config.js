@@ -31,9 +31,24 @@ if (process.env.NODE_ENV === 'development') {
 console.log(COSMOSDB_NAME);
 
 // PG
-const PG_DB_NAME = process.env.PG_DB_NAME;
-const PG_DB_ADMIN_NAME = process.env.PG_DB_ADMIN_NAME;
-const PG_DB_PW = process.env.PG_DB_PW;
+let PG_DB_NAME;
+let PG_DB_ADMIN_NAME;
+let PG_DB_PW;
+let PG_DB_HOST;
+let PG_DB_PORT;
+if (process.env.NODE_ENV === 'development') {
+    PG_DB_NAME = process.env.PG_DB_DEV_NAME;
+    PG_DB_ADMIN_NAME = process.env.PG_DB_DEV_ADMIN_NAME;
+    PG_DB_PW = process.env.PG_DB_DEV_PW;
+    PG_DB_HOST = process.env.PG_DB_DEV_HOST;
+    PG_DB_PORT = process.env.PG_DB_DEV_PORT;
+} else {
+    PG_DB_NAME = process.env.PG_DB_PROD_NAME;
+    PG_DB_ADMIN_NAME = process.env.PG_DB_PROD_ADMIN_NAME;
+    PG_DB_PW = process.env.PG_DB_PROD_PW;
+    PG_DB_HOST = process.env.PG_DB_PROD_HOST;
+    PG_DB_PORT = process.env.PG_DB_PROD_PORT;
+}
 
 // JWT
 const JWT_SECRET_KEY = process.env.JWT_SECRET || 'very secret secret';
@@ -98,6 +113,8 @@ export {
     PG_DB_NAME,
     PG_DB_ADMIN_NAME,
     PG_DB_PW,
+    PG_DB_HOST,
+    PG_DB_PORT,
     JWT_SECRET_KEY,
     JWT_KEY_EXPIRE,
     USER_VERIFICATION_TOKEN_EXPIRES,

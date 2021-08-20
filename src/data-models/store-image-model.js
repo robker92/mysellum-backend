@@ -4,7 +4,7 @@ export function getImageModel(options) {
         storeId: options.storeId,
         datetimeCreated: options.datetimeCreated,
         datetimeAdjusted: options.datetimeAdjusted,
-        arrayPosition: options.title,
+        arrayPosition: options.arrayPosition,
         imgSrc: options.imgSrc,
     };
     return model;
