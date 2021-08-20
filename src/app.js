@@ -85,7 +85,7 @@ app.use('/', routerContact);
 app.use('/', routerUsers);
 
 // PG Test
-app.use('/', routerPgTest);
+// app.use('/', routerPgTest);
 
 // Global Error Handler
 app.use(errorHandler);

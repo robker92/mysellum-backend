@@ -48,7 +48,7 @@ function getOrderModel(sequelize, Sequelize) {
         },
 
         products: {
-            type: Sequelize.ARRAY(Sequelize.STRING(10000)),
+            type: Sequelize.ARRAY(Sequelize.JSONB),
             allowNull: true,
         },
 

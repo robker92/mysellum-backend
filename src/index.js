@@ -29,14 +29,14 @@ import { db } from './pg/sequelize';
 connectMongoDbClient().then(() => {
     const syncOptions = {
         alter: true,
-        // force: true
+        // force: true,
     };
-    db.sequelize.sync(syncOptions).then(() => {
-        app.listen(PORT, function () {
-            console.log('Server started on port ' + PORT);
-        });
-        printAllRoutes();
+    // db.sequelize.sync(syncOptions).then(() => {
+    app.listen(PORT, function () {
+        console.log('Server started on port ' + PORT);
     });
+    printAllRoutes();
+    // });
 });
 
 function printAllRoutes() {

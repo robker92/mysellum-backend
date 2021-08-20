@@ -95,7 +95,8 @@ function getUserModel(sequelize, Sequelize) {
 
         // shopping cart
         shoppingCart: {
-            type: Sequelize.ARRAY(Sequelize.STRING(10000)),
+            // type: Sequelize.ARRAY(Sequelize.STRING(10000)),
+            type: Sequelize.ARRAY(Sequelize.JSONB),
             allowNull: true,
         },
 

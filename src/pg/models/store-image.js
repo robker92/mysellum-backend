@@ -2,13 +2,18 @@
 export { getStoreImageModel };
 function getStoreImageModel(sequelize, Sequelize) {
     const StoreImage = sequelize.define('storeImage', {
-        // storeId: {
-        //     type: Sequelize.STRING(50),
-        //     allowNull: false,
-        // },
+        type: {
+            type: Sequelize.STRING(50),
+            allowNull: false,
+        },
 
         arrayPosition: {
             type: Sequelize.INTEGER,
+            allowNull: false,
+        },
+
+        imgUrl: {
+            type: Sequelize.STRING(10000),
             allowNull: false,
         },
 
