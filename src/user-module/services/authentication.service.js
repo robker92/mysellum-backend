@@ -12,6 +12,16 @@ import {
     countDocumentsOperation,
     databaseEntity,
 } from '../../storage/database-operations';
+//pg
+import {
+    seqReadOneOperation,
+    seqReadManyOperation,
+    seqUpdateOperation,
+    seqCreateOperation,
+    seqDeleteOneOperation,
+    seqReadAndCountAllOperation,
+} from '../../pg/operations';
+
 import {
     JWT_SECRET_KEY,
     JWT_KEY_EXPIRE,

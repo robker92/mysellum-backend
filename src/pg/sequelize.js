@@ -8,6 +8,7 @@ import {
     getProductModel,
     getOrderModel,
     getStoreImageModel,
+    getProductAvailNotifModel,
 } from './models';
 import {
     PG_DB_NAME,
@@ -46,6 +47,7 @@ const Review = getReviewModel(sequelize, Sequelize);
 const Product = getProductModel(sequelize, Sequelize);
 const Order = getOrderModel(sequelize, Sequelize);
 const StoreImage = getStoreImageModel(sequelize, Sequelize);
+const ProductAvailNotif = getProductAvailNotifModel(sequelize, Sequelize);
 
 // Associations (https://sequelize.org/v4/manual/tutorial/associations.html)
 // <source>.function(<target>)
@@ -59,6 +61,8 @@ Store.hasMany(Product);
 Store.hasMany(Order);
 Store.hasMany(StoreImage);
 
+Product.hasMany(ProductAvailNotif);
+
 db.Sequelize = Sequelize;
 db.sequelize = sequelize;
 
@@ -68,6 +72,7 @@ db.product = Product;
 db.review = Review;
 db.order = Order;
 db.storeImage = StoreImage;
+db.productAvailNotif = ProductAvailNotif;
 
 async function checkConnection() {
     try {

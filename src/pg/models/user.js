@@ -1,5 +1,5 @@
 // module.exports = (sequelize, Sequelize) => {
-export { getUserModel };
+export { getUserModel, getNewUserData };
 function getUserModel(sequelize, Sequelize) {
     const User = sequelize.define('user', {
         firstName: {
@@ -93,20 +93,46 @@ function getUserModel(sequelize, Sequelize) {
             allowNull: false,
         },
 
-        // shopping cart
+        // shopping cart -> Array of json objecst
         shoppingCart: {
             // type: Sequelize.ARRAY(Sequelize.STRING(10000)),
-            type: Sequelize.ARRAY(Sequelize.JSONB),
+            type: Sequelize.JSONB,
             allowNull: true,
         },
 
-        // favorite stores
+        // favorite stores -> String array
         favoriteStores: {
             type: Sequelize.ARRAY(Sequelize.STRING(10000)),
             allowNull: true,
         },
     });
     return User;
+}
+
+function getNewUserData(options) {
+    const model = {
+        firstName: options.firstName,
+        lastName: options.lastName,
+        email: options.email,
+        phoneNumber: options.phoneNumber,
+        password: options.passwordHash,
+        addressLine1: options.addressLine1,
+        city: options.city,
+        postcode: options.postcode,
+        companyName: options.companyName,
+        birthdate: options.birthdate,
+        ownedStoreId: '',
+        emailVerified: false,
+        verifyRegistrationToken: options.verificationToken,
+        verifyRegistrationExpires: options.verificationExpires,
+        resetPasswordExpires: null,
+        resetPasswordToken: null,
+        deleted: false,
+        blocked: false,
+        shoppingCart: [],
+        favoriteStores: [],
+    };
+    return model;
 }
 
 // firstName: options.firstName,

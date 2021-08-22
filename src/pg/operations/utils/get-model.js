@@ -1,7 +1,8 @@
 import { db } from '../../sequelize';
+import { databaseEntity } from './database-entity';
 
 export { getModel };
-
+databaseEntity.USER;
 /**
  * Returns the database model according to the given model
  * @param {string} modelIdentifier values: user, store, product, review, order, // storeImage
@@ -11,21 +12,24 @@ export { getModel };
 function getModel(modelIdentifier) {
     let model;
     switch (modelIdentifier) {
-        case 'user':
+        case databaseEntity.USER:
             model = db.user;
             break;
-        case 'store':
+        case databaseEntity.STORE:
             model = db.store;
             break;
-        case 'product':
+        case databaseEntity.PRODUCT:
             model = db.product;
             break;
-        case 'review':
+        case databaseEntity.REVIEW:
             model = db.review;
             break;
-        case 'order':
+        case databaseEntity.ORDER:
             model = db.order;
             break;
+        // case databaseEntity.PRODUCT_AVAIL_NOTIF:
+        // model = db.productAvailNotif;
+        // break;
         // case 'storeImage':
         //     model = db.storeImage;
         //     break;

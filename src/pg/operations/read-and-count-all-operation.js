@@ -1,7 +1,7 @@
 'use strict';
 import { getModel } from './utils/get-model';
 
-export { readAndCountAllOperation };
+export { seqReadAndCountAllOperation };
 
 /**
  * Fetches a single entity from the database by the provided queryObject
@@ -11,7 +11,7 @@ export { readAndCountAllOperation };
  * @param {integer} limit
  * @returns the user or an empty object if nothing was not found
  */
-async function readAndCountAllOperation(
+async function seqReadAndCountAllOperation(
     model,
     whereQuery,
     offset = 0,

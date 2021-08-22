@@ -1,7 +1,7 @@
 'use strict';
 import { getModel } from './utils/get-model';
 
-export { updateOperation };
+export { seqUpdateOperation };
 
 /**
  * Fetches all entity from the database by the provided queryObject
@@ -10,7 +10,7 @@ export { updateOperation };
  * @param {object} whereQuery e.g. {id: 1}
  * @returns false, when no element was updated and returns the updated element itself when the update was successful
  */
-async function updateOperation(model, updateObject, whereQuery) {
+async function seqUpdateOperation(model, updateObject, whereQuery) {
     const dbModel = getModel(model);
 
     const result = await dbModel.update(updateObject, {

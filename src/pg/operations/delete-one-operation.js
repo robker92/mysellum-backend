@@ -1,7 +1,7 @@
 'use strict';
 import { getModel } from './utils/get-model';
 
-export { deleteOneOperation };
+export { seqDeleteOneOperation };
 
 /**
  * Fetches a single entity from the database by the provided queryObject
@@ -9,7 +9,7 @@ export { deleteOneOperation };
  * @param {object} whereQuery e.g. { ID: 1 }
  * @returns true if the entity was successfully deleted, false if not
  */
-async function deleteOneOperation(model, whereQuery) {
+async function seqDeleteOneOperation(model, whereQuery) {
     const dbModel = getModel(model);
 
     const result = await dbModel.destroy({
