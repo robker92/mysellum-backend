@@ -26,13 +26,13 @@ const registerProductAvailNotificationController = async function (
     const lastName = req.body.lastName || '';
 
     //check if email already registered?
-    const payload = {
+    const options = {
         email: email,
         storeId: storeId,
         productId: productId,
     };
     try {
-        await registerProductAvailNotificationService(payload);
+        await registerProductAvailNotificationService(options);
     } catch (error) {
         return next(error);
     }

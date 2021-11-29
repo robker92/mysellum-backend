@@ -9,15 +9,26 @@ export { readOneOperation };
  * @param {string} entity
  * @param {object} queryObject
  * @param {object} projectionObject
+ * @param {object} session mongo db session if needed
  * @returns the user or an empty object if nothing was not found
  */
-async function readOneOperation(entity, queryObject, projectionObject = {}) {
+async function readOneOperation(
+    entity,
+    queryObject,
+    projectionObject = {},
+    session = null
+) {
     const collection = switchCollections(entity);
 
     queryObject = checkForObjectId(queryObject);
 
-    const projection = { projection: projectionObject };
-    const result = await collection.findOne(queryObject, projection);
-    // const result = await collection.find(queryObject).project(projectionObject);
+    let options = { projection: projectionObject };
+
+    if (session) {
+        options.session = session;
+    }
+
+    const result = await collection.findOne(queryObject, options);
+
     return result;
 }

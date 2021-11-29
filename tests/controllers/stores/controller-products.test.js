@@ -9,7 +9,7 @@ import {
     connectMongoDBClient,
     disconnectMongoDBClient,
     getClient,
-} from '../src/mongodb/setup';
+} from '../src/storage/mongodb/setup';
 
 describe('Tests for the Product endpoints', () => {
     beforeAll(async function () {});

@@ -1,61 +1,99 @@
+@baseUrl = http://localhost:3000
+@userEmail = TestEmail4@web.de
+@userPassword = TestPassword1!
+@userFirstName = firstName
+@userLastName = lastName
+@userPhoneNumber = 0001 123456789
+@userBirthdate = 29.11.2020
+@userCity = TestCity
+@userPostcode = 00001
+@userAddressLine1 = TestStreet 1
+@space = {{$dotenv %space}}
+
 # Get All Users
-GET http://localhost:3000/users HTTP/1.1
+GET {{baseUrl}}/users HTTP/1.1
 ###
 
-#Get Single User
-GET http://localhost:3000/users/TestEmail5@web.de HTTP/1.1
-x-access-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjYwMjU5M2JlMWJkYTJkNzk1YzhhMGNhOSIsImVtYWlsIjoiVGVzdEVtYWlsNUB3ZWIuZGUiLCJpYXQiOjE2MTQ3OTA5NjcsImV4cCI6MTYxNTM5NTc2N30.l984HwwxVldvuQdkDhZrb2yiaSeWcsmoT8Fr1S1F-7w
-###
-
-#Login User
-POST http://localhost:3000/users/loginUser HTTP/1.1
+##################################################
+# Register User
+##################################################
+# @name authRegisterUser
+POST {{baseUrl}}/auth/register-user HTTP/1.1
 content-type: application/json
 
 {
-    "email": "TestEmail1@web.de",
-    "password": "TestPassword1!"
+    "email": "{{userEmail}}",
+    "password": "{{userPassword}}",
+    "firstName": "{{userFirstName}}",
+    "lastName": "{{userLastName}}",
+    "phoneNumber": "{{userPhoneNumber}}",
+    "birthdate": "{{userBirthdate}}",
+    "city": "{{userCity}}",
+    "postcode": "{{userPostcode}}",
+    "addressLine1": "{{userAddressLine1}}"
 }
 ###
 
-#Register User
-POST http://localhost:3000/users/registerUser HTTP/1.1
-content-type: application/json
-
-{
-    "email": "TestEmail54@web.de",
-    "password": "Test1!----",
-    "firstName": "Test",
-    "lastName": "Test",
-    "birthdate": "29.11.2020",
-    "city": "Test",
-    "postcode": "11111",
-    "addressLine1": "Test"
-}
-###
-
-#Confirm Registration
-POST http://localhost:3000/users/confirmRegistration/1df8f818b779f45fadc5092e5f4e2abc97de2cc57a0f7b9f19e8fc09e6fd38ba035c24346b53c28c HTTP/1.1
+##################################################
+# Verify User
+##################################################
+# @name authVerifyEmail
+@verificationToken = 38231f85ebcca2619a9a0c88113da66239b002a9445d9916a7320b6468fcc25e39e3059e011623e1
+POST {{baseUrl}}/auth/verify-registration/{{verificationToken}} HTTP/1.1
 content-type: application/json
 
 {}
 ###
+@accessToken = {{authVerifyEmail.response.body.authToken}}
 
-# Forgot Password - send reset Mail
-POST http://localhost:3000/users/sendPasswordResetMail HTTP/1.1
+##################################################
+# Login User
+##################################################
+# @name authLoginUser
+POST {{baseUrl}}/auth/login-user HTTP/1.1
 content-type: application/json
 
 {
-    "email": "TestEmail14@web.de",
-    "birthdate": "05-05-2005"
+    "email": "TestEmail4@web.de",
+    "password": "TestPassword1!"
 }
 ###
+@accessToken = {{authLoginUser.response.body.authToken}}
 
-# Forgot Password - check reset token
-GET http://localhost:3000/users/checkResetToken/395c2e8a5f7e21e92acbece7d04d8da6aeb9bd75cc79cd2eaa84f456591a HTTP/1.1
-
+##################################################
+# Get single User
+##################################################
+# @name getSingleUser
+GET {{baseUrl}}/users HTTP/1.1
+x-access-token: {{accessToken}}
 ###
-# Forgot Password - reset Password
-POST http://localhost:3000/users/resetPassword/2bca66c65d49ef2c216c07bebe87a7582349f6bf74ea1ed44a86755673f2 HTTP/1.1
+
+##################################################
+# PW Reset - Send E-Mail
+##################################################
+# @name pwResetSendEmail
+POST {{baseUrl}}/auth/send-password-reset-mail HTTP/1.1
+content-type: application/json
+
+{
+    "email": "{{userEmail}}",
+    "birthdate": "{{userBirthdate}}"
+}
+###
+@pwResetToken = 020a3d70de48ec543adc357701e9015c6f62116ea1a3dbfcde786251142c6498d3b8260488413093
+
+##################################################
+# PW Reset - Check reset token
+##################################################
+# @name pwResetCheckResetToken
+GET {{baseUrl}}/auth/check-reset-token/{{pwResetToken}} HTTP/1.1
+###
+
+##################################################
+# PW Reset - Reset password
+##################################################
+# @name pwResetResetPassword
+POST {{baseUrl}}/auth/reset-password/{{pwResetToken}} HTTP/1.1
 content-type: application/json
 
 {
@@ -64,11 +102,10 @@ content-type: application/json
 ###
 
 # Send Test Mail
-POST http://localhost:3000/users/sendTestMail HTTP/1.1
+POST {{baseUrl}}/users/sendTestMail HTTP/1.1
 content-type: application/json
 
 {
-    //"mailAddress": "nicolas.pfifferling@gmail.com",
     "contentType": "testMail",
     "mailAddress": "rkerscher@gmx.de"
 }
@@ -76,7 +113,7 @@ content-type: application/json
 
 
 # Testing Endpoint
-POST http://localhost:3000/users/user-testing HTTP/1.1
+POST {{baseUrl}}/users/user-testing HTTP/1.1
 content-type: application/json
 
 {

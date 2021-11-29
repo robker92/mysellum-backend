@@ -4,17 +4,24 @@ import {
     getImageBufferService,
     getImageBufferResizedService,
     getImageResizedService,
+    uploadBlobService,
+    getFromBlobService,
+    deleteBlobService,
 } from '../services/images.service';
 
 export {
     getImageBufferController,
     getImageBufferResizedController,
     getImageResizedController,
+    uploadBlobController,
+    getFromBlobController,
+    deleteBlobController,
 };
 
 const getImageBufferController = async function (req, res, next) {
     const file = req.file;
-
+    console.log(`hi`);
+    console.log(req.body.test);
     let result;
     try {
         result = getImageBufferService(file);
@@ -59,4 +66,42 @@ const getImageResizedController = async function (req, res, next) {
     res.sendFile(
         'C:\\Users\\i514032\\OneDrive - SAP SE\\p\\prjct\\backend\\output.jpg'
     );
+};
+
+// Azure Blob Storage
+const uploadBlobController = async function (req, res, next) {
+    const file = req.file;
+    let blobUrl;
+    try {
+        blobUrl = await uploadBlobService(file);
+    } catch (error) {
+        console.log(error);
+        return next(error);
+    }
+    return res.status(200).send(blobUrl);
+};
+
+const getFromBlobController = async function (req, res, next) {
+    const blobName = req.params.blobName;
+
+    let blobList;
+    try {
+        blobList = await getFromBlobService(blobName);
+    } catch (error) {
+        console.log(error);
+        return next(error);
+    }
+    return res.status(200).json({ list: blobList });
+};
+
+const deleteBlobController = async function (req, res, next) {
+    const blobName = req.params.blobName;
+
+    try {
+        await deleteBlobService(blobName);
+    } catch (error) {
+        console.log(error);
+        return next(error);
+    }
+    return res.sendStatus(200);
 };

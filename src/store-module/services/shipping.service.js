@@ -16,7 +16,11 @@ import {
     fetchAndValidateProduct,
 } from '../utils/operations/store-checks';
 
-export { getShippingCostsService };
+export {
+    getShippingCostsService,
+    calculateShippingCosts,
+    getShippingCostForSingleStore,
+};
 
 async function getShippingCostsService(shoppingCart, userEmail) {
     // Create a data object which contains the shipping information of a store and the ordered products of that store

@@ -4,13 +4,13 @@ import {
     disconnectMongoDbClient,
     connectMongoDbClient,
     getMongoDbClient,
-} from './mongodb/setup';
+} from './storage/mongodb/setup';
 
 // SEQUELIZE
-import { db } from './pg/sequelize';
+import { db } from './storage/pg/sequelize';
 
-// import { connectPgClient, disconnectPgClient } from './pg/client';
-// import { checkConnection } from './pg/sequelize';
+// import { connectPgClient, disconnectPgClient } from './storage/pg/client';
+// import { checkConnection } from './storage/pg/sequelize';
 
 // // Create a function to terminate your app gracefully:
 // function gracefulShutdown(event) {
@@ -28,16 +28,16 @@ import { db } from './pg/sequelize';
 
 connectMongoDbClient().then(() => {
     const syncOptions = {
-        alter: true,
-        // force: true,
+        // alter: true,
+        force: true,
     };
     // db.sequelize.sync(syncOptions).then(() => {
     app.listen(PORT, function () {
         console.log('Server started on port ' + PORT);
     });
     printAllRoutes();
-    // });
 });
+// });
 
 function printAllRoutes() {
     for (const element1 of app._router.stack) {

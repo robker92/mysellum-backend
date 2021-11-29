@@ -8,6 +8,7 @@ import { validate } from 'express-validation';
 
 // Controllers
 import {
+    getStoresReviewController,
     addReviewController,
     editReviewController,
     deleteReviewController,
@@ -29,6 +30,11 @@ const opts = {
 const routerPrefix = 'stores';
 
 // Routes
+routerReviews.get(
+    `/${routerPrefix}/:storeId/reviews`,
+    excHandler(getStoresReviewController)
+);
+
 routerReviews.post(
     `/${routerPrefix}/:storeId/reviews`,
     parserJsonLimit,

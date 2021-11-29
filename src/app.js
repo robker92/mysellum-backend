@@ -6,7 +6,6 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 
 //Routers
-import { routerOrders } from './routes';
 import {
     routerStores,
     routerImages,
@@ -23,10 +22,13 @@ import {
     routerUsers,
 } from './user-module/routes';
 import { routerContact } from './contact-module/contact.routes';
-import { routerPaypal } from './payment-module/paypal/paypal-routes';
 import { errorHandler } from './middlewares/ErrorHandler';
 
-import { routerPgTest } from './pg/endpoint';
+// import { routerPaypal } from './payment-module/paypal/paypal-routes';
+// import { routerOrders } from './payment-module/routes';
+import { routerPaypal, routerOrders } from './payment-module2/routes';
+
+// import { routerPgTest } from './pg/endpoint';
 
 const app = express();
 app.use(helmet());
@@ -66,8 +68,8 @@ app.get('/', (req, res) => {
 app.use('/', routerAdmin);
 
 // Orders Context
-app.use('/orders', routerOrders);
-app.use('/paypal', routerPaypal);
+app.use('/', routerOrders);
+app.use('/', routerPaypal);
 
 // Store Context
 app.use('/', routerStores);

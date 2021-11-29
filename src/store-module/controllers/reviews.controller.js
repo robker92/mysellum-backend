@@ -1,12 +1,31 @@
 'use strict';
 import { StatusCodes } from 'http-status-codes';
 import {
+    getStoresReviewsService,
     addReviewService,
     editReviewService,
     deleteReviewService,
 } from '../services/reviews.service';
 
-export { addReviewController, editReviewController, deleteReviewController };
+export {
+    getStoresReviewController,
+    addReviewController,
+    editReviewController,
+    deleteReviewController,
+};
+
+const getStoresReviewController = async function (req, res, next) {
+    const storeId = req.params.storeId;
+
+    let reviews;
+    try {
+        reviews = await getStoresReviewsService(storeId);
+    } catch (error) {
+        return next(error);
+    }
+
+    return res.status(StatusCodes.OK).json(reviews);
+};
 
 const addReviewController = async function (req, res, next) {
     //TODO check if user bought a product at store

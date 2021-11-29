@@ -6,12 +6,6 @@ import { ObjectId } from 'mongodb';
 import { sendNodemailerMail } from '../../mailing/nodemailer';
 import { refundPaypalOrder } from '../paypal/rest/paypal-rest-client';
 import { contentType } from '../../mailing/enums/contentType';
-import {
-    getMongoProductsCollection,
-    getMongoStoresCollection,
-    getMongoUsersCollection,
-    getMongoOrdersCollection,
-} from '../../mongodb/collections';
 
 export { refundService };
 

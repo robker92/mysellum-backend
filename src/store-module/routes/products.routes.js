@@ -12,7 +12,7 @@ import {
     deleteProductController,
     updateStockAmountController,
     getStoreProducts,
-    getProductImageController,
+    // getProductImageController,
 } from '../controllers/products.controller';
 
 // Utils
@@ -66,9 +66,9 @@ routerProducts.get(
     excHandler(getStoreProducts)
 );
 
-routerProducts.get(
-    `/${routerPrefix}/:storeId/products/:productId/images`,
-    excHandler(getProductImageController)
-);
+// routerProducts.get(
+//     `/${routerPrefix}/:storeId/products/:productId/images`,
+//     excHandler(getProductImageController)
+// );
 
 export { routerProducts };

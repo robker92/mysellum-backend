@@ -12,10 +12,17 @@ import {
 } from '../../storage/database-operations';
 import { ObjectId } from 'mongodb';
 
+import {
+    fetchAndValidateStore,
+    fetchAndValidateProduct,
+} from '../../store-module/utils/operations/store-checks';
+
 export {
     addToShoppingCartService,
     removeFromShoppingCartService,
     updateShoppingCartService,
+    validateShoppingCartService,
+    updateUsersShoppingCart,
 };
 
 async function addToShoppingCartService(email, addedProduct, addedAmount) {
@@ -31,16 +38,9 @@ async function addToShoppingCartService(email, addedProduct, addedAmount) {
         };
     }
 
-    const productFromDB = await readOneOperation(
-        databaseEntity.PRODUCTS,
-        {
-            _id: ObjectId(addedProduct._id),
-        },
-        {
-            // TODO
-            imgSrc: 0,
-        }
-    );
+    const productFromDB = await readOneOperation(databaseEntity.PRODUCTS, {
+        _id: ObjectId(addedProduct._id),
+    });
     if (!productFromDB) {
         //when no product was found -> wrong product id
         throw {
@@ -120,16 +120,9 @@ async function removeFromShoppingCartService(
         };
     }
     // retrieve the product
-    const productFromDB = await readOneOperation(
-        databaseEntity.PRODUCTS,
-        {
-            _id: ObjectId(removedProduct._id),
-        },
-        {
-            // TODO
-            imgSrc: 0,
-        }
-    );
+    const productFromDB = await readOneOperation(databaseEntity.PRODUCTS, {
+        _id: ObjectId(removedProduct._id),
+    });
     if (!productFromDB) {
         // when no product was found -> wrong product id
         throw {
@@ -215,16 +208,9 @@ async function updateShoppingCartService(email, shoppingCart) {
         }
 
         // retrieve the product
-        const productFromDB = await readOneOperation(
-            databaseEntity.PRODUCTS,
-            {
-                _id: ObjectId(productId),
-            },
-            {
-                // TODO
-                imgSrc: 0,
-            }
-        );
+        const productFromDB = await readOneOperation(databaseEntity.PRODUCTS, {
+            _id: ObjectId(productId),
+        });
         if (!productFromDB) {
             // when no product was found -> wrong product id
             throw {
@@ -248,6 +234,46 @@ async function updateShoppingCartService(email, shoppingCart) {
             shoppingCart: payloadArray,
         },
         'set'
+    );
+
+    return;
+}
+
+async function validateShoppingCartService(shoppingCart) {
+    const productsToRemove = await identifyProducts(shoppingCart);
+    shoppingCart = removeProducts(shoppingCart, productsToRemove);
+
+    return shoppingCart;
+}
+
+async function identifyProducts(shoppingCart) {
+    let productsToRemove = [];
+    for (var i = 0; i < shoppingCart.length; i++) {
+        try {
+            await fetchAndValidateProduct(shoppingCart[i][0]._id);
+        } catch (error) {
+            // add index of product to remove to array
+            productsToRemove.push(i);
+            continue;
+        }
+    }
+
+    return productsToRemove;
+}
+
+function removeProducts(shoppingCart, productsToRemove) {
+    for (const index of productsToRemove) {
+        shoppingCart.splice(index, 1);
+    }
+
+    return shoppingCart;
+}
+
+async function updateUsersShoppingCart(email, shoppingCart) {
+    await updateOneOperation(
+        databaseEntity.USERS,
+        { email: email },
+        { shoppingCart: shoppingCart }
     );
 
     return;

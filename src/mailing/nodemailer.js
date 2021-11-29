@@ -1,5 +1,5 @@
 import { nodemailerTransporter } from './mailTransporter';
-import { MAIL_USER } from '../config';
+import { APP_ENV, checkEnvironment, MAIL_USER } from '../config';
 
 import {
     // Product Availability Notification
@@ -141,7 +141,7 @@ async function sendNodemailerMail(options) {
     }
 
     // set receiver address to this one during development
-    if (process.env.NODE_ENV === 'development') {
+    if (checkEnvironment() === APP_ENV.DEV) {
         toAddress = 'rkerscher@gmx.de';
     }
 
@@ -168,5 +168,5 @@ async function sendNodemailerMail(options) {
 }
 
 //===================================================================================================
-export { sendNodemailerMail };
+export { sendNodemailerMail, contentType };
 //===================================================================================================

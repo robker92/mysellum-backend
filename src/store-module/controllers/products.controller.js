@@ -7,7 +7,7 @@ import {
     updateStockAmountService,
     getProductImageService,
 } from '../services/products.service';
-import { getMongoProductsCollection } from '../../mongodb/collections';
+import { getMongoProductsCollection } from '../../storage/mongodb/collections';
 
 export {
     createProductController,

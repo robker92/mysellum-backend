@@ -239,3 +239,26 @@ Content-Type: image/jpg
 < ./product2.jpg
 ------WebKitFormBoundary7MA4YWxkTrZu0gW--
 ######
+
+# Upload to azure blob storage
+POST http://localhost:3000/stores/blob HTTP/1.1
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+x-access-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjYxM2U4NDI4ZWJjMGYzNjg4Y2EyNDQ0YiIsImVtYWlsIjoiVGVzdEVtYWlsNEB3ZWIuZGUiLCJpYXQiOjE2MzE3NDY2MzYsImV4cCI6MTYzMjM1MTQzNn0.mMLsk_dpAduoWHzJIopMfvueFxcidYztUp4nDdLkUtc
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="image"; filename="product2.jpg";
+Content-Type: image/jpg
+
+< ./product2.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+######
+
+GET http://localhost:3000/stores/blob/007
+x-access-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjYxM2U4NDI4ZWJjMGYzNjg4Y2EyNDQ0YiIsImVtYWlsIjoiVGVzdEVtYWlsNEB3ZWIuZGUiLCJpYXQiOjE2MzE3NDY2MzYsImV4cCI6MTYzMjM1MTQzNn0.mMLsk_dpAduoWHzJIopMfvueFxcidYztUp4nDdLkUtc
+
+###
+
+DELETE http://localhost:3000/stores/blob/7UfPXp6Ba-f-rueMvNVw_~product2.jpg
+x-access-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjYxM2U4NDI4ZWJjMGYzNjg4Y2EyNDQ0YiIsImVtYWlsIjoiVGVzdEVtYWlsNEB3ZWIuZGUiLCJpYXQiOjE2MzE3ODQ2MzUsImV4cCI6MTYzMjM4OTQzNX0.xgRpSaUj4E_Has6XHFwMPz8ZBp9s29HLbjqqKHO-6oQ
+
+###

@@ -1,21 +1,21 @@
-"use strict";
+'use strict';
 
-import api from "../src/api";
+import api from '../src/api';
 import request from 'supertest';
-import {getMongoUsersCollection} from "../src/mongodb/collections";
+import { getMongoUsersCollection } from '../src/mongodb/collections';
+import { StatusCodes } from 'http-status-codes';
+
 import {
-    StatusCodes
-} from 'http-status-codes';
+    connectMongoDBClient,
+    disconnectMongoDBClient,
+    getClient,
+} from '../src/storage/mongodb/setup';
 
-import {connectMongoDBClient, disconnectMongoDBClient, getClient} from "../src/mongodb/setup"
-
-jest.mock("../src/mailing/nodemailer", () => (
-    {
-        ...(jest.requireActual("../src/mailing/nodemailer")),
-        sendNodemailerMail: jest.fn()
-    }
-));
-import { sendNodemailerMail } from "../src/mailing/nodemailer"
+jest.mock('../src/mailing/nodemailer', () => ({
+    ...jest.requireActual('../src/mailing/nodemailer'),
+    sendNodemailerMail: jest.fn(),
+}));
+import { sendNodemailerMail } from '../src/mailing/nodemailer';
 // jest.mock('../mailing/nodemailer', () => ({
 //     sendNodemailerMail: jest.fn()
 // }))
@@ -27,8 +27,8 @@ import { sendNodemailerMail } from "../src/mailing/nodemailer"
 
 //Group of tests
 describe('Register User Tests', () => {
-    let email = "TestEmail1@web.de";
-    let password = "Test1aaa!";
+    let email = 'TestEmail1@web.de';
+    let password = 'Test1aaa!';
     beforeAll(async function () {
         await connectMongoDBClient();
         const collection = await getMongoUsersCollection();
@@ -40,33 +40,33 @@ describe('Register User Tests', () => {
         disconnectMongoDBClient();
     }); // //single test. it = synonym for "test" (function)
 
-  it('should return Validation Failed', async function () {
+    it('should return Validation Failed', async function () {
         let payload = {
-            "email": email,
-            "password": "Test",
+            email: email,
+            password: 'Test',
             //should not validate
-            "firstName": "Test",
-            "lastName": "Test",
-            "birthdate": "01.01.2011",
-            "city": "Test",
-            "postcode": "Test",
-            "addressLine1": "Test"
+            firstName: 'Test',
+            lastName: 'Test',
+            birthdate: '01.01.2011',
+            city: 'Test',
+            postcode: 'Test',
+            addressLine1: 'Test',
         };
         let res = await request(api).post('/users/registerUser').send(payload); //expect(res.body.details[0].context.key).toEqual("password"); //Get error details of validation error
 
-        expect(res.body.details[0]).toHaveProperty("password"); //Check if first element of error array has key password
+        expect(res.body.details[0]).toHaveProperty('password'); //Check if first element of error array has key password
     });
 
-  it('should result in successfull registration',async function () {
+    it('should result in successfull registration', async function () {
         let payload = {
-            "email": email,
-            "password": password,
-            "firstName": "Test",
-            "lastName": "Test",
-            "birthdate": "01.01.2011",
-            "city": "Test",
-            "postcode": "11111",
-            "addressLine1": "Teststreet 1"
+            email: email,
+            password: password,
+            firstName: 'Test',
+            lastName: 'Test',
+            birthdate: '01.01.2011',
+            city: 'Test',
+            postcode: '11111',
+            addressLine1: 'Teststreet 1',
         };
         let res = await request(api).post('/users/registerUser').send(payload); //console.log(res.body)
 
@@ -74,46 +74,48 @@ describe('Register User Tests', () => {
         expect(sendNodemailerMail.mock.calls.length).toBe(1); //mock is called exactly once
     });
 
-  it('verify the registration with wrong token',async function () {
-        let res = await request(api).post("/users/verifyRegistration/aaa"); //console.log(res)
+    it('verify the registration with wrong token', async function () {
+        let res = await request(api).post('/users/verifyRegistration/aaa'); //console.log(res)
 
         expect(res.status).toEqual(StatusCodes.UNAUTHORIZED);
     });
 
-  it('verify the registration',async function () {
+    it('verify the registration', async function () {
         let userCollection = await getMongoUsersCollection();
         let user = await userCollection.findOne({
-            'email': email
-        }); 
+            email: email,
+        });
 
-        let res = await request(api).post(`/users/verifyRegistration/${user.verifyRegistrationToken}`);
+        let res = await request(api).post(
+            `/users/verifyRegistration/${user.verifyRegistrationToken}`
+        );
         //console.log(res)
 
         expect(res.status).toEqual(StatusCodes.CREATED);
     });
 
-  it('login the user',async function () {
-        let res = await request(api).post("/users/loginUser").send({
+    it('login the user', async function () {
+        let res = await request(api).post('/users/loginUser').send({
             email: email,
-            password: password
+            password: password,
         }); //console.log(res)
 
         expect(res.status).toEqual(StatusCodes.OK);
     });
 
-  it('login with wrong password',async function () {
-        let res = await request(api).post("/users/loginUser").send({
+    it('login with wrong password', async function () {
+        let res = await request(api).post('/users/loginUser').send({
             email: email,
-            password: "anythingA!0"
+            password: 'anythingA!0',
         }); //console.log(res)
 
         expect(res.status).toEqual(StatusCodes.UNAUTHORIZED);
     });
 
-  it('login with wrong email', async function () {
-        let res = await request(api).post("/users/loginUser").send({
-            email: "email@web.de",
-            password: password
+    it('login with wrong email', async function () {
+        let res = await request(api).post('/users/loginUser').send({
+            email: 'email@web.de',
+            password: password,
         }); //console.log(res)
 
         expect(res.status).toEqual(StatusCodes.UNAUTHORIZED);

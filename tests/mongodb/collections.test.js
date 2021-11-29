@@ -6,7 +6,7 @@ import {
 import {
     connectMongoDbClient,
     disconnectMongoDbClient,
-} from '../../src/mongodb/setup';
+} from '../../src/storage/mongodb/setup';
 describe('Tests for the MongoDB collection get functions', () => {
     beforeAll(async function () {
         await connectMongoDbClient();

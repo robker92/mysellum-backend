@@ -3,7 +3,7 @@
 import {
     getMongoDBClient,
     getMongoDBTransactionWriteOptions,
-} from '../../mongodb/setup';
+} from '../../storage/mongodb/setup';
 
 import { ObjectId } from 'mongodb';
 
@@ -12,7 +12,7 @@ import {
     getMongoOrdersCollection,
     getMongoProductsCollection,
     getMongoUsersCollection,
-} from '../../mongodb/collections';
+} from '../../storage/mongodb/collections';
 
 import { removeDuplicatesFromArray } from '../../utils/arrayFunctions';
 import { getOrderModel } from '../../data-models/order-model';

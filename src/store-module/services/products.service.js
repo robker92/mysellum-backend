@@ -14,14 +14,26 @@ import { getProductModel } from '../../data-models';
 import { storeActivationRoutine } from './activation.service';
 import { sendNotificationsService } from './product-avail-notif.service';
 import {
-    setStoreDistribtuionValue,
-    updateStoreDistribtuionValues,
+    setStoreDistributionValue,
+    updateStoreDistributionValues,
 } from './stores.service';
 
 import {
     fetchAndValidateStore,
     validateStoreOwner,
 } from '../utils/operations/store-checks';
+
+import {
+    uploadBlobService,
+    deleteBlobService,
+    getImageBufferResizedService,
+} from './images.service';
+
+// MongoDB transaction
+import {
+    getMongoDbClient,
+    getMongoDbTransactionWriteOptions,
+} from '../../storage/mongodb/setup';
 
 export {
     createProductService,
@@ -39,20 +51,13 @@ export {
  * @returns the created product
  */
 async function createProductService(data, userEmail, storeId) {
-    const store = await fetchAndValidateStore(storeId);
-    validateStoreOwner(userEmail, store.userEmail);
-    // const findResult = await readOneOperation(databaseEntity.STORES, {
-    //     _id: storeId,
-    // });
-    // if (!findResult) {
-    //     throw new Error(`Store with the id ${storeId} not found.`);
-    // }
-    //Guard to make sure that only the store owner is able to edit this store
-    // if (findResult.userEmail !== userEmail) {
-    //     throw new Error(
-    //         `User with the email address ${userEmail} unauthorized to edit this store.`
-    //     );
-    // }
+    const file = {
+        buffer: data.imgSrc,
+        size: data.imageDetails.size,
+        name: data.imageDetails.name,
+    };
+    const imageUrl = await uploadBlobService(file);
+    console.log(imageUrl);
 
     const options = {
         datetimeCreated: new Date().toISOString(),
@@ -61,10 +66,11 @@ async function createProductService(data, userEmail, storeId) {
         storeId: storeId,
         title: data.title,
         description: data.description,
-        imgSrc: data.imgSrc,
+        longDescription: data.longDescription,
+        imgSrc: imageUrl,
         imageDetails: data.imageDetails,
         price: data.price,
-        //"priceFloat": parseFloat(data.price),
+        priceFloat: parseFloat(data.price),
         currency: data.currency,
         currencySymbol: data.currencySymbol,
         quantityType: data.quantityType,
@@ -74,19 +80,45 @@ async function createProductService(data, userEmail, storeId) {
     };
     const product = getProductModel(options);
 
-    const insertResult = await createOneOperation(
-        databaseEntity.PRODUCTS,
-        product
-    );
-    // TODO Transaction
-    await storeActivationRoutine(storeId);
+    let insertResult;
+    const session = getMongoDbClient().startSession();
+    try {
+        await session.withTransaction(async () => {
+            const store = await fetchAndValidateStore(storeId, session);
+            validateStoreOwner(userEmail, store.userEmail);
 
-    // set the store's distribution type when the value is true
-    if (data.delivery === true) {
-        await setStoreDistribtuionValue(storeId, 'delivery', true);
-    }
-    if (data.pickup === true) {
-        await setStoreDistribtuionValue(storeId, 'pickup', true);
+            insertResult = await createOneOperation(
+                databaseEntity.PRODUCTS,
+                product,
+                session
+            );
+
+            await storeActivationRoutine(store, session);
+
+            // set the store's distribution type when the value is true
+            if (data.delivery === true) {
+                await setStoreDistributionValue(
+                    storeId,
+                    'delivery',
+                    true,
+                    session
+                );
+            }
+            if (data.pickup === true) {
+                await setStoreDistributionValue(
+                    storeId,
+                    'pickup',
+                    true,
+                    session
+                );
+            }
+        }, getMongoDbTransactionWriteOptions());
+    } catch (error) {
+        console.log('The transaction was aborted due to an unexpected error: ');
+        console.log(error);
+        throw error;
+    } finally {
+        await session.endSession();
     }
 
     return insertResult.ops[0];
@@ -101,55 +133,96 @@ async function createProductService(data, userEmail, storeId) {
  * @returns nothing. Throws errors when something goes wrong
  */
 async function editProductService(data, userEmail, storeId, productId) {
-    const store = await fetchAndValidateStore(storeId);
-    validateStoreOwner(userEmail, store.userEmail);
-    // Validate the provided store id
-    // const findResult = await readOneOperation(databaseEntity.STORES, {
-    //     _id: storeId,
-    // });
-    // if (!findResult) {
-    //     throw new Error(`Store with the id ${storeId} not found.`);
-    // }
-    // //Guard to make sure that only the store owner is able to edit this store
-    // if (findResult.userEmail !== userEmail) {
-    //     throw new Error(
-    //         `User with the email address ${userEmail} unauthorized to edit this store.`
-    //     );
-    // }
+    console.log(data.price);
+    let product;
 
-    const product = await updateOneAndReturnOperation(
-        databaseEntity.PRODUCTS,
-        {
-            _id: productId,
-            storeId: storeId,
-        },
-        {
-            datetimeAdjusted: new Date().toISOString(),
-            title: data.title,
-            description: data.description,
-            imgSrc: data.imgSrc,
-            imageDetails: data.imageDetails,
-            price: data.price,
-            priceFloat: parseFloat(data.price),
-            currency: data.currency,
-            currencySymbol: data.currencySymbol,
-            quantityType: data.quantityType,
-            quantityValue: data.quantityValue,
-            delivery: data.delivery,
-            pickup: data.pickup,
-        },
-        'set'
-    );
+    const session = getMongoDbClient().startSession();
+    try {
+        await session.withTransaction(async () => {
+            const store = await fetchAndValidateStore(storeId, session);
+            validateStoreOwner(userEmail, store.userEmail);
 
-    // TODO Transaction
-    // set the store's distribution type when the value is true
-    if (data.delivery === true) {
-        await setStoreDistribtuionValue(storeId, 'delivery', true);
+            const oldProduct = await readOneOperation(databaseEntity.PRODUCTS, {
+                _id: productId,
+                storeId: storeId,
+            });
+
+            let imageUrl;
+            if (oldProduct.imageDetails.name !== data.imageDetails.name) {
+                // Upload new image
+                const file = {
+                    buffer: data.imgSrc,
+                    size: data.imageDetails.size,
+                    name: data.imageDetails.name,
+                };
+                imageUrl = await uploadBlobService(file);
+                console.log(imageUrl);
+
+                // Delete old image
+                const blobName = oldProduct.imgSrc.substring(
+                    oldProduct.imgSrc.lastIndexOf('/') + 1,
+                    oldProduct.imgSrc.length
+                );
+                console.log(`Old Image: ${blobName}`);
+                await deleteBlobService(blobName);
+            } else {
+                imageUrl = data.imgSrc;
+            }
+
+            product = await updateOneAndReturnOperation(
+                databaseEntity.PRODUCTS,
+                {
+                    _id: productId,
+                    storeId: storeId,
+                },
+                {
+                    datetimeAdjusted: new Date().toISOString(),
+                    title: data.title,
+                    description: data.description,
+                    longDescription: data.longDescription,
+                    imgSrc: imageUrl,
+                    imageDetails: data.imageDetails,
+                    price: data.price,
+                    priceFloat: parseFloat(data.price),
+                    currency: data.currency,
+                    currencySymbol: data.currencySymbol,
+                    quantityType: data.quantityType,
+                    quantityValue: data.quantityValue,
+                    delivery: data.delivery,
+                    pickup: data.pickup,
+                },
+                'set',
+                false,
+                session
+            );
+
+            // set the store's distribution type when the value is true
+            if (data.delivery === true) {
+                await setStoreDistributionValue(
+                    storeId,
+                    'delivery',
+                    true,
+                    session
+                );
+            }
+            if (data.pickup === true) {
+                await setStoreDistributionValue(
+                    storeId,
+                    'pickup',
+                    true,
+                    session
+                );
+            }
+        }, getMongoDbTransactionWriteOptions());
+    } catch (error) {
+        console.log('The transaction was aborted due to an unexpected error: ');
+        console.log(error);
+        throw error;
+    } finally {
+        await session.endSession();
     }
-    if (data.pickup === true) {
-        await setStoreDistribtuionValue(storeId, 'pickup', true);
-    }
 
+    console.log(product.price);
     return product;
 }
 
@@ -160,38 +233,47 @@ async function editProductService(data, userEmail, storeId, productId) {
  * @param {string} productId
  */
 async function deleteProductService(userEmail, storeId, productId) {
-    const store = await fetchAndValidateStore(storeId);
-    validateStoreOwner(userEmail, store.userEmail);
-    // Validate the provided store id
-    // const findResult = await readOneOperation(databaseEntity.STORES, {
-    //     _id: storeId,
-    // });
-    // if (!findResult) {
-    //     throw new Error(`Store with the id ${storeId} not found.`);
-    // }
-    // //Guard to make sure that only the store owner is able to edit this store
-    // if (findResult.userEmail !== userEmail) {
-    //     throw new Error(
-    //         `User with the email address ${userEmail} unauthorized to edit this store.`
-    //     );
-    // }
+    const session = getMongoDbClient().startSession();
+    try {
+        await session.withTransaction(async () => {
+            const store = await fetchAndValidateStore(storeId, session);
+            validateStoreOwner(userEmail, store.userEmail);
 
-    // TODO Transaction
-    // delete the product
-    await deleteOneOperation(databaseEntity.PRODUCTS, {
-        _id: productId,
-        storeId: storeId,
-    });
+            const product = await readOneOperation(databaseEntity.PRODUCTS, {
+                _id: productId,
+                storeId: storeId,
+            });
 
-    // const products = await readManyOperation(databaseEntity.PRODUCTS, {
-    //     storeId: storeId,
-    // });
+            // Delete old image
+            const blobName = product.imgSrc.substring(
+                product.imgSrc.lastIndexOf('/') + 1,
+                product.imgSrc.length
+            );
+            console.log(`Old Image: ${blobName}`);
+            await deleteBlobService(blobName);
 
-    // Trigger the store activation routine
-    await storeActivationRoutine(storeId);
+            // delete the product
+            await deleteOneOperation(
+                databaseEntity.PRODUCTS,
+                {
+                    _id: productId,
+                    storeId: storeId,
+                },
+                session
+            );
 
-    // check the distribution values and update them
-    await updateStoreDistribtuionValues(storeId);
+            // Trigger the store activation routine
+            await storeActivationRoutine(store, session);
+            // check the distribution values and update them
+            await updateStoreDistributionValues(storeId, session);
+        }, getMongoDbTransactionWriteOptions());
+    } catch (error) {
+        console.log('The transaction was aborted due to an unexpected error: ');
+        console.log(error);
+        throw error;
+    } finally {
+        await session.endSession();
+    }
 
     return;
 }
@@ -205,37 +287,36 @@ async function deleteProductService(userEmail, storeId, productId) {
  * @returns
  */
 async function updateStockAmountService(data, userEmail, storeId, productId) {
-    const store = await fetchAndValidateStore(storeId);
-    validateStoreOwner(userEmail, store.userEmail);
-    // Validate the provided store id
-    // const findResult = await readOneOperation(databaseEntity.STORES, {
-    //     _id: storeId,
-    // });
-    // if (!findResult) {
-    //     throw new Error(`Store with the id ${storeId} not found.`);
-    // }
-    // //Guard to make sure that only the store owner is able to edit this store
-    // if (findResult.userEmail !== userEmail) {
-    //     throw new Error(
-    //         `User with the email address ${userEmail} unauthorized to edit this store.`
-    //     );
-    // }
+    const session = getMongoDbClient().startSession();
+    try {
+        await session.withTransaction(async () => {
+            const store = await fetchAndValidateStore(storeId, session);
+            validateStoreOwner(userEmail, store.userEmail);
 
-    const product = await updateOneAndReturnOperation(
-        databaseEntity.PRODUCTS,
-        {
-            _id: productId,
-            storeId: storeId,
-        },
-        {
-            stockAmount: parseInt(data.stockAmount),
-        },
-        'set'
-    );
+            const product = await updateOneAndReturnOperation(
+                databaseEntity.PRODUCTS,
+                {
+                    _id: productId,
+                    storeId: storeId,
+                },
+                {
+                    stockAmount: parseInt(data.stockAmount),
+                },
+                'set',
+                session
+            );
 
-    if (product.stockAmount === 0) {
-        console.log('trigger notification');
-        sendNotificationsService(storeId, productId);
+            if (product.stockAmount === 0) {
+                console.log('trigger notification');
+                sendNotificationsService(storeId, productId);
+            }
+        }, getMongoDbTransactionWriteOptions());
+    } catch (error) {
+        console.log('The transaction was aborted due to an unexpected error: ');
+        console.log(error);
+        throw error;
+    } finally {
+        await session.endSession();
     }
 
     return;
@@ -249,13 +330,6 @@ async function updateStockAmountService(data, userEmail, storeId, productId) {
  */
 async function getProductImageService(storeId, productId) {
     await fetchAndValidateStore(storeId);
-    // Validate the provided store id
-    // const findResult = await readOneOperation(databaseEntity.STORES, {
-    //     _id: storeId,
-    // });
-    // if (!findResult) {
-    //     throw new Error(`Store with the id ${storeId} not found.`);
-    // }
 
     const imageSrc = await readOneOperation(
         databaseEntity.PRODUCTS,

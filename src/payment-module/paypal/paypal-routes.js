@@ -18,7 +18,7 @@ import {
     paypalWebhookTestController,
 } from './paypal-controller';
 
-//Validation
+// Validation
 import {
     createSignUpLinkValidation,
     onboardingDataValidation,

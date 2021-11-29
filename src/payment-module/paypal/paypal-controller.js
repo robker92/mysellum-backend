@@ -66,29 +66,29 @@ const createSignUpLinkController = async function (req, res, next) {
 };
 
 const onboardingDataController = async function (req, res, next) {
-    // const storeId = req.params.storeId;
-    // const userEmail = req.userEmail;
-    // const merchantId = req.body.merchantId;
-    // const merchantIdInPayPal = req.body.merchantIdInPayPal;
-    // const permissionsGranted = req.body.permissionsGranted;
-    // const consentStatus = req.body.consentStatus;
-    // const productIntentId = req.body.productIntentId;
-    // const productIntentID = req.body.productIntentID;
-    // const isEmailConfirmed = req.body.isEmailConfirmed;
-    // const accountStatus = req.body.accountStatus;
+    const storeId = req.params.storeId;
+    const userEmail = req.userEmail;
+    const merchantId = req.body.merchantId;
+    const merchantIdInPayPal = req.body.merchantIdInPayPal;
+    const permissionsGranted = req.body.permissionsGranted;
+    const consentStatus = req.body.consentStatus;
+    const productIntentId = req.body.productIntentId;
+    const productIntentID = req.body.productIntentID;
+    const isEmailConfirmed = req.body.isEmailConfirmed;
+    const accountStatus = req.body.accountStatus;
 
-    const {
-        storeId,
-        userEmail,
-        merchantId,
-        merchantIdInPayPal,
-        permissionsGranted,
-        consentStatus,
-        productIntentId,
-        productIntentID,
-        isEmailConfirmed,
-        accountStatus,
-    } = req.body;
+    // const {
+    //     storeId,
+    //     userEmail,
+    //     merchantId,
+    //     merchantIdInPayPal,
+    //     permissionsGranted,
+    //     consentStatus,
+    //     productIntentId,
+    //     productIntentID,
+    //     isEmailConfirmed,
+    //     accountStatus,
+    // } = req.body;
 
     // const {
     //     merchantId,

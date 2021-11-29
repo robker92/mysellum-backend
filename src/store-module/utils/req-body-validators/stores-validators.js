@@ -26,6 +26,8 @@ const editStoreVal = {
                     title: Joi.string().required(),
                     size: Joi.number().optional(),
                     src: Joi.string().required(),
+                    name: Joi.string().optional(),
+                    originalName: Joi.string().optional(),
                 })
             )
             .min(1)

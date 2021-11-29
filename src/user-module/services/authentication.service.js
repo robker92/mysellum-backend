@@ -1,6 +1,5 @@
 'use strict';
-import { ObjectId } from 'mongodb';
-// database operations
+
 import {
     readOneOperation,
     updateOneOperation,
@@ -12,6 +11,7 @@ import {
     countDocumentsOperation,
     databaseEntity,
 } from '../../storage/database-operations';
+
 //pg
 import {
     seqReadOneOperation,
@@ -20,7 +20,7 @@ import {
     seqCreateOperation,
     seqDeleteOneOperation,
     seqReadAndCountAllOperation,
-} from '../../pg/operations';
+} from '../../storage/pg/operations';
 
 import {
     JWT_SECRET_KEY,
@@ -42,6 +42,7 @@ export {
     loginUserService,
     registerUserService,
     verifyRegistrationService,
+    resendVerificationEmailService,
     sendPasswordResetMailService,
     checkResetTokenService,
     resetPasswordService,
@@ -61,7 +62,9 @@ function verifyToken(token) {
 
 function convertBirthdate(birthdate) {
     // return moment(birthdate, 'DD.MM.YYYY', true);
-    return birthdate.replaceAll('-', '.');
+    // return birthdate.replaceAll('-', '.');
+    // return birthdate.replaceAll('-', '.');
+    return birthdate.replace(/-/g, '.');
 }
 
 async function loginUserService(email, password) {
@@ -70,19 +73,28 @@ async function loginUserService(email, password) {
         email: email,
     });
     if (!user) {
-        throw new Error({
+        // throw new Error('Combination of username and password was incorrect.');
+        throw {
+            status: 401,
             type: 'incorrect',
             message: 'Combination of username and password was incorrect.',
-        });
+        };
     }
     if (user.emailVerified === false) {
-        throw new Error({
+        // throw new Error('E-mail address was not verified.');
+        throw {
+            status: 401,
             type: 'verification',
             message: 'E-mail address was not verified.',
-        });
+        };
     }
     if (user.blocked === true || user.deleted === true) {
-        throw new Error('User can not be accessed.');
+        // throw new Error('User can not be accessed.');
+        throw {
+            status: 401,
+            type: 'unauthorized',
+            message: 'User can not be accessed.',
+        };
     }
 
     // Verify password
@@ -90,10 +102,12 @@ async function loginUserService(email, password) {
 
     // Password does not match
     if (!match) {
-        throw new Error({
+        // throw new Error('Combination of username and password was incorrect.');
+        throw {
+            status: 401,
             type: 'incorrect',
             message: 'Combination of username and password was incorrect.',
-        });
+        };
     }
 
     const accessToken = createToken({
@@ -141,6 +155,19 @@ async function loginUserService(email, password) {
     return { accessToken, userData };
 }
 
+function createVerificationToken() {
+    const verificationToken = crypto
+        .randomBytes(PW_RESET_TOKEN_NUM_BYTES)
+        .toString('hex');
+    if (!verificationToken) {
+        throw {
+            status: 401,
+            message: 'Verification token invalid.',
+        };
+    }
+    return verificationToken;
+}
+
 async function registerUserService(data) {
     const user = await readOneOperation(databaseEntity.USERS, {
         email: data.email,
@@ -152,24 +179,27 @@ async function registerUserService(data) {
             type: 'alreadyUsed',
             message: 'E-Mail already used.',
         };
+        // throw new Error(`The e-mail ${data.email} is already registered.`);
     }
 
     const passwordHash = await bcrypt.hash(data.password, PW_HASH_SALT_ROUNDS);
-    const verificationToken = crypto
-        .randomBytes(PW_RESET_TOKEN_NUM_BYTES)
-        .toString('hex');
-    if (!verificationToken) {
-        throw {
-            status: 401,
-            message: 'Verification token invalid.',
-        };
-    }
+    const verificationToken = createVerificationToken();
+    // const verificationToken = crypto
+    //     .randomBytes(PW_RESET_TOKEN_NUM_BYTES)
+    //     .toString('hex');
+    // if (!verificationToken) {
+    //     throw {
+    //         status: 401,
+    //         message: 'Verification token invalid.',
+    //     };
+    // }
 
     // get user data model function
     const options = {
         firstName: data.firstName,
         lastName: data.lastName,
         email: data.email,
+        phoneNumber: data.phoneNumber,
         passwordHash: passwordHash,
         city: data.city,
         postcode: data.postcode,
@@ -195,7 +225,7 @@ async function registerUserService(data) {
     }
     // const createdUser = insertResult.ops[0];
 
-    //send email confirmation mail
+    //send email verification e-mail
     const mailOptions = {
         email: data.email,
         contentType: 'registrationVerification',
@@ -247,6 +277,16 @@ async function verifyRegistrationService(verificationToken) {
             message: 'E-Mail verification failed.',
         };
     }
+    console.log(`hi1`);
+    console.log(user);
+    if (!user) {
+        throw {
+            status: 500,
+            type: 'verification',
+            message: 'E-Mail verification failed.',
+        };
+    }
+
     console.log(user);
     const accessToken = createToken({
         id: user._id.toString(),
@@ -273,6 +313,70 @@ async function verifyRegistrationService(verificationToken) {
     };
 
     return { accessToken, userData };
+}
+
+async function resendVerificationEmailService(email, birthdate) {
+    const user = await readOneOperation(databaseEntity.USERS, {
+        email: email,
+    });
+    if (!user) {
+        throw {
+            status: 400,
+            type: 'emailUnknown',
+            message: `The e-mail ${email} is not registered yet.`,
+        };
+    }
+    console.log(user.birthdate);
+    if (
+        user.birthdate !== birthdate ||
+        user.deleted === true ||
+        user.blocked === true
+    ) {
+        throw {
+            status: 400,
+            type: 'unauthorized',
+            message: `The user is not allowed to request a new verification e-mail.`,
+        };
+    }
+    if (user.emailVerified === true) {
+        throw {
+            status: 400,
+            type: 'alreadyVerified',
+            message: `The user's e-mail ${email} is already verified.`,
+        };
+    }
+
+    // update token and expiration date
+    const verificationToken = createVerificationToken();
+    await updateOneOperation(
+        databaseEntity.USERS,
+        { email: email },
+        {
+            verifyRegistrationToken: verificationToken,
+            verifyRegistrationExpires:
+                Date.now() + USER_VERIFICATION_TOKEN_EXPIRES, //Date now + 60min
+        }
+    );
+    //send email verification e-mail
+    const mailOptions = {
+        email: email,
+        contentType: 'registrationVerification',
+        verificationToken: verificationToken,
+    };
+
+    try {
+        await sendNodemailerMail(mailOptions);
+    } catch (error) {
+        // TODO User is updated, but no mail is sent...
+        console.log(error);
+        throw {
+            status: 500,
+            type: 'whileMailSending',
+            message: 'Error while sending!',
+        };
+    }
+
+    return;
 }
 
 async function sendPasswordResetMailService(email, birthdate) {

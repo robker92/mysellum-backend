@@ -2,33 +2,103 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
+const APP_ENV = Object.freeze({
+    DEV: 'development',
+    TEST: 'test',
+    PROD: 'production',
+});
+
+/**
+ * The function checks the environment and returns it as string representation.
+ * @returns either "development", "production" or "test"
+ */
+function checkEnvironment() {
+    if (process.env.NODE_ENV === APP_ENV.DEV) {
+        return 'development';
+    } else if (process.env.NODE_ENV === APP_ENV.PROD) {
+        return 'production';
+    } else if (process.env.NODE_ENV === APP_ENV.TEST) {
+        return 'test';
+    }
+}
+
 // Configuration variables
 const PORT = process.env.PORT || '3000';
 
 // MongoDB
-const MONGODB_URL =
-    process.env.MONGODB_URL ||
-    'mongodb://localhost:27017,localhost:30001/testdatabase?replSet=rs0';
-const MONGODB_NAME =
-    process.env.NODE_ENV !== 'test'
-        ? process.env.MONGODB_NAME_DEV
-        : process.env.MONGODB_NAME_TEST;
+// const MONGODB_URL =
+//     process.env.MONGODB_URL ||
+//     'mongodb://localhost:27017,localhost:30001/testdatabase?replSet=rs0';
+// const MONGODB_NAME =
+//     process.env.NODE_ENV !== 'test'
+//         ? process.env.MONGODB_NAME_DEV
+//         : process.env.MONGODB_NAME_TEST;
 
-const COSMOSDB_URL =
-    'mongodb://prjct-database:vRW4XEoblHbcmGdMDadRwXUgWqEElr6bxc4osxuUWIceaXYyK9toVk4KIvf4FlFLwUWR8dRwDE3MXvowYDbkxw%3D%3D@prjct-database.mongo.cosmos.azure.com:10255/?ssl=true&retrywrites=false&maxIdleTimeMS=120000&appName=@prjct-database@';
-const COSMOSDB_DB_DEV_NAME = process.env.COSMOSDB_DB_DEV_NAME;
-const COSMOSDB_DB_TEST_NAME = process.env.COSMOSDB_DB_TEST_NAME;
-const COSMOSDB_DB_PROD_NAME = process.env.COSMOSDB_DB_PROD_NAME;
+// needed:
+// Cloud urls: dev, prod, test
+// Local url
+// name: dev, prod, test
 
-let COSMOSDB_NAME;
-if (process.env.NODE_ENV === 'development') {
-    COSMOSDB_NAME = COSMOSDB_DB_DEV_NAME;
-} else if (process.env.NODE_ENV === 'production') {
-    COSMOSDB_NAME = COSMOSDB_DB_PROD_NAME;
-} else {
-    COSMOSDB_NAME = COSMOSDB_DB_TEST_NAME;
+// Mongo Local
+// let MONGODB_URL_DEV_LOCAL;
+// let MONGODB_NAME_DEV_LOCAL;
+// if (checkEnvironment() === APP_ENV.DEV || checkEnvironment() === APP_ENV.TEST) {
+//     MONGODB_URL_DEV_LOCAL = process.env.MONGODB_URL_DEV_LOCAL;
+//     MONGODB_NAME_DEV_LOCAL = process.env.MONGODB_NAME_DEV_LOCAL;
+// }
+
+// MongoDb (Cloud)
+let MONGODB_URL;
+let MONGODB_NAME;
+if (checkEnvironment() === APP_ENV.PROD) {
+    MONGODB_URL = process.env.MONGODB_URL_PROD;
+    MONGODB_NAME = process.env.MONGODB_NAME_PROD;
+} else if (checkEnvironment() === APP_ENV.DEV) {
+    MONGODB_URL = process.env.MONGODB_URL_DEV;
+    MONGODB_NAME = process.env.MONGODB_NAME_DEV;
+} else if (checkEnvironment() === APP_ENV.TEST) {
+    MONGODB_URL = process.env.MONGODB_URL_TEST;
+    MONGODB_NAME = process.env.MONGODB_NAME_TEST;
 }
-console.log(COSMOSDB_NAME);
+
+// MongoDb (Local)
+let MONGODB_URL_LOCAL;
+if (checkEnvironment() === APP_ENV.DEV) {
+    MONGODB_URL_LOCAL = process.env.MONGODB_URL_DEV_LOCAL;
+} else if (checkEnvironment() === APP_ENV.TEST) {
+    MONGODB_URL_LOCAL = process.env.MONGODB_URL_TEST_LOCAL;
+}
+
+// Azure Blob Storage
+const AZURE_STORAGE_ACCOUNT_NAME = process.env.AZURE_STORAGE_ACCOUNT_NAME;
+const AZURE_STORAGE_ACCOUNT_ACCESS_KEY =
+    process.env.AZURE_STORAGE_ACCOUNT_ACCESS_KEY;
+let AZURE_STORAGE_CONTAINER_NAME;
+if (checkEnvironment() === APP_ENV.PROD) {
+    AZURE_STORAGE_CONTAINER_NAME =
+        process.env.AZURE_STORAGE_CONTAINER_NAME_PROD;
+} else if (checkEnvironment() === APP_ENV.DEV) {
+    AZURE_STORAGE_CONTAINER_NAME = process.env.AZURE_STORAGE_CONTAINER_NAME_DEV;
+} else if (checkEnvironment() === APP_ENV.TEST) {
+    AZURE_STORAGE_CONTAINER_NAME =
+        process.env.AZURE_STORAGE_CONTAINER_NAME_TEST;
+}
+
+// const COSMOSDB_URL =
+//     'mongodb://prjct-database:vRW4XEoblHbcmGdMDadRwXUgWqEElr6bxc4osxuUWIceaXYyK9toVk4KIvf4FlFLwUWR8dRwDE3MXvowYDbkxw%3D%3D@prjct-database.mongo.cosmos.azure.com:10255/?ssl=true&retrywrites=false&maxIdleTimeMS=120000&appName=@prjct-database@';
+// const COSMOSDB_DB_DEV_NAME = process.env.COSMOSDB_DB_DEV_NAME;
+// const COSMOSDB_DB_TEST_NAME = process.env.COSMOSDB_DB_TEST_NAME;
+// const COSMOSDB_DB_PROD_NAME = process.env.COSMOSDB_DB_PROD_NAME;
+
+// let COSMOSDB_NAME;
+// if (checkEnvironment() === APP_ENV.DEV) {
+//     COSMOSDB_NAME = COSMOSDB_DB_DEV_NAME;
+// } else if (checkEnvironment() === APP_ENV.PROD) {
+//     COSMOSDB_NAME = COSMOSDB_DB_PROD_NAME;
+// } else if (checkEnvironment() === APP_ENV.TEST) {
+//     COSMOSDB_NAME = COSMOSDB_DB_TEST_NAME;
+// }
+// console.log(COSMOSDB_NAME);
 
 // PG
 let PG_DB_NAME;
@@ -36,13 +106,13 @@ let PG_DB_ADMIN_NAME;
 let PG_DB_PW;
 let PG_DB_HOST;
 let PG_DB_PORT;
-if (process.env.NODE_ENV === 'development') {
+if (checkEnvironment() === APP_ENV.DEV) {
     PG_DB_NAME = process.env.PG_DB_DEV_NAME;
     PG_DB_ADMIN_NAME = process.env.PG_DB_DEV_ADMIN_NAME;
     PG_DB_PW = process.env.PG_DB_DEV_PW;
     PG_DB_HOST = process.env.PG_DB_DEV_HOST;
     PG_DB_PORT = process.env.PG_DB_DEV_PORT;
-} else {
+} else if (checkEnvironment() === APP_ENV.PROD) {
     PG_DB_NAME = process.env.PG_DB_PROD_NAME;
     PG_DB_ADMIN_NAME = process.env.PG_DB_PROD_ADMIN_NAME;
     PG_DB_PW = process.env.PG_DB_PROD_PW;
@@ -91,25 +161,36 @@ const PAYPAL_PLATFORM_EMAIL = process.env.PAYPAL_PLATFORM_EMAIL;
 // URLs
 const FRONTEND_BASE_URL_PROD = process.env.FRONTEND_BASE_URL_PROD;
 let FRONTEND_BASE_URL;
-if (process.env.NODE_ENV === 'production') {
+if (checkEnvironment() === APP_ENV.PROD) {
     FRONTEND_BASE_URL = FRONTEND_BASE_URL_PROD;
-} else {
+} else if (checkEnvironment() === APP_ENV.DEV) {
     FRONTEND_BASE_URL = process.env.FRONTEND_BASE_URL_DEV;
 }
+
 let BACKEND_BASE_URL;
-if (process.env.NODE_ENV === 'production') {
+if (process.env.NODE_ENV === APP_ENV.PROD) {
     BACKEND_BASE_URL = process.env.BACKEND_BASE_URL_PROD;
-} else {
+} else if (checkEnvironment() === APP_ENV.DEV) {
     BACKEND_BASE_URL = process.env.BACKEND_BASE_URL_DEV;
 }
 
 //=============================================================================
 export {
+    APP_ENV,
+    checkEnvironment,
     PORT,
     MONGODB_URL,
     MONGODB_NAME,
-    COSMOSDB_URL,
-    COSMOSDB_NAME,
+    MONGODB_URL_LOCAL,
+    AZURE_STORAGE_ACCOUNT_NAME,
+    AZURE_STORAGE_ACCOUNT_ACCESS_KEY,
+    AZURE_STORAGE_CONTAINER_NAME,
+    // MONGODB_URL_DEV_LOCAL,
+    // MONGODB_NAME_DEV_LOCAL,
+    // MONGO_ATLAS_DEV_URL,
+    // MONGO_ATLAS_PW,
+    // COSMOSDB_URL,
+    // COSMOSDB_NAME,
     PG_DB_NAME,
     PG_DB_ADMIN_NAME,
     PG_DB_PW,

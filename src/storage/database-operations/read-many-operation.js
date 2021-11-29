@@ -9,16 +9,27 @@ export { readManyOperation };
  * @param {string} entity
  * @param {object} queryObject
  * @param {object} projectionObject
+ * @param {string} session mongo db session if needed
  * @returns true when a user was updated and false if not
  */
-async function readManyOperation(entity, queryObject, projectionObject = {}) {
+async function readManyOperation(
+    entity,
+    queryObject,
+    projectionObject = {},
+    sortObject = {},
+    session = null
+) {
     const collection = switchCollections(entity);
 
     queryObject = checkForObjectId(queryObject);
 
-    const projection = { projection: projectionObject };
+    let options = { projection: projectionObject, sort: sortObject };
 
-    const result = await collection.find(queryObject, projection).toArray();
+    if (session) {
+        options.session = session;
+    }
+
+    const result = await collection.find(queryObject, options).toArray();
 
     return result;
 }

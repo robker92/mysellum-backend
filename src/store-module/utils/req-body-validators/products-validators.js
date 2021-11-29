@@ -16,6 +16,7 @@ const productVal = {
         _id: Joi.string().optional(),
         title: Joi.string().min(5).max(30).required(),
         description: Joi.string().min(20).max(200).required(),
+        longDescription: Joi.string().min(20).max(1000).optional(),
         imgSrc: Joi.string().required(),
         imageDetails: Joi.object().required(),
         price: Joi.string().required(),

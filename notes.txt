@@ -1,0 +1,3 @@
+payment module:
+- payment-module 2 in use
+- paypal-orders.service and paypal-utils.service are not in use anymore

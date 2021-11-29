@@ -17,7 +17,7 @@ import { FRONTEND_BASE_URL_PROD } from '../../config';
 import {
     getMongoDbClient,
     getMongoDbTransactionWriteOptions,
-} from '../../mongodb/setup';
+} from '../../storage/mongodb/setup';
 import { ObjectId } from 'mongodb';
 
 import NodeGeocoder from 'node-geocoder';
@@ -28,8 +28,15 @@ const geoCoder = NodeGeocoder(geoCodeOptions);
 
 import { getStoreModel } from '../../data-models';
 import { createSignUpLink } from '../../payment-module/paypal/rest/paypal-rest-client';
-
+import {
+    uploadBlobService,
+    deleteBlobService,
+    getImageBufferResizedService,
+    getImageBufferResizedService2,
+} from './images.service';
 import { storeActivationRoutine } from '../services/activation.service';
+
+import sharp from 'sharp';
 
 import {
     fetchAndValidateStore,
@@ -42,8 +49,8 @@ export {
     createStoreService,
     editStoreService,
     deleteStoreService,
-    setStoreDistribtuionValue,
-    updateStoreDistribtuionValues,
+    setStoreDistributionValue,
+    updateStoreDistributionValues,
 };
 
 /**
@@ -59,7 +66,7 @@ async function getSingleStoreService(storeId) {
     // if (!findResult) {
     //     throw new Error(`Store with the id ${storeId} not found.`);
     // }
-
+    console.log(store.profileData.images);
     return store;
 }
 
@@ -87,6 +94,22 @@ async function createStoreService(data, userEmail) {
     // throw error when address was not found
     if (geoCodeResult.length === 0) {
         throw new Error(`Invalid address provided.`);
+    }
+
+    // IMAGES - if image is base64 string, upload image to blob store and replace base64 string with blob url
+    for (const image of data.images) {
+        const file = {
+            buffer: image.src,
+            size: image.size,
+            name: image.name,
+            originalName: image.originalName,
+        };
+        // Resize file
+        // const resizedFile = await getImageBufferResizedService(file);
+        // file.buffer = resizedFile.buffer;
+
+        image.src = await uploadBlobService(file);
+        console.log(image);
     }
 
     // TODO validate the address, check if it exists, if it is in the correct country (legal) etc
@@ -126,70 +149,68 @@ async function createStoreService(data, userEmail) {
 
     // Start Mongo DB Transaction
     let store;
-    // const session = getMongoDbClient().startSession();
-    // try {
-    //     await session.withTransaction(async () => {
-    // insert the store to the database
-    const insertResult = await createOneOperation(
-        databaseEntity.STORES,
-        storeObject
-        // session
-    );
+    const session = getMongoDbClient().startSession();
+    try {
+        await session.withTransaction(async () => {
+            // insert the store to the database
+            const insertResult = await createOneOperation(
+                databaseEntity.STORES,
+                storeObject,
+                session
+            );
 
-    store = insertResult.ops[0];
-    console.log('Store creation successful!');
+            store = insertResult.ops[0];
+            console.log('Store creation successful!');
 
-    // Create paypal action link
-    // Other option: use user email and not store id
-    console.log(store._id);
-    const paypalLinks = await createSignUpLink(
-        // `https://prjct-frontend.azurewebsites.net/store-profile/${store._id}`,
-        `${FRONTEND_BASE_URL_PROD}/store-profile/${store._id}`,
-        // `http://127.0.0.1:8080/store-profile/${store._id}`,
-        // '/',
-        store._id
-    );
-    const selfUrl = paypalLinks.links.find((obj) => obj.rel === 'self');
-    const actionUrl = paypalLinks.links.find((obj) => obj.rel === 'action_url');
+            // Create paypal action link
+            // Other option: use user email and not store id
+            console.log(store._id);
+            const paypalLinks = await createSignUpLink(
+                // `https://prjct-frontend.azurewebsites.net/store-profile/${store._id}`,
+                `${FRONTEND_BASE_URL_PROD}/store-profile/${store._id}`,
+                // `http://127.0.0.1:8080/store-profile/${store._id}`,
+                // '/',
+                store._id
+            );
+            const selfUrl = paypalLinks.links.find((obj) => obj.rel === 'self');
+            const actionUrl = paypalLinks.links.find(
+                (obj) => obj.rel === 'action_url'
+            );
 
-    await updateOneOperation(
-        databaseEntity.STORES,
-        {
-            //Selection criteria
-            _id: store._id,
-        },
-        {
-            'payment.paypal.urls.self': selfUrl,
-            'payment.paypal.urls.actionUrl': actionUrl,
-        },
-        'set'
-        // session
-    );
-    await updateOneOperation(
-        databaseEntity.USERS,
-        {
-            email: userEmail,
-        },
-        {
-            ownedStoreId: ObjectId(store._id),
-        },
-        'set'
-        // session
-    );
+            await updateOneOperation(
+                databaseEntity.STORES,
+                {
+                    //Selection criteria
+                    _id: store._id,
+                },
+                {
+                    'payment.paypal.urls.self': selfUrl,
+                    'payment.paypal.urls.actionUrl': actionUrl,
+                },
+                'set',
+                session
+            );
+            await updateOneOperation(
+                databaseEntity.USERS,
+                {
+                    email: userEmail,
+                },
+                {
+                    ownedStoreId: ObjectId(store._id),
+                },
+                'set',
+                session
+            );
 
-    await storeActivationRoutine(store._id);
-
-    //     }, getMongoDbTransactionWriteOptions());
-    // } catch (e) {
-    //     // session.abortTransaction();
-    //     console.log(
-    //         'The transaction was aborted due to an unexpected error: ' + e
-    //     );
-    //     throw e;
-    // } finally {
-    //     await session.endSession();
-    // }
-    // session.commitTransaction();
+            await storeActivationRoutine(store, session);
+        }, getMongoDbTransactionWriteOptions());
+    } catch (error) {
+        console.log('The transaction was aborted due to an unexpected error: ');
+        console.log(error);
+        throw error;
+    } finally {
+        await session.endSession();
+    }
     return store;
 }
 
@@ -201,7 +222,7 @@ async function createStoreService(data, userEmail) {
  * @returns
  */
 async function editStoreService(data, storeId, userEmail) {
-    console.log(data);
+    // console.log(data);
     const store = await fetchAndValidateStore(storeId);
     validateStoreOwner(userEmail, store.userEmail);
     // const findResult = await readOneOperation(databaseEntity.STORES, {
@@ -228,38 +249,115 @@ async function editStoreService(data, storeId, userEmail) {
         );
     }
 
-    await storeActivationRoutine(storeId);
+    // IMAGES - if image is base64 string, upload image to blob store and replace base64 string with blob url
+    for (const image of data.images) {
+        if (image.src.startsWith('data:image/')) {
+            const file = {
+                buffer: image.src,
+                size: image.size,
+                name: image.name,
+                originalName: image.name,
+            };
+            console.log(file.size);
+            // Resize file
+            // const resizedFile = await getImageBufferResizedService(file);
+            // file.buffer = resizedFile.buffer;
+            const resultString = await getImageBufferResizedService2(image.src);
+            // const testBuffer = Buffer.from(
+            //     image.src.substr('data:image/jpeg;base64,'.length),
+            //     'base64'
+            // );
+            // const metadataIn = await sharp(testBuffer).metadata();
+            // const resizeResult = await sharp(testBuffer)
+            //     .resize({
+            //         fit: sharp.fit.contain,
+            //         width: parseInt(metadataIn.width / 5),
+            //     })
+            //     .toBuffer();
+            // const bufferString = Buffer.from(resizeResult).toString('base64');
+            // const buffer = 'data:image/jpeg;base64,' + bufferString;
 
-    const openingHours = validateOpeningHours(data.openingHours);
+            console.log(resultString.substring(0, 50));
 
-    await updateOneOperation(
-        databaseEntity.STORES,
-        {
-            _id: storeId,
-        },
-        {
-            'profileData.title': data.title,
-            'profileData.description': data.description,
-            'profileData.tags': data.tags,
-            'profileData.images': data.images,
-            'mapData.address.addressLine1': data.address.addressLine1,
-            'mapData.address.city': data.address.city,
-            'mapData.address.postcode': data.address.postcode,
-            'mapData.address.country': data.address.country,
-            'mapData.mapIcon': data.mapIcon,
-            'mapData.location.lat': geoCodeResult[0].latitude,
-            'mapData.location.lng': geoCodeResult[0].longitude,
-            'shipping.method': data.shippingMethod,
-            'shipping.costs': data.shippingCosts,
-            'shipping.thresholdValue': data.shippingThresholdValue,
-            openingHours: openingHours,
-            // 'activationSteps.profileComplete': activationProfileCompleteValue,
-            // 'activationSteps.shippingRegistered': activationShippingValue,
-            // 'activationSteps.paymentMethodRegistered':
-            //     activationPaymentMethodValue,
-        },
-        'set'
-    );
+            image.src = await uploadBlobService(file);
+            console.log(image);
+        }
+    }
+    console.log(JSON.stringify(data.images));
+
+    // Iterate over old images and see if the url is in the array of new images. If not, delete the blob
+    let promises = [];
+    let found;
+    for (const oldImage of store.profileData.images) {
+        found = false;
+        for (const newImage of data.images) {
+            // if old image is found, set var to true
+            if (oldImage.src === newImage.src) {
+                found = true;
+                break;
+            }
+        }
+        if (found === false) {
+            // Delete Blob
+            const blobName = oldImage.src.substring(
+                oldImage.src.lastIndexOf('/') + 1,
+                oldImage.src.length
+            );
+            console.log(`Old Image: ${blobName}`);
+            promises.push(deleteBlobService(blobName));
+        }
+    }
+    // do not abort when the deletion is unsuccessful
+    try {
+        await Promise.all(promises);
+    } catch (error) {
+        console.log(error);
+    }
+
+    const session = getMongoDbClient().startSession();
+    try {
+        await session.withTransaction(async () => {
+            await storeActivationRoutine(store, session);
+
+            const openingHours = validateOpeningHours(data.openingHours);
+
+            await updateOneOperation(
+                databaseEntity.STORES,
+                {
+                    _id: storeId,
+                },
+                {
+                    'profileData.title': data.title,
+                    'profileData.description': data.description,
+                    'profileData.tags': data.tags,
+                    'profileData.images': data.images,
+                    'mapData.address.addressLine1': data.address.addressLine1,
+                    'mapData.address.city': data.address.city,
+                    'mapData.address.postcode': data.address.postcode,
+                    'mapData.address.country': data.address.country,
+                    'mapData.mapIcon': data.mapIcon,
+                    'mapData.location.lat': geoCodeResult[0].latitude,
+                    'mapData.location.lng': geoCodeResult[0].longitude,
+                    'shipping.method': data.shippingMethod,
+                    'shipping.costs': data.shippingCosts,
+                    'shipping.thresholdValue': data.shippingThresholdValue,
+                    openingHours: openingHours,
+                    // 'activationSteps.profileComplete': activationProfileCompleteValue,
+                    // 'activationSteps.shippingRegistered': activationShippingValue,
+                    // 'activationSteps.paymentMethodRegistered':
+                    //     activationPaymentMethodValue,
+                },
+                'set',
+                session
+            );
+        }, getMongoDbTransactionWriteOptions());
+    } catch (error) {
+        console.log('The transaction was aborted due to an unexpected error: ');
+        console.log(error);
+        throw error;
+    } finally {
+        await session.endSession();
+    }
 
     return;
 }
@@ -367,7 +465,6 @@ async function deleteStoreService(storeId, userEmail) {
                 'set',
                 session
             );
-            console.log(`hi112`);
         }, getMongoDbTransactionWriteOptions());
     } catch (e) {
         console.log(
@@ -386,32 +483,51 @@ async function deleteStoreService(storeId, userEmail) {
  * @param {string} storeId
  * @param {string} type "delivery" or "pickup"
  * @param {boolean} value true or false
+ * @param {string} session mongo db session if needed
  */
-async function setStoreDistribtuionValue(storeId, type, value) {
+async function setStoreDistributionValue(storeId, type, value, session = null) {
     let setObj = {};
     setObj[type] = value;
-    await updateOneOperation(
-        databaseEntity.STORES,
-        {
-            _id: storeId,
-        },
-        setObj,
-        'set'
-    );
+
+    if (!session) {
+        await updateOneOperation(
+            databaseEntity.STORES,
+            {
+                _id: storeId,
+            },
+            setObj,
+            'set'
+        );
+    } else {
+        await updateOneOperation(
+            databaseEntity.STORES,
+            {
+                _id: storeId,
+            },
+            setObj,
+            'set',
+            session
+        );
+    }
+
     return;
 }
 
 /**
- * The function gets a stores values for the two distribution types
+ * The function sets a store's values for the two distribution types
  * @param {string} storeId
- * @param {string} type "delivery" or "pickup"
- * @param {boolean} value true or false
+ * @param {string} session mongo db session if needed
  */
-async function updateStoreDistribtuionValues(storeId) {
+async function updateStoreDistributionValues(storeId, session = null) {
     // get the store and it's current values
-    const store = await readOneOperation(databaseEntity.STORES, {
-        _id: storeId,
-    });
+    const store = await readOneOperation(
+        databaseEntity.STORES,
+        {
+            _id: storeId,
+        },
+        {},
+        session
+    );
     const currentDeliveryValue = store.delivery;
     const currentPickupValue = store.pickup;
 
@@ -421,12 +537,14 @@ async function updateStoreDistribtuionValues(storeId) {
         {
             storeId: storeId,
         },
-        { imgSrc: 0 }
+        { imgSrc: 0 },
+        {},
+        session
     );
 
     // baseline: values are false
-    const productsDeliveryValue = false;
-    const productsPickupValue = false;
+    let productsDeliveryValue = false;
+    let productsPickupValue = false;
     // the products are iterated and when a distribution type is true, we set the value accordingly
     for (const product of products) {
         if (product.delivery === true) {
@@ -437,21 +555,29 @@ async function updateStoreDistribtuionValues(storeId) {
         }
 
         // when both values are true, we break out of the for loop
-        if (productsDeliveryValue === true && productsPickupValue == true) {
+        if (productsDeliveryValue === true && productsPickupValue === true) {
             break;
         }
     }
 
     // set identified values
     if (currentDeliveryValue !== productsDeliveryValue) {
-        await setStoreDistribtuionValue(
+        await setStoreDistributionValue(
             storeId,
             'delivery',
-            productsDeliveryValue
+            productsDeliveryValue,
+            session
         );
     }
+
     if (currentPickupValue !== productsPickupValue) {
-        await setStoreDistribtuionValue(storeId, 'pickup', productsPickupValue);
+        await setStoreDistributionValue(
+            storeId,
+            'pickup',
+            productsPickupValue,
+            session
+        );
     }
+
     return;
 }

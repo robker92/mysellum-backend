@@ -4,7 +4,7 @@ import {
     getMongoDbClient,
     disconnectMongoDbClient,
     getMongoDBTransactionWriteOptions,
-} from '../../src/mongodb/setup';
+} from '../../src/storage/mongodb/setup';
 import { getMongoUsersCollection } from '../../src/mongodb/collections';
 
 describe('Tests for the MongoDB setup module', () => {

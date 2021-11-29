@@ -68,12 +68,15 @@ async function createSignUpLink(returnLink, trackingId) {
  * @param {string} trackingId the tracking id which should be used as query param
  */
 async function validatePaypalMerchantId(merchantIdInPaypal, trackingId) {
-    const url = `/v1/customer/partners/${PAYPAL_PLATFORM_MERCHANT_ID}/merchant-integrations`;
-    if (!merchantIdInPaypal) {
-        url = url + `?tracking_id=${trackingId}`;
-    } else {
-        url = url + `/${merchantIdInPaypal}`;
-    }
+    let url = `/v1/customer/partners/${PAYPAL_PLATFORM_MERCHANT_ID}/merchant-integrations`;
+    url = merchantIdInPaypal
+        ? url + `/${merchantIdInPaypal}`
+        : url + `?tracking_id=${trackingId}`;
+    // if (!merchantIdInPaypal) {
+    //     url = url + `?tracking_id=${trackingId}`;
+    // } else {
+    //     url = url + `/${merchantIdInPaypal}`;
+    // }
 
     let response;
     try {

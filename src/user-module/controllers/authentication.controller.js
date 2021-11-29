@@ -8,16 +8,22 @@ import {
     loginUserService,
     registerUserService,
     verifyRegistrationService,
+    resendVerificationEmailService,
     sendPasswordResetMailService,
     checkResetTokenService,
     resetPasswordService,
 } from '../services/authentication.service';
 import { getShippingCostsService } from '../../store-module/services/shipping.service';
+import {
+    validateShoppingCartService,
+    updateUsersShoppingCart,
+} from '../services/shopping-cart.service';
 
 export {
     loginUserController,
     registerUserController,
     verifyRegistrationController,
+    resendVerificationEmailController,
     sendPasswordResetMailController,
     checkResetTokenController,
     resetPasswordController,
@@ -30,6 +36,17 @@ const loginUserController = async function (req, res, next) {
     let result;
     try {
         result = await loginUserService(email, password);
+        const updatedShoppingCart = await validateShoppingCartService(
+            result.userData.shoppingCart
+        );
+        if (
+            JSON.stringify(result.userData.shoppingCart) !==
+            JSON.stringify(updatedShoppingCart)
+        ) {
+            result.userData.shoppingCart = updatedShoppingCart;
+            await updateUsersShoppingCart(email, updatedShoppingCart);
+        }
+
         const shippingCosts = await getShippingCostsService(
             result.userData.shoppingCart
         );
@@ -51,7 +68,7 @@ const loginUserController = async function (req, res, next) {
 
 const registerUserController = async function (req, res, next) {
     const data = req.body;
-
+    console.log(data);
     try {
         await registerUserService(data);
     } catch (error) {
@@ -60,6 +77,19 @@ const registerUserController = async function (req, res, next) {
     }
 
     return res.sendStatus(StatusCodes.CREATED);
+};
+
+const resendVerificationEmailController = async function (req, res, next) {
+    const data = req.body;
+    console.log(data);
+    try {
+        await resendVerificationEmailService(data.email, data.birthdate);
+    } catch (error) {
+        console.log(error);
+        return next(error);
+    }
+
+    return res.sendStatus(StatusCodes.OK);
 };
 
 const verifyRegistrationController = async function (req, res, next) {

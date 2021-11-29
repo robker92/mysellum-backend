@@ -24,13 +24,16 @@ import {
     getImageBufferController,
     getImageBufferResizedController,
     getImageResizedController,
+    uploadBlobController,
+    getFromBlobController,
+    deleteBlobController,
 } from '../controllers/images.controller';
 
 const routerPrefix = 'stores';
 
 routerImages.post(
     `/${routerPrefix}/image-buffer`,
-    checkAuthentication,
+    // checkAuthentication,
     upload.single('image'),
     excHandler(getImageBufferController)
 );
@@ -47,6 +50,29 @@ routerImages.post(
     checkAuthentication,
     upload.single('image'),
     excHandler(getImageResizedController)
+);
+
+// Azure Blob Storage
+const inMemoryStorage = multer.memoryStorage();
+const uploadStrategy = multer({ storage: inMemoryStorage }).single('image');
+
+routerImages.post(
+    `/${routerPrefix}/blob`,
+    // checkAuthentication,
+    uploadStrategy,
+    excHandler(uploadBlobController)
+);
+
+routerImages.get(
+    `/${routerPrefix}/blob/:blobName`,
+    checkAuthentication,
+    excHandler(getFromBlobController)
+);
+
+routerImages.delete(
+    `/${routerPrefix}/blob/:blobName`,
+    checkAuthentication,
+    excHandler(deleteBlobController)
 );
 
 export { routerImages };

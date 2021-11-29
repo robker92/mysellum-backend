@@ -5,9 +5,14 @@ import { sendNodemailerMail } from '../../mailing/nodemailer';
 import { contentType } from '../../mailing/enums/contentType';
 
 // database operations
-import { readOneOperation } from '../../storage/database-operations/read-one-operation';
-import { updateOneOperation } from '../../storage/database-operations/update-one-operation';
-import { createOneOperation } from '../../storage/database-operations/create-one-operation';
+import {
+    readOneOperation,
+    updateOneOperation,
+    createOneOperation,
+    databaseEntity,
+} from '../../storage/database-operations';
+// import { updateOneOperation } from '../../storage/database-operations/update-one-operation';
+// import { createOneOperation } from '../../storage/database-operations/create-one-operation';
 
 export {
     onboardingDataService,
@@ -37,6 +42,7 @@ async function onboardingDataService(
     isEmailConfirmed,
     accountStatus
 ) {
+    console.log(`Received store id: ${storeId}`);
     // Validate store id & check if values are not already set
     const store = await fetchAndValidateStore(storeId);
     if (store.payment.paypal.common.merchantIdInPayPal) {
@@ -199,12 +205,14 @@ async function createOrderDataStructure(cartArray) {
  * @param {string} storeId
  */
 async function fetchAndValidateStore(storeId) {
-    const findResult = await readOneOperation('stores', {
+    const findResult = await readOneOperation(databaseEntity.STORES, {
         _id: storeId,
     });
 
     if (!findResult) {
-        throw new Error('Wrong store id provided!');
+        throw new Error(
+            `A store with the store id ${storeId} could not be found.`
+        );
     }
     return findResult;
 }
@@ -345,12 +353,9 @@ async function updateProductStockAmount(orderObject, mongoDbSession) {
  * @param {*} mongoDbSession the mongo db session
  */
 async function insertOrders(orderArray, mongoDbSession) {
-    // const collectionOrders = await getMongoOrdersCollection();
-
     let insertions = [];
     for (const order of orderArray) {
         insertions.push(createOneOperation('orders', order, mongoDbSession));
-        // insertions.push(collectionOrders.insertOne(order, { mongoDbSession }));
     }
 
     // Wait for all insertions to be done

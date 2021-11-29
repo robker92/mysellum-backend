@@ -10,6 +10,16 @@ import {
     createOneOperation,
     databaseEntity,
 } from '../../storage/database-operations';
+//pg
+import {
+    seqReadOneOperation,
+    seqReadManyOperation,
+    seqUpdateOperation,
+    seqCreateOperation,
+    seqDeleteOneOperation,
+    seqReadAndCountAllOperation,
+    seqDatabaseEntity,
+} from '../../storage/pg/operations';
 
 export {
     getUserDataService,
@@ -19,30 +29,54 @@ export {
 
 async function getUserDataService(userEmail) {
     const user = await readOneOperation(
-        databaseEntity.USERS,
+        seqDatabaseEntity.USER,
         {
             email: userEmail,
         },
-        {
-            password: 0,
-            shoppingCart: 0,
-            datetimeCreated: 0,
-            datetimeAdjusted: 0,
-            ownedStoreId: 0,
-            emailVerified: 0,
-            verifyRegistrationToken: 0,
-            verifyRegistrationExpires: 0,
-            resetPasswordExpires: 0,
-            resetPasswordToken: 0,
-            deleted: 0,
-            blocked: 0,
-        }
+        [
+            // 'password',
+            // 'shoppingCart',
+            // 'ownedStoreId',
+            // 'emailVerified',
+            // 'verifyRegistrationToken',
+            // 'verifyRegistrationExpires',
+            // 'resetPasswordToken',
+            // 'resetPasswordExpires',
+            // 'deleted',
+            // 'blocked',
+            // 'storeId',
+            // 'createdAt',
+            // 'updatedAt',
+            'firstName',
+            'lastName',
+            'addressLine1',
+            'city',
+            'postcode',
+            'companyName',
+        ]
     );
+    // const user = await readOneOperation(
+    //     databaseEntity.USERS,
+    //     {
+    //         email: userEmail,
+    //     },
+    //     {
+    //         password: 0,
+    //         shoppingCart: 0,
+    //         datetimeCreated: 0,
+    //         datetimeAdjusted: 0,
+    //         ownedStoreId: 0,
+    //         emailVerified: 0,
+    //         verifyRegistrationToken: 0,
+    //         verifyRegistrationExpires: 0,
+    //         resetPasswordExpires: 0,
+    //         resetPasswordToken: 0,
+    //         deleted: 0,
+    //         blocked: 0,
+    //     }
+    // );
     if (!user) {
-        throw {
-            status: 500,
-            message: 'User not found.',
-        };
+        throw new Error(`A user with the email "${userEmail}" was not found.`);
     }
     console.log(user);
     return user;

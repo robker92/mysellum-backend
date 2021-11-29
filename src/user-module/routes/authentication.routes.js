@@ -10,6 +10,9 @@ import { parserJsonLimit } from '../../utils/bodyParsers';
 import {
     registerUserValidation,
     loginUserValidation,
+    resendVerificationEmailValidation,
+    sendPasswordResetMailValidation,
+    resetPasswordValidation,
 } from '../utils/req-body-validators/authentication-validators';
 
 import { validate } from 'express-validation';
@@ -21,6 +24,7 @@ const opts = {
 import {
     loginUserController,
     registerUserController,
+    resendVerificationEmailController,
     verifyRegistrationController,
     sendPasswordResetMailController,
     checkResetTokenController,
@@ -43,6 +47,12 @@ routerAuthentication.post(
     excHandler(registerUserController)
 );
 routerAuthentication.post(
+    `/${routerPrefix}/resend-verification-email`,
+    parserJsonLimit,
+    // validate(resendVerificationEmailValidation, opts),
+    excHandler(resendVerificationEmailController)
+);
+routerAuthentication.post(
     `/${routerPrefix}/verify-registration/:verificationToken`,
     parserJsonLimit,
     excHandler(verifyRegistrationController)
@@ -52,6 +62,7 @@ routerAuthentication.post(
 routerAuthentication.post(
     `/${routerPrefix}/send-password-reset-mail`,
     parserJsonLimit,
+    // validate(sendPasswordResetMailValidation, opts),
     excHandler(sendPasswordResetMailController)
 );
 routerAuthentication.get(
@@ -61,6 +72,7 @@ routerAuthentication.get(
 routerAuthentication.post(
     `/${routerPrefix}/reset-password/:token`,
     parserJsonLimit,
+    // validate(resetPasswordValidation, opts),
     excHandler(resetPasswordController)
 );
 

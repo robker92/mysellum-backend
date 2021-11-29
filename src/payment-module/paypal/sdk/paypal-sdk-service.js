@@ -6,7 +6,7 @@ import { getCreateOrderBody } from '../bodys/create-order-body';
 import {
     getMongoDbClient,
     getMongoDbTransactionWriteOptions,
-} from '../../../mongodb/setup';
+} from '../../../storage/mongodb/setup';
 
 import {
     createOrderDataStructure,
@@ -64,49 +64,50 @@ async function capturePaypalOrderProcedure(orderId, orderData, userEmail) {
 
     // start the transaction. If an error occurs internally, everything is aborted and we don't capture the paypal order
     // if an error occurs at the capture, we don't have anything saved persistently internally
-    // const mongoDbSession = getMongoDbClient().startSession();
+    const mongoDbSession = getMongoDbClient().startSession();
     try {
-        // await mongoDbSession.withTransaction(async () => {
-        // Create the order object; no mongo session needed here since we only fetch and dont update
-        const orderObject = await createOrderDataStructure(orderData.products);
+        await mongoDbSession.withTransaction(async () => {
+            // Create the order object; no mongo session needed here since we only fetch and dont update
+            const orderObject = await createOrderDataStructure(
+                orderData.products
+            );
 
-        // Insert Orders and decrease stocks
-        const orderArray = createOrderArray(
-            orderObject,
-            orderData,
-            userEmail,
-            orderId
-        );
+            // Insert Orders and decrease stocks
+            const orderArray = createOrderArray(
+                orderObject,
+                orderData,
+                userEmail,
+                orderId
+            );
 
-        let promises = [];
-        // save new stocks
-        promises.push(
-            // updateProductStockAmount(orderObject, mongoDbSession)
-            updateProductStockAmount(orderObject)
-        );
-        // create orders
-        promises.push(
-            // insertOrders(orderArray, mongoDbSession)
-            insertOrders(orderArray)
-        );
+            let promises = [];
+            // save new stocks
+            promises.push(
+                updateProductStockAmount(orderObject, mongoDbSession)
+                // updateProductStockAmount(orderObject)
+            );
+            // create orders
+            promises.push(
+                insertOrders(orderArray, mongoDbSession)
+                // insertOrders(orderArray)
+            );
 
-        // also: empty shopping cart
-        promises.push(
-            // emptyShoppingCart(userEmail, mongoDbSession)
-            emptyShoppingCart(userEmail)
-        );
-        await Promise.all(promises);
+            // also: empty shopping cart
+            promises.push(
+                emptyShoppingCart(userEmail, mongoDbSession)
+                // emptyShoppingCart(userEmail)
+            );
+            await Promise.all(promises);
 
-        // finally - when all internal steps were successful - , capture the paypal order and perform the payment
-        captureResult = await capturePaypalOrder(orderId, orderData);
-        // }, getMongoDbTransactionWriteOptions());
+            // finally - when all internal steps were successful - , capture the paypal order and perform the payment
+            captureResult = await capturePaypalOrder(orderId, orderData);
+        }, getMongoDbTransactionWriteOptions());
     } catch (error) {
         console.log(error);
         throw error;
+    } finally {
+        await mongoDbSession.endSession();
     }
-    // finally {
-    //     await mongoDbSession.endSession();
-    // }
     return captureResult;
 }
 

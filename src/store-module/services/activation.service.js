@@ -15,18 +15,19 @@ const activationStep = Object.freeze({
 });
 
 /**
- * This is the main activation function, which is called whenever a relevant action took place which could affect the activation status.
+ * This is the main activation function, which is called whenever a relevant action took place which could affect the activation status of a store.
  * It checks first the activation status of every single step and then updates the general activation field.
- * @param {string} storeId
+ * @param {object} store
+ * @param {string} mongoDbSession mongo db session if needed
  */
-async function storeActivationRoutine(storeId) {
-    // Fetch the store
-    const store = await readOneOperation(
-        databaseEntity.STORES,
-        { _id: storeId },
-        { 'profileData.images': 0 }
-    );
-
+async function storeActivationRoutine(store, mongoDbSession = null) {
+    if (!store) {
+        // throw new Error(`Store with the id ${storeId} was not found.`);
+        throw new Error(
+            `No store was provided to check its activation status.`
+        );
+    }
+    const storeId = store._id.toString();
     // PROFILE COMPLETE
     let profileCompleteValue;
     // Check the store's values and call the set methods accordingly
@@ -38,7 +39,7 @@ async function storeActivationRoutine(storeId) {
 
     // MIN ONE PRODUCT
     let minOneProductValue;
-    if (await checkMinOneProduct(storeId)) {
+    if (await checkMinOneProduct(storeId, mongoDbSession)) {
         minOneProductValue = true;
     } else {
         minOneProductValue = false;
@@ -60,6 +61,15 @@ async function storeActivationRoutine(storeId) {
         paymentMethodValue = false;
     }
 
+    // get the value for the general actiovation status field
+    const stepValueArray = [
+        profileCompleteValue,
+        minOneProductValue,
+        shippingValue,
+        paymentMethodValue,
+    ];
+    const activationValue = getGeneralActivationStatusValue(stepValueArray);
+
     // Build update object
     let updateObject = {};
     updateObject[`activationSteps.${activationStep.PROFILE_COMPLETE}`] =
@@ -70,6 +80,8 @@ async function storeActivationRoutine(storeId) {
         shippingValue;
     updateObject[`activationSteps.${activationStep.PAYMENT_REGISTERED}`] =
         paymentMethodValue;
+    updateObject[`activation`] = activationValue;
+
     // Update the store's values
     await updateOneOperation(
         databaseEntity.STORES,
@@ -77,28 +89,8 @@ async function storeActivationRoutine(storeId) {
             _id: storeId,
         },
         updateObject,
-        'set'
-    );
-
-    const stepValueArray = [
-        profileCompleteValue,
-        minOneProductValue,
-        shippingValue,
-        paymentMethodValue,
-    ];
-    const activationValue = getGeneralActivationStatusValue(stepValueArray);
-
-    // Now, all single steps are updated, next:
-    // Update the general activation field of the store
-    await updateOneOperation(
-        databaseEntity.STORES,
-        {
-            _id: storeId,
-        },
-        {
-            activation: activationValue,
-        },
-        'set'
+        'set',
+        mongoDbSession
     );
 }
 
@@ -157,14 +149,13 @@ function checkProfileComplete(store) {
     return true;
 }
 
-async function checkMinOneProduct(storeId) {
-    console.log(storeId);
+async function checkMinOneProduct(storeId, mongoDbSession) {
     const product = await readOneOperation(
         databaseEntity.PRODUCTS,
         { storeId: storeId },
-        { _id: 1 }
+        { _id: 1 },
+        mongoDbSession
     );
-    console.log(product);
     if (!product) {
         return false;
     }

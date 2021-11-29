@@ -1,3 +1,5 @@
+import { sendNodemailerMail } from '../../mailing/nodemailer';
+
 // database operations
 import {
     readOneOperation,
@@ -17,33 +19,35 @@ export {
 /**
  * The function validates the provided storeId and productId and
  * creates the notification entity in the database.
- * @param {object} payload
+ * @param {object} options
  * @returns nothing. throws errors when soemthing went wrong or is not valid
  */
-async function registerProductAvailNotificationService(payload) {
+async function registerProductAvailNotificationService(options) {
     // Validate Store
     const resultStore = await readOneOperation(databaseEntity.STORES, {
-        _id: storeId,
+        _id: options.storeId,
     });
     if (!resultStore) {
-        throw new Error(`Store not found. Store id (${storeId}) invalid.`);
+        throw new Error(
+            `Store not found. Store id (${options.storeId}) invalid.`
+        );
     }
 
     // Validate product
     const resultProduct = await readOneOperation(databaseEntity.PRODUCTS, {
-        _id: productId,
-        storeId: storeId,
+        _id: options.productId,
+        storeId: options.storeId,
     });
     if (!resultProduct) {
         throw new Error(
-            `Product not found. Product id (${productId}) invalid.`
+            `Product not found. Product id (${options.productId}) invalid.`
         );
     }
 
     // Create Notification database entity
     const resultNotif = await createOneOperation(
         databaseEntity.PRODUCT_NOTIFICATIONS,
-        payload
+        options
     );
     if (!resultNotif) {
         throw new Error(
@@ -75,15 +79,11 @@ async function getNotificationsService(storeId, productId) {
         }
     );
 
-    // TODO Validate?
     for (let i = 0; i < findResult.length; i++) {
         resultArray.push(findResult[i].email);
     }
     console.log(resultArray);
     //return empty array if nothing is found
-    // if (!findResult) {
-    //     return [];
-    // }
     return resultArray;
 }
 
@@ -93,11 +93,20 @@ async function getNotificationsService(storeId, productId) {
  * @param {string} productId
  */
 async function deleteNotificationService(storeId, productId) {
-    await deleteManyOperation(databaseEntity.PRODUCT_NOTIFICATIONS, {
-        storeId: storeId,
-        productId: productId,
-    });
-    // TODO Validate?
+    const result = await deleteManyOperation(
+        databaseEntity.PRODUCT_NOTIFICATIONS,
+        {
+            storeId: storeId,
+            productId: productId,
+        }
+    );
+
+    if (!result) {
+        throw new Error(
+            'Error during deletion of product availability entity.'
+        );
+    }
+
     return;
 }
 
@@ -110,6 +119,7 @@ async function deleteNotificationService(storeId, productId) {
  * @returns
  */
 async function sendNotificationsService(storeId, productId) {
+    console.log(`storeId: ${storeId}`);
     const emailArray = await getNotificationsService(storeId, productId);
 
     //if the array is empty, stop the function
@@ -123,7 +133,7 @@ async function sendNotificationsService(storeId, productId) {
         _id: productId,
         storeId: storeId,
     });
-    if (!findproductResult) {
+    if (!product) {
         throw new Error(
             `Product with the id ${productId} and the store id ${storeId} not found.`
         );
@@ -146,7 +156,7 @@ async function sendNotificationsService(storeId, productId) {
         }
     }
 
-    // delete the send notifications from the database
+    // delete the sent notifications from the database
     await deleteNotificationService(storeId, productId);
 
     return;

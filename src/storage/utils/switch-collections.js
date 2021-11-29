@@ -5,7 +5,7 @@ import {
     getMongoCollectionProducts,
     getMongoCollectionOrders,
     getMongoCollectionPrdctNotif,
-} from '../../mongodb/collections';
+} from '../mongodb/collections';
 import { databaseEntity } from './database-entity';
 
 export { switchCollections };

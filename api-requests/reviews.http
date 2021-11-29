@@ -1,0 +1,53 @@
+@baseUrl = http://localhost:3000
+@storeId = 6137160fc72967106c582580
+@reviewId = 613e84b6ebc0f3688ca2444c
+@userEmail = TestEmail3@web.de
+@rating = 2.0
+@text = Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren
+@accessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjYxM2U4NDI4ZWJjMGYzNjg4Y2EyNDQ0YiIsImVtYWlsIjoiVGVzdEVtYWlsNEB3ZWIuZGUiLCJpYXQiOjE2MzE1NjQ2NzYsImV4cCI6MTYzMjE2OTQ3Nn0.8smnD4rwglbDBcIdFjsGvqkSlqfAnvnxVpWMaLtYQrg
+
+##################################################
+# Get Stores Review
+##################################################
+# @name authRegisterUser
+GET {{baseUrl}}/stores/{{storeId}}/reviews HTTP/1.1
+
+###
+
+##################################################
+# Add Review
+##################################################
+# @name authRegisterUser
+POST {{baseUrl}}/stores/{{storeId}}/reviews HTTP/1.1
+x-access-token: {{accessToken}}
+content-type: application/json
+
+{
+    "rating": "{{rating}}",
+    "text": "{{text}}"
+}
+###
+
+##################################################
+# Edit Review
+##################################################
+# @name authRegisterUser
+PATCH {{baseUrl}}/stores/{{storeId}}/reviews/{{reviewId}} HTTP/1.1
+x-access-token: {{accessToken}}
+content-type: application/json
+
+{
+    "rating": "5.0",
+    "text": "{{text}}"
+}
+###
+
+##################################################
+# Delete Review
+##################################################
+# @name authRegisterUser
+DELETE {{baseUrl}}/stores/{{storeId}}/reviews/{{reviewId}} HTTP/1.1
+x-access-token: {{accessToken}}
+content-type: application/json
+
+###

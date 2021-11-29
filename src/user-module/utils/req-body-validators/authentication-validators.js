@@ -3,7 +3,13 @@
 
 import { Joi } from 'express-validation';
 
-export { registerUserValidation, loginUserValidation };
+export {
+    registerUserValidation,
+    loginUserValidation,
+    resendVerificationEmailValidation,
+    sendPasswordResetMailValidation,
+    resetPasswordValidation,
+};
 
 const registerUserValidation = {
     body: Joi.object({
@@ -44,6 +50,36 @@ const registerUserValidation = {
 const loginUserValidation = {
     body: Joi.object({
         email: Joi.string().email().required(),
+        password: Joi.string()
+            .min(8)
+            .max(30)
+            .regex(
+                /(?=.*[$&+,:;=_?@#|'<>.^*()%!-])(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])/
+            )
+            .required(),
+    }),
+};
+
+const resendVerificationEmailValidation = {
+    body: Joi.object({
+        email: Joi.string().email().required(),
+        birthdate: Joi.string()
+            .regex(/[0-9]{2}\.[0-9]{2}\.[0-9]{4}/)
+            .required(),
+    }),
+};
+
+const sendPasswordResetMailValidation = {
+    body: Joi.object({
+        email: Joi.string().email().required(),
+        birthdate: Joi.string()
+            .regex(/[0-9]{2}\.[0-9]{2}\.[0-9]{4}/)
+            .required(),
+    }),
+};
+
+const resetPasswordValidation = {
+    body: Joi.object({
         password: Joi.string()
             .min(8)
             .max(30)

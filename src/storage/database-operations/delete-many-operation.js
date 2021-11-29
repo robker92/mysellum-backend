@@ -9,17 +9,22 @@ export { deleteManyOperation };
  * Deletes n entities by the provided queryObject
  * @param {string} entity
  * @param {object} queryObject
+ * @param {string} session mongo db session if needed
  * @returns true when at least one entity was deleted and false if not
  */
-async function deleteManyOperation(entity, queryObject) {
+async function deleteManyOperation(entity, queryObject, session = null) {
     const collection = switchCollections(entity);
 
     queryObject = checkForObjectId(queryObject);
 
-    // const result = await collection.removeOne(queryObject);
-    const result = await collection.deleteMany({
-        storeId: storeId,
-        productId: productId,
-    });
+    let result;
+    if (!session) {
+        result = await collection.deleteMany(queryObject);
+    } else {
+        result = await collection.deleteMany(queryObject, {
+            session,
+        });
+    }
+
     return validateDeleteManyResult(result);
 }

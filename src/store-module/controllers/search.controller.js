@@ -4,7 +4,7 @@ import {
     getFilteredStoresService,
     getFilteredStores2Service,
 } from '../services/search.service';
-import { getMongoStoresCollection } from '../../mongodb/collections';
+import { getMongoStoresCollection } from '../../storage/mongodb/collections';
 
 export {
     // getFilteredStores,

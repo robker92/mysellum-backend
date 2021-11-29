@@ -13,6 +13,8 @@ function validateDeleteOneResult(result) {
     ) {
         return true;
     } else {
-        return false;
+        throw new Error(
+            'Error during deletion operation! Element was not deleted.'
+        );
     }
 }
