@@ -49,6 +49,11 @@ const editStoreVal = {
             lat: Joi.number().optional(),
             lng: Joi.number().optional(),
         }).optional(),
+        contact: Joi.object({
+            phoneNumber: Joi.string().regex(/[0-9]/).min(5).max(25).optional(),
+            emailAddress: Joi.string().email().min(5).max(100).optional(),
+            website: Joi.string().min(5).max(250).optional(),
+        }).optional(),
         shippingMethod: Joi.string()
             .valid('free', 'fixed', 'threshold')
             .required(),

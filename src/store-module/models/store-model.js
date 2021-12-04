@@ -30,6 +30,11 @@ export function getStoreModel(options) {
             reviews: options.reviews,
             avgRating: options.avgRating,
         },
+        contact: {
+            phoneNumber: options.phoneNumber,
+            emailAddress: options.emailAddress,
+            website: options.website,
+        },
         activationSteps: {
             // profileComplete: options.activation?.profileComplete ?? false,
             profileComplete: true, // init is true since validations are done during creation

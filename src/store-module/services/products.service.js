@@ -27,6 +27,7 @@ import {
     uploadBlobService,
     deleteBlobService,
     getImageBufferResizedService,
+    getImageBase64Resized,
 } from './images.service';
 
 // MongoDB transaction
@@ -51,9 +52,12 @@ export {
  * @returns the created product
  */
 async function createProductService(data, userEmail, storeId) {
+    // Resize file
+    const resizedImage = await getImageBase64Resized(data.imgSrc);
+
     const file = {
-        buffer: data.imgSrc,
-        size: data.imageDetails.size,
+        buffer: resizedImage.base64String,
+        size: resizedImage.metadata.size,
         name: data.imageDetails.name,
     };
     const imageUrl = await uploadBlobService(file);
@@ -67,8 +71,14 @@ async function createProductService(data, userEmail, storeId) {
         title: data.title,
         description: data.description,
         longDescription: data.longDescription,
+        // image
         imgSrc: imageUrl,
-        imageDetails: data.imageDetails,
+        imageDetails: {
+            size: resizedImage.metadata.size,
+            originalname: file.name,
+            name: file.name,
+        },
+
         price: data.price,
         priceFloat: parseFloat(data.price),
         currency: data.currency,
@@ -77,6 +87,7 @@ async function createProductService(data, userEmail, storeId) {
         quantityValue: data.quantityValue,
         delivery: data.delivery,
         pickup: data.pickup,
+        active: data.active,
     };
     const product = getProductModel(options);
 
@@ -148,13 +159,18 @@ async function editProductService(data, userEmail, storeId, productId) {
             });
 
             let imageUrl;
+            let imageDetails;
             if (oldProduct.imageDetails.name !== data.imageDetails.name) {
-                // Upload new image
+                // Resize file
+                const resizedImage = await getImageBase64Resized(data.imgSrc);
+
                 const file = {
-                    buffer: data.imgSrc,
-                    size: data.imageDetails.size,
+                    buffer: resizedImage.base64String,
+                    size: resizedImage.metadata.size,
                     name: data.imageDetails.name,
                 };
+
+                // Upload new image
                 imageUrl = await uploadBlobService(file);
                 console.log(imageUrl);
 
@@ -164,9 +180,23 @@ async function editProductService(data, userEmail, storeId, productId) {
                     oldProduct.imgSrc.length
                 );
                 console.log(`Old Image: ${blobName}`);
-                await deleteBlobService(blobName);
+                try {
+                    await deleteBlobService(blobName);
+                } catch (error) {
+                    // when an error occurs during deletion, the flow is not interrupted
+                    console.log(
+                        `A blob could not be deleted. Message: ${error.message}`
+                    );
+                }
+
+                imageDetails = {
+                    size: resizedImage.metadata.size,
+                    originalname: file.name,
+                    name: file.name,
+                };
             } else {
                 imageUrl = data.imgSrc;
+                imageDetails = data.imageDetails;
             }
 
             product = await updateOneAndReturnOperation(
@@ -181,7 +211,7 @@ async function editProductService(data, userEmail, storeId, productId) {
                     description: data.description,
                     longDescription: data.longDescription,
                     imgSrc: imageUrl,
-                    imageDetails: data.imageDetails,
+                    imageDetails: imageDetails,
                     price: data.price,
                     priceFloat: parseFloat(data.price),
                     currency: data.currency,
@@ -190,6 +220,7 @@ async function editProductService(data, userEmail, storeId, productId) {
                     quantityValue: data.quantityValue,
                     delivery: data.delivery,
                     pickup: data.pickup,
+                    active: data.active,
                 },
                 'set',
                 false,
@@ -250,7 +281,16 @@ async function deleteProductService(userEmail, storeId, productId) {
                 product.imgSrc.length
             );
             console.log(`Old Image: ${blobName}`);
-            await deleteBlobService(blobName);
+            // await deleteBlobService(blobName);
+
+            try {
+                await deleteBlobService(blobName);
+            } catch (error) {
+                // when an error occurs during deletion, the flow is not interrupted
+                console.log(
+                    `A blob could not be deleted. Message: ${error.message}`
+                );
+            }
 
             // delete the product
             await deleteOneOperation(

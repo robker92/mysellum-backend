@@ -16,7 +16,7 @@ const productVal = {
         _id: Joi.string().optional(),
         title: Joi.string().min(5).max(30).required(),
         description: Joi.string().min(20).max(200).required(),
-        longDescription: Joi.string().min(20).max(1000).optional(),
+        longDescription: Joi.string().max(1000).optional(),
         imgSrc: Joi.string().required(),
         imageDetails: Joi.object().required(),
         price: Joi.string().required(),
@@ -29,5 +29,6 @@ const productVal = {
         delivery: Joi.boolean().required(),
         pickup: Joi.boolean().required(),
         stockAmount: Joi.number().integer().min(0).optional(),
+        active: Joi.boolean().optional(), // change to required
     }),
 };

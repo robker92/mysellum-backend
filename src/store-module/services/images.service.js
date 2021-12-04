@@ -2,10 +2,13 @@
 
 import sharp from 'sharp';
 
+const JPEG_URI_PATTERN = 'data:image/jpeg;base64,';
+const PNG_URI_PATTERN = 'data:image/jpeg;base64,';
+
 export {
     getImageBufferService,
     getImageBufferResizedService,
-    getImageBufferResizedService2,
+    getImageBase64Resized,
     getImageResizedService,
     uploadBlobService,
     getFromBlobService,
@@ -88,12 +91,12 @@ async function getImageBufferResizedService(file) {
 /**
  * The function resizes an image and returns its buffer
  * @param {string} base64String
- * @returns
+ * @returns {string} a base64String
  */
-async function getImageBufferResizedService2(base64String) {
-    // remove the data:image/jpeg;base64, part if its present
-    if (base64String.startsWith('data:image/jpeg;base64,')) {
-        base64String = base64String.substr('data:image/jpeg;base64,'.length);
+async function getImageBase64Resized(base64String) {
+    // remove the JPEG_URI_PATTERN part when its present
+    if (base64String.startsWith(JPEG_URI_PATTERN)) {
+        base64String = base64String.substr(JPEG_URI_PATTERN.length);
     }
 
     const inputBuffer = Buffer.from(base64String, 'base64');
@@ -102,16 +105,46 @@ async function getImageBufferResizedService2(base64String) {
     const resizedBuffer = await sharp(inputBuffer)
         .resize({
             fit: sharp.fit.contain,
-            width: parseInt(metadataIn.width / 5),
+            width: parseInt(
+                metadataIn.width / resizeFactorCalculation(metadataIn.size)
+            ),
         })
         .toBuffer();
 
-    const resultBase64String = Buffer.from(resizedBuffer).toString('base64');
+    let resultBase64String = Buffer.from(resizedBuffer).toString('base64');
 
-    //append file type
-    resultBase64String = 'data:image/jpeg;base64,' + resultBase64String;
+    const metadataOut = await sharp(resizedBuffer).metadata();
 
-    return resultBase64String;
+    //append data pattern
+    resultBase64String = JPEG_URI_PATTERN + resultBase64String;
+
+    return { metadata: metadataOut, base64String: resultBase64String };
+}
+
+/**
+ * The function takes an image size as parameter and returns the factor to resize the image
+ * @param {number} imgSize size of the image in byte
+ * @returns the factor
+ */
+function resizeFactorCalculation(imgSize) {
+    const MB_2 = 2000000;
+    const MB_3 = 3000000;
+    // const MB_4 = 4000000;
+    const MB_5 = 5000000;
+
+    let factor;
+    if (imgSize > MB_2 && imgSize < MB_3) {
+        factor = 2;
+    }
+    if (imgSize > MB_3 && imgSize < MB_5) {
+        factor = 3;
+    } else if (imgSize > MB_5) {
+        factor = 4;
+    } else {
+        factor = 1;
+    }
+
+    return factor;
 }
 
 /**

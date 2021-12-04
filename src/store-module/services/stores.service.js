@@ -32,7 +32,7 @@ import {
     uploadBlobService,
     deleteBlobService,
     getImageBufferResizedService,
-    getImageBufferResizedService2,
+    getImageBase64Resized,
 } from './images.service';
 import { storeActivationRoutine } from '../services/activation.service';
 
@@ -98,17 +98,26 @@ async function createStoreService(data, userEmail) {
 
     // IMAGES - if image is base64 string, upload image to blob store and replace base64 string with blob url
     for (const image of data.images) {
-        const file = {
-            buffer: image.src,
-            size: image.size,
+        // const file = {
+        //     buffer: image.src,
+        //     size: image.size,
+        //     name: image.name,
+        //     originalName: image.originalName,
+        // };
+
+        // Resize file
+        const resizedImage = await getImageBase64Resized(file.buffer);
+        // file.buffer = resizedImage.base64String;
+
+        const resizedFile = {
+            buffer: resizedImage.base64String,
+            size: resizedImage.metadata.size,
             name: image.name,
             originalName: image.originalName,
         };
-        // Resize file
-        // const resizedFile = await getImageBufferResizedService(file);
-        // file.buffer = resizedFile.buffer;
 
-        image.src = await uploadBlobService(file);
+        image.src = await uploadBlobService(resizedFile);
+        image.size = resizedFile.size;
         console.log(image);
     }
 
@@ -252,38 +261,28 @@ async function editStoreService(data, storeId, userEmail) {
     // IMAGES - if image is base64 string, upload image to blob store and replace base64 string with blob url
     for (const image of data.images) {
         if (image.src.startsWith('data:image/')) {
-            const file = {
-                buffer: image.src,
-                size: image.size,
-                name: image.name,
-                originalName: image.name,
-            };
-            console.log(file.size);
             // Resize file
-            // const resizedFile = await getImageBufferResizedService(file);
-            // file.buffer = resizedFile.buffer;
-            const resultString = await getImageBufferResizedService2(image.src);
-            // const testBuffer = Buffer.from(
-            //     image.src.substr('data:image/jpeg;base64,'.length),
-            //     'base64'
-            // );
-            // const metadataIn = await sharp(testBuffer).metadata();
-            // const resizeResult = await sharp(testBuffer)
-            //     .resize({
-            //         fit: sharp.fit.contain,
-            //         width: parseInt(metadataIn.width / 5),
-            //     })
-            //     .toBuffer();
-            // const bufferString = Buffer.from(resizeResult).toString('base64');
-            // const buffer = 'data:image/jpeg;base64,' + bufferString;
+            const resizedImage = await getImageBase64Resized(image.src);
 
-            console.log(resultString.substring(0, 50));
+            const resizedFile = {
+                buffer: resizedImage.base64String,
+                size: resizedImage.metadata.size,
+                name: image.name,
+                originalName: image.originalName,
+            };
 
-            image.src = await uploadBlobService(file);
+            image.src = await uploadBlobService(resizedFile);
+            image.size = resizedFile.size;
             console.log(image);
         }
+        if (
+            image.src.startsWith('https://') &&
+            image.src.contains('.blob.core.windows.net/')
+        ) {
+            console.log(`Image uploaded already`);
+        }
     }
-    console.log(JSON.stringify(data.images));
+    // console.log(JSON.stringify(data.images));
 
     // Iterate over old images and see if the url is in the array of new images. If not, delete the blob
     let promises = [];
