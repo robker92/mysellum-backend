@@ -1,7 +1,8 @@
 export function getStoreModel(options) {
     const model = {
         userEmail: options.userEmail,
-        adminActivation: true,
+        adminActivation: false,
+        userActivation: true,
         deleted: false,
         delivery: options.delivery,
         pickup: options.pickup,
@@ -35,6 +36,8 @@ export function getStoreModel(options) {
             emailAddress: options.emailAddress,
             website: options.website,
         },
+
+        activation: false, // determined by activation steps result
         activationSteps: {
             // profileComplete: options.activation?.profileComplete ?? false,
             profileComplete: true, // init is true since validations are done during creation
@@ -43,7 +46,7 @@ export function getStoreModel(options) {
             paymentMethodRegistered:
                 options.activation?.paymentMethodRegistered ?? false,
         },
-        activation: false,
+
         openingHours: {
             monday: {
                 opened: false,

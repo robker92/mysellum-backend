@@ -78,7 +78,6 @@ async function createProductService(data, userEmail, storeId) {
             originalname: file.name,
             name: file.name,
         },
-
         price: data.price,
         priceFloat: parseFloat(data.price),
         currency: data.currency,

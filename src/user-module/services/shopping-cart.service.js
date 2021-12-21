@@ -241,9 +241,13 @@ async function updateShoppingCartService(email, shoppingCart) {
 
 async function validateShoppingCartService(shoppingCart) {
     const productsToRemove = await identifyProducts(shoppingCart);
-    shoppingCart = removeProducts(shoppingCart, productsToRemove);
+    const shoppingCartCopy = JSON.parse(JSON.stringify(shoppingCart));
+    const updatedShoppingCart = removeProducts(
+        shoppingCartCopy,
+        productsToRemove
+    );
 
-    return shoppingCart;
+    return updatedShoppingCart;
 }
 
 async function identifyProducts(shoppingCart) {
@@ -257,19 +261,22 @@ async function identifyProducts(shoppingCart) {
             continue;
         }
     }
-
+    // console.log(productsToRemove);
     return productsToRemove;
 }
 
 function removeProducts(shoppingCart, productsToRemove) {
     for (const index of productsToRemove) {
+        console.log(index);
         shoppingCart.splice(index, 1);
     }
-
+    // console.log(shoppingCart);
     return shoppingCart;
 }
 
 async function updateUsersShoppingCart(email, shoppingCart) {
+    console.log(`Email: ${email}`);
+    console.log(shoppingCart.length);
     await updateOneOperation(
         databaseEntity.USERS,
         { email: email },

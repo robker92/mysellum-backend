@@ -35,23 +35,42 @@ const loginUserController = async function (req, res, next) {
 
     let result;
     try {
+        // login the user
         result = await loginUserService(email, password);
-        const updatedShoppingCart = await validateShoppingCartService(
-            result.userData.shoppingCart
-        );
-        if (
-            JSON.stringify(result.userData.shoppingCart) !==
-            JSON.stringify(updatedShoppingCart)
-        ) {
-            result.userData.shoppingCart = updatedShoppingCart;
-            await updateUsersShoppingCart(email, updatedShoppingCart);
-        }
 
-        const shippingCosts = await getShippingCostsService(
-            result.userData.shoppingCart
-        );
-        result.userData.shippingCosts = shippingCosts;
+        // shopping cart routine; when an error occurs here, it is ignored and an empty shopping cart is returned
+        try {
+            const updatedShoppingCart = await validateShoppingCartService(
+                result.userData.shoppingCart
+            );
+            // console.log(`carts:`);
+            // console.log(
+            //     JSON.stringify(result.userData.shoppingCart) !==
+            //         JSON.stringify(updatedShoppingCart)
+            // );
+            // console.log(JSON.stringify(result.userData.shoppingCart));
+            // console.log(JSON.stringify(updatedShoppingCart));
+            if (
+                JSON.stringify(result.userData.shoppingCart) !==
+                JSON.stringify(updatedShoppingCart)
+            ) {
+                result.userData.shoppingCart = updatedShoppingCart;
+                await updateUsersShoppingCart(email, updatedShoppingCart);
+            }
+            // console.log(result.userData.shoppingCart.length);
+            const shippingCosts = await getShippingCostsService(
+                result.userData.shoppingCart
+            );
+            result.userData.shippingCosts = shippingCosts;
+        } catch (error) {
+            console.log(
+                `[LOGIN] An error occured during a shopping cart routine:`
+            );
+            console.log(error);
+            result.userData.shoppingCart = [];
+        }
     } catch (error) {
+        console.log(`[LOGIN] An error occured during the login of a user.`);
         console.log(error);
         return next(error);
     }

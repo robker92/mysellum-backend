@@ -55,7 +55,7 @@ function grantAccess(role) {
 const checkAuthentication = (req, res, next) => {
     // check header or url parameters or post parameters for token
     const token = req.headers['x-access-token'];
-    console.log(token);
+    // console.log(token);
     if (!token) {
         console.error('token invalid');
         return res.status(401).send({
@@ -66,6 +66,7 @@ const checkAuthentication = (req, res, next) => {
     // verifies secret and checks exp
     jwt.verify(token, JWT_SECRET_KEY, (err, decoded) => {
         if (err) {
+            console.log('JWT invalid.');
             return res.status(401).send({
                 error: 'TokenInvalid',
                 message: 'Failed to authenticate token.',
@@ -88,6 +89,31 @@ const checkAuthentication = (req, res, next) => {
         next();
     });
 };
+
+// when a jwt is present, it is decoded and the results are added to the request
+// an error does not abort the process.
+// const jwtOptional = (req, res, next) => {
+//     const token = req.headers['x-access-token'];
+
+//     if (!token) {
+//         // when there is an error skip to next mw
+//         return next();
+//     }
+
+//     jwt.verify(token, JWT_SECRET_KEY, (err, decoded) => {
+//         if (err) {
+//             // when there is an error skip to next mw
+//             return next();
+//         }
+
+//         console.log(`Date now: ${Date.now()}`);
+//         console.log(decoded);
+//         // if everything is good, save to request for use in other routes
+//         req.userId = decoded.id;
+//         req.userEmail = decoded.email;
+//         return next();
+//     });
+// };
 
 // const errorHandler = (err, req, res, next) => {
 //     if (res.headersSent) {
@@ -139,5 +165,11 @@ const errorHandler = (err, req, res, next) => {
 };
 
 //=============================================================================
-export { allowCrossDomain, checkAuthentication, errorHandler, grantAccess };
+export {
+    allowCrossDomain,
+    checkAuthentication,
+    errorHandler,
+    grantAccess,
+    // jwtOptional,
+};
 //=============================================================================

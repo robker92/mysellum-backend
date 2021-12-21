@@ -25,6 +25,14 @@ function checkEnvironment() {
 // Configuration variables
 const PORT = process.env.PORT || '3000';
 
+const ADMIN_USER = process.env.ADMIN_USER;
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+if (!ADMIN_USER || !ADMIN_PASSWORD) {
+    throw new Error('Admin credentials could not be found!');
+}
+
+const ADMIN_CREDENTIALS_OBJ = {};
+ADMIN_CREDENTIALS_OBJ[ADMIN_USER] = ADMIN_PASSWORD;
 // MongoDB
 // const MONGODB_URL =
 //     process.env.MONGODB_URL ||
@@ -179,6 +187,7 @@ export {
     APP_ENV,
     checkEnvironment,
     PORT,
+    ADMIN_CREDENTIALS_OBJ,
     MONGODB_URL,
     MONGODB_NAME,
     MONGODB_URL_LOCAL,

@@ -173,7 +173,11 @@ async function createOrderDataStructure(cartArray) {
     let orderObject = {};
     for (const element of cartArray) {
         const amount = element[1];
-        const product = await fetchAndValidateProduct(element[0], amount);
+        const product = await fetchAndValidateProduct(
+            element[0],
+            amount,
+            orderedDistType
+        );
 
         // Check if store id in order object, if not add it
         if (!(product.storeId in orderObject)) {
@@ -214,6 +218,31 @@ async function fetchAndValidateStore(storeId) {
             `A store with the store id ${storeId} could not be found.`
         );
     }
+
+    if (!findResult.adminActivation) {
+        throw new Error(
+            `The store with the store id ${storeId} was deactivated by an admin. Thus, its products can not be added to an order`
+        );
+    }
+
+    if (!findResult.userActivation) {
+        throw new Error(
+            `The store with the store id ${storeId} was deactivated by its owner. Thus, its products can not be added to an order`
+        );
+    }
+
+    if (!findResult.deleted) {
+        throw new Error(
+            `The store with the store id ${storeId} was deleted by its owner. Thus, its products can not be added to an order`
+        );
+    }
+
+    if (!findResult.activation) {
+        throw new Error(
+            `The store with the store id ${storeId} did not pass the activation flow yet. Thus, its products can not be added to an order`
+        );
+    }
+
     return findResult;
 }
 
@@ -222,8 +251,13 @@ async function fetchAndValidateStore(storeId) {
  * or if the id was not found
  * @param {Object} orderedProduct
  * @param {number} orderedAmount
+ * @param {string} orderedDistType "delivery" or "pickup"
  */
-async function fetchAndValidateProduct(orderedProduct, orderedAmount) {
+async function fetchAndValidateProduct(
+    orderedProduct,
+    orderedAmount,
+    orderedDistType
+) {
     const findResult = await readOneOperation(
         'products',
         {
@@ -242,8 +276,21 @@ async function fetchAndValidateProduct(orderedProduct, orderedAmount) {
         );
     }
 
-    // Remove the stock Amount from the product, since we dont need it in the order
+    if (!findResult.active) {
+        throw new Error(
+            `The product with the id ${findResult._id} is not active and therefore can not be added to an order.`
+        );
+    }
+
+    // if (!findResult[orderedDistType]) {
+    //     throw new Error(
+    //         `The product with the id ${findResult._id} is not available for the ordered distribution type.`
+    //     );
+    // }
+
+    // Remove fields which are not needed in the order data
     delete findResult.stockAmount;
+    delete findResult.active;
 
     return findResult;
 }

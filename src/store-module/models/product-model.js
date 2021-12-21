@@ -1,7 +1,6 @@
 export function getProductModel(options) {
     const model = {
         storeId: options.storeId,
-        active: true,
         datetimeCreated: options.datetimeCreated,
         datetimeAdjusted: options.datetimeAdjusted,
         title: options.title,

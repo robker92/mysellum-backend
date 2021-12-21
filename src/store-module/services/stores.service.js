@@ -36,7 +36,7 @@ import {
 } from './images.service';
 import { storeActivationRoutine } from '../services/activation.service';
 
-import sharp from 'sharp';
+import sanitizeHtml from 'sanitize-html';
 
 import {
     fetchAndValidateStore,
@@ -51,21 +51,58 @@ export {
     deleteStoreService,
     setStoreDistributionValue,
     updateStoreDistributionValues,
+    adminActivationService,
+    adminDeactivationService,
 };
 
 /**
  *
  * @param {string} storeId
+ * @param {string} userEmail
  * @returns
  */
-async function getSingleStoreService(storeId) {
-    const store = await fetchAndValidateStore(storeId);
+async function getSingleStoreService(storeId, userEmail) {
+    // const store = await fetchAndValidateStore(storeId);
     // const store = await readOneOperation(databaseEntity.STORES, {
     //     _id: storeId,
     // });
     // if (!findResult) {
     //     throw new Error(`Store with the id ${storeId} not found.`);
     // }
+
+    const store = await readOneOperation(
+        databaseEntity.STORES,
+        {
+            _id: storeId,
+        },
+        {}
+    );
+
+    if (!store) {
+        throw new Error(`Store with the id ${storeId} not found.`);
+    }
+    console.log(userEmail);
+    console.log(store.userEmail);
+    // check if store owner is requesting his own store
+    if (userEmail === store.userEmail) {
+        // if yes, the store is returned
+        return store;
+    }
+
+    if (!store.adminActivation) {
+        throw new Error(
+            `Store with the id ${storeId} is not activated by the admins.`
+        );
+    }
+
+    if (store.deleted) {
+        throw new Error(`Store with the id ${storeId} has been deleted.`);
+    }
+
+    if (!store.activation) {
+        throw new Error(`Store with the id ${storeId} is not activated yet.`);
+    }
+
     console.log(store.profileData.images);
     return store;
 }
@@ -123,6 +160,9 @@ async function createStoreService(data, userEmail) {
 
     // TODO validate the address, check if it exists, if it is in the correct country (legal) etc
 
+    // sanitize the description
+    const sanitizedDescription = sanitizeHtml(data.description);
+
     console.log(geoCodeResult[0]);
     let storeOptions = {
         userEmail: userEmail,
@@ -141,7 +181,7 @@ async function createStoreService(data, userEmail) {
         mapIcon: data.mapIcon,
         title: data.title,
         subtitle: data.subtitle,
-        description: data.description,
+        description: sanitizedDescription,
         tags: data.tags,
         images: data.images,
         products: [],
@@ -234,6 +274,10 @@ async function editStoreService(data, storeId, userEmail) {
     // console.log(data);
     const store = await fetchAndValidateStore(storeId);
     validateStoreOwner(userEmail, store.userEmail);
+
+    // sanitize the description
+    const sanitizedDescription = sanitizeHtml(data.description);
+
     // const findResult = await readOneOperation(databaseEntity.STORES, {
     //     _id: storeId,
     // });
@@ -277,9 +321,9 @@ async function editStoreService(data, storeId, userEmail) {
         }
         if (
             image.src.startsWith('https://') &&
-            image.src.contains('.blob.core.windows.net/')
+            image.src.includes('.blob.core.windows.net/')
         ) {
-            console.log(`Image uploaded already`);
+            console.log(`Image already uploaded.`);
         }
     }
     // console.log(JSON.stringify(data.images));
@@ -319,7 +363,7 @@ async function editStoreService(data, storeId, userEmail) {
             await storeActivationRoutine(store, session);
 
             const openingHours = validateOpeningHours(data.openingHours);
-
+            // console.log(data.contact);
             await updateOneOperation(
                 databaseEntity.STORES,
                 {
@@ -327,7 +371,7 @@ async function editStoreService(data, storeId, userEmail) {
                 },
                 {
                     'profileData.title': data.title,
-                    'profileData.description': data.description,
+                    'profileData.description': sanitizedDescription,
                     'profileData.tags': data.tags,
                     'profileData.images': data.images,
                     'mapData.address.addressLine1': data.address.addressLine1,
@@ -341,6 +385,7 @@ async function editStoreService(data, storeId, userEmail) {
                     'shipping.costs': data.shippingCosts,
                     'shipping.thresholdValue': data.shippingThresholdValue,
                     openingHours: openingHours,
+                    contact: data.contact,
                     // 'activationSteps.profileComplete': activationProfileCompleteValue,
                     // 'activationSteps.shippingRegistered': activationShippingValue,
                     // 'activationSteps.paymentMethodRegistered':
@@ -577,6 +622,44 @@ async function updateStoreDistributionValues(storeId, session = null) {
             session
         );
     }
+
+    return;
+}
+
+/**
+ * The function performs the admin activation action
+ * @param {string} storeId
+ */
+async function adminActivationService(storeId) {
+    await updateOneOperation(
+        databaseEntity.STORES,
+        {
+            _id: storeId,
+        },
+        {
+            adminActivation: true,
+        },
+        'set'
+    );
+
+    return;
+}
+
+/**
+ * The function performs the admin activation action
+ * @param {string} storeId
+ */
+async function adminDeactivationService(storeId) {
+    await updateOneOperation(
+        databaseEntity.STORES,
+        {
+            _id: storeId,
+        },
+        {
+            adminActivation: false,
+        },
+        'set'
+    );
 
     return;
 }

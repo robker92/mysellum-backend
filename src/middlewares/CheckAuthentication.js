@@ -3,7 +3,7 @@
 import jwt from 'jsonwebtoken';
 import { JWT_SECRET_KEY } from '../config';
 
-export { checkAuthentication };
+export { checkAuthentication, jwtOptional };
 
 const checkAuthentication = (req, res, next) => {
     // TODO change to get cookie
@@ -52,5 +52,31 @@ const checkAuthentication = (req, res, next) => {
         req.userId = decoded.id;
         req.userEmail = decoded.email;
         next();
+    });
+};
+
+// when a jwt is present, it is decoded and the results are added to the request
+// an error does not abort the process.
+const jwtOptional = (req, res, next) => {
+    const token = req.headers['x-access-token'];
+    console.log(token);
+    if (!token) {
+        // when there is an error skip to next mw
+        return next();
+    }
+
+    jwt.verify(token, JWT_SECRET_KEY, (err, decoded) => {
+        console.log(err);
+        if (err) {
+            // when there is an error skip to next mw
+            return next();
+        }
+
+        console.log(`Date now: ${Date.now()}`);
+        console.log(decoded);
+        // if everything is good, save to request for use in other routes
+        req.userId = decoded.id;
+        req.userEmail = decoded.email;
+        return next();
     });
 };

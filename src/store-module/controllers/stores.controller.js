@@ -5,6 +5,8 @@ import {
     createStoreService,
     editStoreService,
     deleteStoreService,
+    adminActivationService,
+    adminDeactivationService,
 } from '../services/stores.service';
 
 export {
@@ -12,14 +14,17 @@ export {
     createStoreController,
     editStoreController,
     deleteStoreController,
+    adminActivationController,
+    adminDeactivationController,
 };
 
 const getSingleStoreController = async function (req, res, next) {
     const storeId = req.params.storeId;
+    const userEmail = req.userEmail;
 
     let result;
     try {
-        result = await getSingleStoreService(storeId);
+        result = await getSingleStoreService(storeId, userEmail);
     } catch (error) {
         return next(error);
     }
@@ -63,6 +68,30 @@ const deleteStoreController = async function (req, res, next) {
 
     try {
         await deleteStoreService(data, storeId, userEmail);
+    } catch (error) {
+        return next(error);
+    }
+
+    return res.sendStatus(StatusCodes.OK);
+};
+
+const adminActivationController = async function (req, res, next) {
+    const storeId = req.params.storeId;
+    // return res.sendStatus(StatusCodes.OK);
+    try {
+        await adminActivationService(storeId);
+    } catch (error) {
+        return next(error);
+    }
+
+    return res.sendStatus(StatusCodes.OK);
+};
+
+const adminDeactivationController = async function (req, res, next) {
+    const storeId = req.params.storeId;
+    // return res.sendStatus(StatusCodes.OK);
+    try {
+        await adminDeactivationService(storeId);
     } catch (error) {
         return next(error);
     }

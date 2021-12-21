@@ -60,6 +60,12 @@ function verifyToken(token) {
     return jwt.verify(token, JWT_SECRET_KEY);
 }
 
+function createPasswordSalt() {
+    const salt = crypto.randomBytes(128).toString('base64');
+
+    return salt;
+}
+
 function convertBirthdate(birthdate) {
     // return moment(birthdate, 'DD.MM.YYYY', true);
     // return birthdate.replaceAll('-', '.');
@@ -96,9 +102,15 @@ async function loginUserService(email, password) {
             message: 'User can not be accessed.',
         };
     }
+    console.log(user.passwordSalt);
+    console.log(password);
+    console.log(user.password);
 
     // Verify password
-    const match = await bcrypt.compare(password, user.password);
+    const match = await bcrypt.compare(
+        `${password}${user.passwordSalt}`,
+        `${user.password}`
+    );
 
     // Password does not match
     if (!match) {
@@ -125,8 +137,8 @@ async function loginUserService(email, password) {
                 { 'status.finished': false },
             ],
         });
+        console.log(`order count: ${orderCount}`);
     }
-    console.log(`order count: ${orderCount}`);
 
     let counter = 0;
     for (const element of user.shoppingCart) {
@@ -181,8 +193,12 @@ async function registerUserService(data) {
         };
         // throw new Error(`The e-mail ${data.email} is already registered.`);
     }
-
-    const passwordHash = await bcrypt.hash(data.password, PW_HASH_SALT_ROUNDS);
+    const passwordSalt = createPasswordSalt();
+    const valueToBeHashed = `${data.password}${passwordSalt}`;
+    const passwordHash = await bcrypt.hash(
+        valueToBeHashed,
+        PW_HASH_SALT_ROUNDS
+    );
     const verificationToken = createVerificationToken();
     // const verificationToken = crypto
     //     .randomBytes(PW_RESET_TOKEN_NUM_BYTES)
@@ -201,6 +217,7 @@ async function registerUserService(data) {
         email: data.email,
         phoneNumber: data.phoneNumber,
         passwordHash: passwordHash,
+        passwordSalt: passwordSalt,
         city: data.city,
         postcode: data.postcode,
         addressLine1: data.addressLine1,
@@ -277,7 +294,7 @@ async function verifyRegistrationService(verificationToken) {
             message: 'E-Mail verification failed.',
         };
     }
-    console.log(`hi1`);
+
     console.log(user);
     if (!user) {
         throw {
@@ -460,7 +477,12 @@ async function checkResetTokenService(receivedToken) {
 }
 
 async function resetPasswordService(receivedToken, password) {
-    const passwordHash = await bcrypt.hash(password, PW_HASH_SALT_ROUNDS);
+    const passwordSalt = createPasswordSalt();
+    const valueToBeHashed = `${password}${passwordSalt}`;
+    const passwordHash = await bcrypt.hash(
+        valueToBeHashed,
+        PW_HASH_SALT_ROUNDS
+    );
 
     await updateOneOperation(
         databaseEntity.USERS,
@@ -474,6 +496,7 @@ async function resetPasswordService(receivedToken, password) {
             resetPasswordToken: null,
             resetPasswordExpires: null,
             password: passwordHash,
+            passwordSalt: passwordSalt,
         },
         'set'
     );

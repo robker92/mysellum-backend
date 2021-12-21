@@ -184,7 +184,7 @@ const createPaypalOrderController = async function (req, res, next) {
         orderId = response.id;
     } catch (error) {
         console.log(error);
-        res.sendStatus(500); // send only status 500 back to the paypal smart buttons
+        return res.sendStatus(500); // send only status 500 back to the paypal smart buttons
     }
 
     return res.json({

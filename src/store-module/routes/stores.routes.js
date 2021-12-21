@@ -5,10 +5,11 @@ import express from 'express';
 const routerStores = express.Router();
 import excHandler from 'express-async-handler';
 import { validate } from 'express-validation';
-
+// import * as basicAuth from 'express-basic-auth';
+const basicAuth = require('express-basic-auth');
 // Multer
 import multer from 'multer';
-import { MULTER_LIMIT } from '../../config';
+import { MULTER_LIMIT, ADMIN_CREDENTIALS_OBJ } from '../../config';
 const storage = multer.memoryStorage();
 const upload = multer({
     limits: {
@@ -18,7 +19,10 @@ const upload = multer({
 });
 
 // Utils
-import { checkAuthentication } from '../../middlewares/CheckAuthentication';
+import {
+    checkAuthentication,
+    jwtOptional,
+} from '../../middlewares/CheckAuthentication';
 import { parserJsonLimit } from '../../utils/bodyParsers';
 
 // Controllers
@@ -27,6 +31,8 @@ import {
     createStoreController,
     editStoreController,
     deleteStoreController,
+    adminActivationController,
+    adminDeactivationController,
 } from '../controllers/stores.controller';
 
 // Validation
@@ -42,6 +48,7 @@ const routerPrefix = 'stores';
 
 routerStores.get(
     `/${routerPrefix}/:storeId`,
+    jwtOptional,
     excHandler(getSingleStoreController)
 );
 // routerStores.get(`/${routerPrefix}`, excHandler(controller_stores.getAllStores));
@@ -74,5 +81,23 @@ routerStores.delete(
 );
 // router.post(`/${routerPrefix}addStoreImage/:storeId`, checkAuthentication, validate(addStoreImageVal, opts), excHandler(controller_stores.addStoreImage));
 // router.delete(`/${routerPrefix}deleteStoreImage/:storeId/:imageId`, checkAuthentication, excHandler(controller_stores.deleteStoreImage));
+
+routerStores.post(
+    `/${routerPrefix}/admin/activate/:storeId`,
+    // require admin credentials
+    basicAuth({
+        users: ADMIN_CREDENTIALS_OBJ,
+    }),
+    excHandler(adminActivationController)
+);
+
+routerStores.post(
+    `/${routerPrefix}/admin/deactivate/:storeId`,
+    // require admin credentials
+    basicAuth({
+        users: ADMIN_CREDENTIALS_OBJ,
+    }),
+    excHandler(adminDeactivationController)
+);
 
 export { routerStores };

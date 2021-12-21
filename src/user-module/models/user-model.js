@@ -5,6 +5,7 @@ export function getUserModel(options) {
         email: options.email,
         phoneNumber: options.phoneNumber,
         password: options.passwordHash,
+        passwordSalt: options.passwordSalt,
         // "address": {
         addressLine1: options.addressLine1,
         city: options.city,

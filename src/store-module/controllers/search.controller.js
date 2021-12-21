@@ -177,6 +177,11 @@ function getAdminOptions(queryArray) {
     queryArray.push({
         adminActivation: true,
     });
+    // check if user activation is true
+    queryArray.push({
+        userActivation: true,
+    });
+
     return queryArray;
 }
 
