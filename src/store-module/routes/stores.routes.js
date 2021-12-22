@@ -5,8 +5,8 @@ import express from 'express';
 const routerStores = express.Router();
 import excHandler from 'express-async-handler';
 import { validate } from 'express-validation';
-// import * as basicAuth from 'express-basic-auth';
-const basicAuth = require('express-basic-auth');
+import basicAuth from 'express-basic-auth';
+
 // Multer
 import multer from 'multer';
 import { MULTER_LIMIT, ADMIN_CREDENTIALS_OBJ } from '../../config';

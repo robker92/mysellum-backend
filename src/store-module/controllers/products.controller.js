@@ -6,8 +6,8 @@ import {
     deleteProductService,
     updateStockAmountService,
     getProductImageService,
+    getStoreProductsService,
 } from '../services/products.service';
-import { getMongoProductsCollection } from '../../storage/mongodb/collections';
 
 export {
     createProductController,
@@ -81,118 +81,27 @@ const updateStockAmountController = async function (req, res, next) {
 };
 
 const getStoreProducts = async function (req, res, next) {
-    const collectionProducts = await getMongoProductsCollection();
-    let storeId = req.params.storeId;
-    //TODO validate params
-    let searchTerm = req.query.search;
-    let priceMin = req.query.priceMin;
-    let priceMax = req.query.priceMax;
+    const storeId = req.params.storeId;
+    const userEmail = req.userEmail;
+    const searchTerm = req.query.search;
+    const priceMin = req.query.priceMin;
+    const priceMax = req.query.priceMax;
 
-    let findResult;
-    if (searchTerm && !priceMin && !priceMax) {
-        searchTerm = searchTerm.replace('-', ' ');
-
-        findResult = await collectionProducts
-            .find({
-                $and: [
-                    {
-                        storeId: storeId,
-                    },
-                    {
-                        $text: {
-                            $search: searchTerm,
-                        },
-                    },
-                ],
-            })
-            .project({
-                score: {
-                    $meta: 'textScore',
-                },
-            })
-            .sort({
-                score: {
-                    $meta: 'textScore',
-                },
-            })
-            .toArray();
-        //console.log("no search term provided.")
-    } else if (priceMin && priceMax && !searchTerm) {
-        console.log(priceMin);
-        //return
-        findResult = await collectionProducts
-            .find({
-                $and: [
-                    {
-                        storeId: storeId,
-                    },
-                    {
-                        priceFloat: {
-                            $gte: parseFloat(priceMin),
-                            $lte: parseFloat(priceMax),
-                        },
-                    },
-                ],
-            })
-            .sort({
-                datetimeCreated: -1,
-            })
-            .toArray();
-        //
-    } else if (priceMin && priceMax && searchTerm) {
-        //console.log(priceMin)
-        findResult = await collectionProducts
-            .find({
-                $and: [
-                    {
-                        $text: {
-                            $search: searchTerm,
-                        },
-                    },
-                    {
-                        storeId: storeId,
-                    },
-                    {
-                        priceFloat: {
-                            $gte: parseFloat(priceMin),
-                            $lte: parseFloat(priceMax),
-                        },
-                    },
-                ],
-            })
-            .project({
-                score: {
-                    $meta: 'textScore',
-                },
-            })
-            .sort({
-                score: {
-                    $meta: 'textScore',
-                },
-            })
-            .toArray();
-    } else {
-        findResult = await collectionProducts
-            .find(
-                {
-                    storeId: storeId,
-                }
-                // {
-                //     projection: {
-                //         imgSrc: 0
-                //     }
-                // }
-            )
-            .sort({
-                datetimeCreated: -1,
-            })
-            .toArray();
+    let products;
+    try {
+        products = await getStoreProductsService(
+            userEmail,
+            storeId,
+            searchTerm,
+            priceMin,
+            priceMax
+        );
+    } catch (error) {
+        return next(error);
     }
 
     return res.status(200).json({
-        success: true,
-        message: 'Successfully fetched products!',
-        products: findResult,
+        products: products,
     });
 };
 

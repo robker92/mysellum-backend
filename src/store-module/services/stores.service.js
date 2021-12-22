@@ -55,6 +55,14 @@ export {
     adminDeactivationService,
 };
 
+const sanitizeOptions = {
+    allowedTags: ['b', 'i', 'u', 'font', 'div', 'br', 'ul', 'ol', 'li'],
+    allowedAttributes: {
+        font: ['size'],
+        div: ['style'],
+    },
+};
+
 /**
  *
  * @param {string} storeId
@@ -161,7 +169,10 @@ async function createStoreService(data, userEmail) {
     // TODO validate the address, check if it exists, if it is in the correct country (legal) etc
 
     // sanitize the description
-    const sanitizedDescription = sanitizeHtml(data.description);
+    const sanitizedDescription = sanitizeHtml(
+        data.description,
+        sanitizeOptions
+    );
 
     console.log(geoCodeResult[0]);
     let storeOptions = {
@@ -276,7 +287,10 @@ async function editStoreService(data, storeId, userEmail) {
     validateStoreOwner(userEmail, store.userEmail);
 
     // sanitize the description
-    const sanitizedDescription = sanitizeHtml(data.description);
+    const sanitizedDescription = sanitizeHtml(
+        data.description,
+        sanitizeOptions
+    );
 
     // const findResult = await readOneOperation(databaseEntity.STORES, {
     //     _id: storeId,

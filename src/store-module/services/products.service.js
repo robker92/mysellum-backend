@@ -9,6 +9,7 @@ import {
     createOneOperation,
     databaseEntity,
 } from '../../storage/database-operations';
+import { getMongoProductsCollection } from '../../storage/mongodb/collections';
 
 import { getProductModel } from '../../data-models';
 import { storeActivationRoutine } from './activation.service';
@@ -42,6 +43,7 @@ export {
     deleteProductService,
     updateStockAmountService,
     getProductImageService,
+    getStoreProductsService,
 };
 
 /**
@@ -379,4 +381,111 @@ async function getProductImageService(storeId, productId) {
     );
 
     return imageSrc;
+}
+
+async function getStoreProductsService(
+    userEmail,
+    storeId,
+    searchTerm,
+    priceMin,
+    priceMax
+) {
+    const store = await fetchAndValidateStore(storeId);
+    // let activeValue = true;
+    let findObject = {
+        storeId: storeId,
+    };
+    if (store.userEmail !== userEmail) {
+        findObject.active = true;
+    }
+    console.log(`findObject: ${JSON.stringify(findObject)}`);
+
+    let findResult;
+    const collectionProducts = await getMongoProductsCollection();
+    if (searchTerm && !priceMin && !priceMax) {
+        searchTerm = searchTerm.replace('-', ' ');
+
+        findResult = await collectionProducts
+            .find({
+                $and: [
+                    findObject,
+                    {
+                        $text: {
+                            $search: searchTerm,
+                        },
+                    },
+                ],
+            })
+            .project({
+                score: {
+                    $meta: 'textScore',
+                },
+            })
+            .sort({
+                score: {
+                    $meta: 'textScore',
+                },
+            })
+            .toArray();
+        //console.log("no search term provided.")
+    } else if (priceMin && priceMax && !searchTerm) {
+        console.log(priceMin);
+        //return
+        findResult = await collectionProducts
+            .find({
+                $and: [
+                    findObject,
+                    {
+                        priceFloat: {
+                            $gte: parseFloat(priceMin),
+                            $lte: parseFloat(priceMax),
+                        },
+                    },
+                ],
+            })
+            .sort({
+                datetimeCreated: -1,
+            })
+            .toArray();
+        //
+    } else if (priceMin && priceMax && searchTerm) {
+        //console.log(priceMin)
+        findResult = await collectionProducts
+            .find({
+                $and: [
+                    {
+                        $text: {
+                            $search: searchTerm,
+                        },
+                    },
+                    findObject,
+                    {
+                        priceFloat: {
+                            $gte: parseFloat(priceMin),
+                            $lte: parseFloat(priceMax),
+                        },
+                    },
+                ],
+            })
+            .project({
+                score: {
+                    $meta: 'textScore',
+                },
+            })
+            .sort({
+                score: {
+                    $meta: 'textScore',
+                },
+            })
+            .toArray();
+    } else {
+        findResult = await collectionProducts
+            .find(findObject)
+            .sort({
+                datetimeCreated: -1,
+            })
+            .toArray();
+    }
+
+    return findResult;
 }

@@ -16,7 +16,10 @@ import {
 } from '../controllers/products.controller';
 
 // Utils
-import { checkAuthentication } from '../../middlewares/CheckAuthentication';
+import {
+    checkAuthentication,
+    jwtOptional,
+} from '../../middlewares/CheckAuthentication';
 import { parserJsonLimit } from '../../utils/bodyParsers';
 
 // Validation
@@ -63,6 +66,7 @@ routerProducts.patch(
 
 routerProducts.get(
     `/${routerPrefix}/:storeId/products`,
+    jwtOptional,
     excHandler(getStoreProducts)
 );
 
