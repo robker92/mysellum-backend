@@ -567,6 +567,7 @@ async function sendNotificationEmails(customerEmail, captureArray) {
         let mailOptions = {
             email: store.userEmail,
             contentType: contentType.ORDER_CREATED_STORE,
+            storeId: storeId,
         };
         promises.push(sendNodemailerMail(mailOptions));
     }

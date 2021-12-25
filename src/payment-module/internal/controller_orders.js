@@ -582,6 +582,7 @@ const setStepStatus = async function (req, res, next) {
         returnValueSuccessfully = true;
     }
 
+    console.log(findAndUpdateResult.value);
     if (step === 'inDelivery') {
         const options = {
             contentType: contentType.ORDER_STATUS_IN_DELIVERY,

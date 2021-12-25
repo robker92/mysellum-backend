@@ -14,20 +14,24 @@ export { editStoreVal, createStoreVal };
 
 const editStoreVal = {
     body: Joi.object({
-        storeId: Joi.string().optional(),
+        storeId: Joi.string().max(200).optional(),
         title: Joi.string().min(10).max(100).required(),
         subtitle: Joi.string().allow(null, '').min(0).max(150).optional(),
         description: Joi.string().min(100).max(10000).required(),
-        tags: Joi.array().items(Joi.string()).min(1).max(10).required(),
+        tags: Joi.array()
+            .items(Joi.string().max(100).required())
+            .min(1)
+            .max(10)
+            .required(),
         images: Joi.array()
             .items(
                 Joi.object({
                     id: Joi.number().required(),
-                    title: Joi.string().required(),
+                    title: Joi.string().max(200).required(),
                     size: Joi.number().optional(),
-                    src: Joi.string().required(),
-                    name: Joi.string().optional(),
-                    originalName: Joi.string().optional(),
+                    src: Joi.string().max(1000).required(),
+                    name: Joi.string().max(100).optional(),
+                    originalName: Joi.string().max(100).optional(),
                 })
             )
             .min(1)
@@ -162,7 +166,11 @@ const createStoreVal = {
         title: Joi.string().min(10).max(100).required(),
         subtitle: Joi.string().allow(null, '').min(0).max(150).optional(),
         description: Joi.string().min(100).max(10000).required(),
-        tags: Joi.array().items(Joi.string()).min(1).max(10).required(),
+        tags: Joi.array()
+            .items(Joi.string().max(25).required())
+            .min(1)
+            .max(10)
+            .required(),
         images: Joi.array()
             .items(
                 Joi.object({

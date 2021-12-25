@@ -30,6 +30,7 @@ function getContentOrderCreatedCustomer2(options) {
 }
 
 function getContentOrderCreatedCustomer(options) {
+    console.log(options);
     let htmlBody = `
     <!DOCTYPE html
     PUBLIC "-//W3C//DTD XHTML 1.0 Transitional //EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
@@ -308,7 +309,7 @@ function getContentOrderCreatedCustomer(options) {
                                                         <p
                                                             style="margin: 0; font-size: 20px; line-height: 1.2; word-break: break-word; text-align: center; mso-line-height-alt: 24px; margin-top: 0; margin-bottom: 0;">
                                                             <span style="font-size: 20px;">congratulations! Your order was successfully forwarded to the stores. You will hear from us again as soon as they are in delivery or ready to be picked up.
-                                                            You can view your order using the link below.</span></p>
+                                                            </span></p>
                                                     </div>
                                                 </div>
                                                 <!--[if mso]></td></tr></table><![endif]-->
@@ -338,21 +339,7 @@ function getContentOrderCreatedCustomer(options) {
                                                         </tr>
                                                     </tbody>
                                                 </table>
-                                                <div align="center" class="button-container"
-                                                    style="padding-top:10px;padding-right:10px;padding-bottom:10px;padding-left:10px;">
-                                                    <!--[if mso]><table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-spacing: 0; border-collapse: collapse; mso-table-lspace:0pt; mso-table-rspace:0pt;"><tr><td style="padding-top: 10px; padding-right: 10px; padding-bottom: 10px; padding-left: 10px" align="center"><v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="www.example.com" style="height:45pt;width:224.25pt;v-text-anchor:middle;" arcsize="17%" strokeweight="1.5pt" strokecolor="#3F4D75" fillcolor="#ffffff"><w:anchorlock/><v:textbox inset="0,0,0,0"><center style="color:#3f4d75; font-family:Arial, sans-serif; font-size:18px"><![endif]-->
-                                                    <a
-                                                        href="${FRONTEND_BASE_URL}/customer-order-overview/${options.orderId}"
-                                                        style="-webkit-text-size-adjust: none; text-decoration: none; display: inline-block; color: #3f4d75; background-color: #ffffff; border-radius: 10px; -webkit-border-radius: 10px; -moz-border-radius: 10px; width: auto; width: auto; border-top: 2px solid #3F4D75; border-right: 2px solid #3F4D75; border-bottom: 2px solid #3F4D75; border-left: 2px solid #3F4D75; padding-top: 10px; padding-bottom: 10px; font-family: Roboto Slab, Arial, Helvetica Neue, Helvetica, sans-serif; text-align: center; mso-border-alt: none; word-break: keep-all;"
-                                                        target="_blank"><span
-                                                            style="padding-left:25px;padding-right:25px;font-size:18px;display:inline-block;letter-spacing:undefined;"><span
-                                                                style="font-size: 16px; line-height: 2; word-break: break-word; mso-line-height-alt: 32px;"><span
-                                                                    data-mce-style="font-size: 18px; line-height: 36px;"
-                                                                    style="font-size: 18px; line-height: 36px;">View Your Order</span></span></span></a>
-
-                                                                    
-                                                    <!--[if mso]></center></v:textbox></v:roundrect></td></tr></table><![endif]-->
-                                                </div>
+                                                
                                                 <table border="0" cellpadding="0" cellspacing="0" class="divider"
                                                     role="presentation"
                                                     style="table-layout: fixed; vertical-align: top; border-spacing: 0; border-collapse: collapse; mso-table-lspace: 0pt; mso-table-rspace: 0pt; min-width: 100%; -ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%;"
