@@ -99,6 +99,7 @@ async function addToShoppingCartService(email, addedProduct, addedAmount) {
         },
         'set'
     );
+    console.log(JSON.stringify(currentShoppingCart));
 
     return currentShoppingCart;
 }

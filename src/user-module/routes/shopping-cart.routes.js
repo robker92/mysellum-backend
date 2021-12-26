@@ -39,10 +39,10 @@ routerShoppingCart.patch(
     excHandler(removeFromShoppingCartController)
 );
 routerShoppingCart.patch(
-    `/${routerPrefix}/update/:email`,
+    `/${routerPrefix}/update`,
     parserJsonLimit,
     checkAuthentication,
-    validate(cartUpdateValidation, opts),
+    // validate(cartUpdateValidation, opts),
     excHandler(updateShoppingCartController)
 );
 

@@ -6,6 +6,7 @@ export function getProductModel(options) {
         datetimeAdjusted: options.datetimeAdjusted,
         title: options.title,
         description: options.description,
+        longDescription: options.longDescription,
         imgSrc: options.imgSrc,
         imageDetails: options.imageDetails,
         price: options.price,
@@ -17,6 +18,7 @@ export function getProductModel(options) {
         delivery: options.delivery,
         pickup: options.pickup,
         stockAmount: 1,
+        active: options.active,
     };
     return model;
 }

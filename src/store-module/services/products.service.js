@@ -64,7 +64,7 @@ async function createProductService(data, userEmail, storeId) {
     };
     const imageUrl = await uploadBlobService(file);
     console.log(imageUrl);
-
+    console.log(`Active value: ${data.active}`);
     const options = {
         datetimeCreated: new Date().toISOString(),
         datetimeAdjusted: '',

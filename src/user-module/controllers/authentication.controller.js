@@ -37,7 +37,8 @@ const loginUserController = async function (req, res, next) {
     try {
         // login the user
         result = await loginUserService(email, password);
-
+        console.log(`User Data Cart:`);
+        console.log(JSON.stringify(result.userData.shoppingCart));
         // shopping cart routine; when an error occurs here, it is ignored and an empty shopping cart is returned
         try {
             const updatedShoppingCart = await validateShoppingCartService(
@@ -48,8 +49,8 @@ const loginUserController = async function (req, res, next) {
             //     JSON.stringify(result.userData.shoppingCart) !==
             //         JSON.stringify(updatedShoppingCart)
             // );
-            // console.log(JSON.stringify(result.userData.shoppingCart));
-            // console.log(JSON.stringify(updatedShoppingCart));
+            console.log(JSON.stringify(result.userData.shoppingCart));
+            console.log(JSON.stringify(updatedShoppingCart));
             if (
                 JSON.stringify(result.userData.shoppingCart) !==
                 JSON.stringify(updatedShoppingCart)

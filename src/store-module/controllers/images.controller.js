@@ -20,7 +20,6 @@ export {
 
 const getImageBufferController = async function (req, res, next) {
     const file = req.file;
-    console.log(`hi`);
     console.log(req.body.test);
     let result;
     try {

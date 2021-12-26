@@ -24,6 +24,8 @@ export {
 
 async function getShippingCostsService(shoppingCart, userEmail) {
     // Create a data object which contains the shipping information of a store and the ordered products of that store
+    console.log(`Shopping Cart:`);
+    console.log(JSON.stringify(shoppingCart));
     const dataObject = await createStoreDataObject(shoppingCart);
     console.log(JSON.stringify(dataObject));
 

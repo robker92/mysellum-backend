@@ -397,5 +397,5 @@ async function sendNotificationEmails(customerEmail, captureArray) {
         };
         promises.push(sendNodemailerMail(mailOptions));
     }
-    Promise.all(promises);
+    await Promise.all(promises);
 }

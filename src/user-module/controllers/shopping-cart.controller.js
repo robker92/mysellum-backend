@@ -31,7 +31,7 @@ const addToShoppingCartController = async function (req, res, next) {
         console.log(error);
         return next(error);
     }
-
+    // console.log(JSON.stringify(shoppingCart));
     return res.status(StatusCodes.OK).json({
         shoppingCart: shoppingCart,
         shippingCosts: shippingCosts,
@@ -64,17 +64,21 @@ const removeFromShoppingCartController = async function (req, res, next) {
 };
 
 const updateShoppingCartController = async function (req, res, next) {
-    const email = req.params.email;
+    const userEmail = req.userEmail;
     const shoppingCart = req.body.shoppingCart;
 
     let shippingCosts;
     try {
-        await updateShoppingCartService(email, shoppingCart);
+        await updateShoppingCartService(userEmail, shoppingCart);
         shippingCosts = await getShippingCostsService(shoppingCart);
     } catch (error) {
         console.log(error);
         return next(error);
     }
+    // console.log(`shippingCosts: ${shippingCosts}`);
+    // console.log(JSON.stringify(shoppingCart));
 
-    return res.status(StatusCodes.OK).json({ shippingCosts: shippingCosts });
+    return res
+        .status(StatusCodes.OK)
+        .json({ shoppingCart: shoppingCart, shippingCosts: shippingCosts });
 };
