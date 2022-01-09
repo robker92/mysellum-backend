@@ -11,6 +11,7 @@ export {
     getImageBase64Resized,
     getImageResizedService,
     uploadBlobService,
+    uploadLegalDocumentService,
     getFromBlobService,
     deleteBlobService,
 };
@@ -48,11 +49,9 @@ async function getImageBufferResizedService(file) {
     console.log(file.buffer);
     const metadataIn = await sharp(file.buffer).metadata();
     console.log(
-        `Input Metadata: size ${metadataIn.size}, width ${
-            metadataIn.width
-        }, height ${metadataIn.height}, aspect ratio ${
-            metadataIn.width / metadataIn.height
-        }`
+        `Input Metadata: size ${metadataIn.size}, width ${metadataIn.width}, height ${
+            metadataIn.height
+        }, aspect ratio ${metadataIn.width / metadataIn.height}`
     );
 
     const imageResult = await sharp(file.buffer)
@@ -65,11 +64,9 @@ async function getImageBufferResizedService(file) {
 
     const metadataOut = await sharp(imageResult).metadata();
     console.log(
-        `Output Metadata: size ${metadataOut.size}, width ${
-            metadataOut.width
-        }, height ${metadataOut.height}, aspect ratio ${
-            metadataOut.width / metadataOut.height
-        }`
+        `Output Metadata: size ${metadataOut.size}, width ${metadataOut.width}, height ${
+            metadataOut.height
+        }, aspect ratio ${metadataOut.width / metadataOut.height}`
     );
 
     //console.log(imageResult);
@@ -105,9 +102,7 @@ async function getImageBase64Resized(base64String) {
     const resizedBuffer = await sharp(inputBuffer)
         .resize({
             fit: sharp.fit.contain,
-            width: parseInt(
-                metadataIn.width / resizeFactorCalculation(metadataIn.size)
-            ),
+            width: parseInt(metadataIn.width / resizeFactorCalculation(metadataIn.size)),
         })
         .toBuffer();
 
@@ -154,11 +149,9 @@ function resizeFactorCalculation(imgSize) {
 async function getImageResizedService(file) {
     const metadataIn = await sharp(file.buffer).metadata();
     console.log(
-        `Input Metadata: size ${metadataIn.size}, width ${
-            metadataIn.width
-        }, height ${metadataIn.height}, aspect ratio ${
-            metadataIn.width / metadataIn.height
-        }`
+        `Input Metadata: size ${metadataIn.size}, width ${metadataIn.width}, height ${
+            metadataIn.height
+        }, aspect ratio ${metadataIn.width / metadataIn.height}`
     );
 
     const resizedImg = await sharp(file.buffer)
@@ -171,11 +164,9 @@ async function getImageResizedService(file) {
 
     const metadataOut = await sharp(resizedImg).metadata();
     console.log(
-        `Output Metadata: size ${metadataOut.size}, width ${
-            metadataOut.width
-        }, height ${metadataOut.height}, aspect ratio ${
-            metadataOut.width / metadataOut.height
-        }`
+        `Output Metadata: size ${metadataOut.size}, width ${metadataOut.width}, height ${
+            metadataOut.height
+        }, aspect ratio ${metadataOut.width / metadataOut.height}`
     );
 
     await sharp(resizedImg).toFile('output.jpg');
@@ -183,11 +174,7 @@ async function getImageResizedService(file) {
     return;
 }
 
-import {
-    BlobServiceClient,
-    StorageSharedKeyCredential,
-    newPipeline,
-} from '@azure/storage-blob';
+import { BlobServiceClient, StorageSharedKeyCredential, newPipeline } from '@azure/storage-blob';
 // import { Readable } from 'stream';
 import streamifier from 'streamifier';
 import { nanoid } from 'nanoid';
@@ -195,6 +182,7 @@ import {
     AZURE_STORAGE_ACCOUNT_NAME,
     AZURE_STORAGE_ACCOUNT_ACCESS_KEY,
     AZURE_STORAGE_CONTAINER_NAME,
+    AZURE_STORAGE_CONTAINER_NAME_OTHERS,
 } from '../../config';
 const sharedKeyCredential = new StorageSharedKeyCredential(
     AZURE_STORAGE_ACCOUNT_NAME,
@@ -208,18 +196,32 @@ const blobServiceClient = new BlobServiceClient(
 const ONE_MEGABYTE = 1024 * 1024;
 const uploadOptions = { bufferSize: 4 * ONE_MEGABYTE, maxBuffers: 20 };
 const containerName = AZURE_STORAGE_CONTAINER_NAME;
+const containerNameOthers = AZURE_STORAGE_CONTAINER_NAME_OTHERS;
 
 function getNewBlobName(fileName) {
     const name = `${nanoid()}~${fileName}`;
     return name;
 }
 
-function getBlobContainerClient() {
-    return blobServiceClient.getContainerClient(containerName);
+function getBlobContainerName(type) {
+    let name;
+    if (type === 'images') {
+        name = containerName;
+    }
+    if (type === 'others') {
+        name = containerNameOthers;
+    }
+    return name;
 }
 
-function getBlobUrl(blobName) {
-    const blobUrl = `https://${AZURE_STORAGE_ACCOUNT_NAME}.blob.core.windows.net/${containerName}/${blobName}`;
+function getBlobContainerClient(containerType) {
+    return blobServiceClient.getContainerClient(getBlobContainerName(containerType));
+}
+
+function getBlobUrl(blobName, containerType) {
+    const blobUrl = `https://${AZURE_STORAGE_ACCOUNT_NAME}.blob.core.windows.net/${getBlobContainerName(
+        containerType
+    )}/${blobName}`;
     return blobUrl;
 }
 
@@ -227,7 +229,7 @@ function getBlobUrl(blobName) {
  * The function uploads an image to azure blob storage
  * @param {object} file
  */
-async function uploadBlobService(file) {
+async function uploadBlobService(file, blobContentType = 'image/jpeg') {
     let blobUrl;
     try {
         // the store image has title, a file has originalName
@@ -257,16 +259,58 @@ async function uploadBlobService(file) {
 
         // console.log(`Stream:`);
         // console.log(stream);
-        const blockBlobClient =
-            getBlobContainerClient().getBlockBlobClient(blobName);
+        const blockBlobClient = getBlobContainerClient('images').getBlockBlobClient(blobName);
 
-        await blockBlobClient.uploadStream(
-            stream,
-            uploadOptions.bufferSize,
-            uploadOptions.maxBuffers,
-            { blobHTTPHeaders: { blobContentType: 'image/jpeg' } }
-        );
-        blobUrl = getBlobUrl(blobName);
+        await blockBlobClient.uploadStream(stream, uploadOptions.bufferSize, uploadOptions.maxBuffers, {
+            blobHTTPHeaders: { blobContentType: blobContentType },
+        });
+        blobUrl = getBlobUrl(blobName, 'images');
+    } catch (err) {
+        console.log(err);
+        throw err;
+    }
+    return blobUrl;
+}
+
+/**
+ * The function uploads a legal document to azure blob storage
+ * @param {object} file
+ */
+async function uploadLegalDocumentService(file, blobContentType) {
+    let blobUrl;
+    try {
+        // the store image has title, a file has originalName
+        const name = file.label;
+        console.log(`Blob name: ${name}`);
+        const blobName = getNewBlobName(name);
+
+        console.log(`Base64:`);
+        console.log(file.fileSrc.substring(0, 50));
+
+        let base64;
+        if (file.fileSrc.includes('base64')) {
+            base64 = file.fileSrc.substr(file.fileSrc.indexOf('base64') + 7);
+        } else {
+            base64 = file.fileSrc;
+        }
+
+        console.log(`Base64:`);
+        console.log(base64.substring(0, 50));
+
+        const buffer = Buffer.from(base64, 'base64');
+        console.log(buffer);
+
+        // const stream = Readable.from(buffer);
+        const stream = streamifier.createReadStream(buffer);
+
+        // console.log(`Stream:`);
+        // console.log(stream);
+        const blockBlobClient = getBlobContainerClient('others').getBlockBlobClient(blobName);
+
+        await blockBlobClient.uploadStream(stream, uploadOptions.bufferSize, uploadOptions.maxBuffers, {
+            blobHTTPHeaders: { blobContentType: blobContentType },
+        });
+        blobUrl = getBlobUrl(blobName, 'others');
     } catch (err) {
         console.log(err);
         throw err;
@@ -279,8 +323,7 @@ async function uploadBlobService(file) {
  * @param {string} blobName
  */
 async function getFromBlobService(blobName) {
-    const listBlobsResponse =
-        await getBlobContainerClient().listBlobFlatSegment();
+    const listBlobsResponse = await getBlobContainerClient('images').listBlobFlatSegment();
 
     for await (const blob of listBlobsResponse.segment.blobItems) {
         console.log(`Blob: ${blob.name}`);
@@ -293,16 +336,13 @@ async function getFromBlobService(blobName) {
  * The function deletes a blob from azure blob storage
  * @param {string} blobName
  */
-async function deleteBlobService(blobName) {
-    const blockBlobClient =
-        getBlobContainerClient().getBlockBlobClient(blobName);
+async function deleteBlobService(blobName, containerType) {
+    const blockBlobClient = getBlobContainerClient(containerType).getBlockBlobClient(blobName);
 
     const deleteResponse = await blockBlobClient.deleteIfExists();
     // console.log(deleteResponse);
     if (!deleteResponse.succeeded) {
-        throw new Error(
-            `The blob with the name ${blobName} could not be deleted.`
-        );
+        throw new Error(`The blob with the name ${blobName} could not be deleted.`);
     }
 
     return;

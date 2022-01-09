@@ -53,13 +53,16 @@ const editStoreController = async function (req, res, next) {
     const storeId = req.params.storeId;
     const userEmail = req.userEmail;
 
+    let result;
     try {
-        await editStoreService(data, storeId, userEmail);
+        result = await editStoreService(data, storeId, userEmail);
     } catch (error) {
         return next(error);
     }
 
-    return res.sendStatus(StatusCodes.OK);
+    return res.status(StatusCodes.OK).json({
+        legalDocuments: result.legalDocuments,
+    });
 };
 
 const deleteStoreController = async function (req, res, next) {

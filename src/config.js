@@ -79,17 +79,18 @@ if (checkEnvironment() === APP_ENV.DEV) {
 
 // Azure Blob Storage
 const AZURE_STORAGE_ACCOUNT_NAME = process.env.AZURE_STORAGE_ACCOUNT_NAME;
-const AZURE_STORAGE_ACCOUNT_ACCESS_KEY =
-    process.env.AZURE_STORAGE_ACCOUNT_ACCESS_KEY;
+const AZURE_STORAGE_ACCOUNT_ACCESS_KEY = process.env.AZURE_STORAGE_ACCOUNT_ACCESS_KEY;
 let AZURE_STORAGE_CONTAINER_NAME;
+let AZURE_STORAGE_CONTAINER_NAME_OTHERS;
 if (checkEnvironment() === APP_ENV.PROD) {
-    AZURE_STORAGE_CONTAINER_NAME =
-        process.env.AZURE_STORAGE_CONTAINER_NAME_PROD;
+    AZURE_STORAGE_CONTAINER_NAME = process.env.AZURE_STORAGE_CONTAINER_NAME_PROD;
+    AZURE_STORAGE_CONTAINER_NAME_OTHERS = process.env.AZURE_STORAGE_CONTAINER_NAME_OTHERS_PROD;
 } else if (checkEnvironment() === APP_ENV.DEV) {
     AZURE_STORAGE_CONTAINER_NAME = process.env.AZURE_STORAGE_CONTAINER_NAME_DEV;
+    AZURE_STORAGE_CONTAINER_NAME_OTHERS = process.env.AZURE_STORAGE_CONTAINER_NAME_OTHERS_DEV;
 } else if (checkEnvironment() === APP_ENV.TEST) {
-    AZURE_STORAGE_CONTAINER_NAME =
-        process.env.AZURE_STORAGE_CONTAINER_NAME_TEST;
+    AZURE_STORAGE_CONTAINER_NAME = process.env.AZURE_STORAGE_CONTAINER_NAME_TEST;
+    AZURE_STORAGE_CONTAINER_NAME_OTHERS = process.env.AZURE_STORAGE_CONTAINER_NAME_OTHERS_TEST;
 }
 
 // const COSMOSDB_URL =
@@ -132,23 +133,19 @@ if (checkEnvironment() === APP_ENV.DEV) {
 const JWT_SECRET_KEY = process.env.JWT_SECRET || 'very secret secret';
 const JWT_KEY_EXPIRE = process.env.BCRYPT_KEY_EXPIRES_IN || '7d';
 
-const USER_VERIFICATION_TOKEN_EXPIRES = parseInt(
-    process.env.USER_VERIFICATION_TOKEN_EXPIRES
-);
+const USER_VERIFICATION_TOKEN_EXPIRES = parseInt(process.env.USER_VERIFICATION_TOKEN_EXPIRES);
 
 // Password Hash BCrypt
 const PW_HASH_SALT_ROUNDS = parseInt(process.env.BCRYPT_SALT_ROUNDS) || 11;
 
 // Password reset crypto
-const PW_RESET_TOKEN_NUM_BYTES =
-    parseInt(process.env.CRYPTO_RESET_TOKEN_NUM_BYTES) || 40;
+const PW_RESET_TOKEN_NUM_BYTES = parseInt(process.env.CRYPTO_RESET_TOKEN_NUM_BYTES) || 40;
 
 // Nodemailer
 const MAIL_HOST = process.env.MAIL_HOST || 'mail.gmx.net';
 const MAIL_USER = process.env.MAIL_USER || 'AwesomeCompany@gmx.de';
 const MAIL_PW = process.env.MAIL_PASS || 'ThisIsAwesome1-';
-const MAIL_INTERNAL_CUSTOMER_SUPPORT =
-    process.env.MAIL_INTERNAL_CUSTOMER_SUPPORT || 'rkerscher@gmx.de';
+const MAIL_INTERNAL_CUSTOMER_SUPPORT = process.env.MAIL_INTERNAL_CUSTOMER_SUPPORT || 'rkerscher@gmx.de';
 
 // Body Parser limits
 const JSON_LIMIT = process.env.BP_JSON_LIMIT || '50mb'; // store max 10 images => 4mbx10 = 40mb; + puffer
@@ -160,9 +157,7 @@ const PAYPAL_BASE_URL = process.env.PAYPAL_BASE_URL;
 const PAYPAL_CLIENT_ID = process.env.PAYPAL_CLIENT_ID;
 const PAYPAL_CLIENT_SECRET = process.env.PAYPAL_CLIENT_SECRET;
 const PAYPAL_BN_CODE = process.env.PAYPAL_BN_CODE; // also called Attribution Id
-const PAYPAL_REF_ID_HASH_NUM_BYTES = parseInt(
-    process.env.PAYPAL_REF_ID_HASH_NUM_BYTES
-);
+const PAYPAL_REF_ID_HASH_NUM_BYTES = parseInt(process.env.PAYPAL_REF_ID_HASH_NUM_BYTES);
 const PAYPAL_PLATFORM_MERCHANT_ID = process.env.PAYPAL_PLATFORM_MERCHANT_ID;
 const PAYPAL_PLATFORM_EMAIL = process.env.PAYPAL_PLATFORM_EMAIL;
 
@@ -194,6 +189,7 @@ export {
     AZURE_STORAGE_ACCOUNT_NAME,
     AZURE_STORAGE_ACCOUNT_ACCESS_KEY,
     AZURE_STORAGE_CONTAINER_NAME,
+    AZURE_STORAGE_CONTAINER_NAME_OTHERS,
     // MONGODB_URL_DEV_LOCAL,
     // MONGODB_NAME_DEV_LOCAL,
     // MONGO_ATLAS_DEV_URL,

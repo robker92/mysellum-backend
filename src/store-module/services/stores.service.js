@@ -14,10 +14,7 @@ import {
 import { FRONTEND_BASE_URL_PROD } from '../../config';
 
 // MongoDB transaction
-import {
-    getMongoDbClient,
-    getMongoDbTransactionWriteOptions,
-} from '../../storage/mongodb/setup';
+import { getMongoDbClient, getMongoDbTransactionWriteOptions } from '../../storage/mongodb/setup';
 import { ObjectId } from 'mongodb';
 
 import NodeGeocoder from 'node-geocoder';
@@ -30,6 +27,7 @@ import { getStoreModel } from '../../data-models';
 import { createSignUpLink } from '../../payment-module/paypal/rest/paypal-rest-client';
 import {
     uploadBlobService,
+    uploadLegalDocumentService,
     deleteBlobService,
     getImageBufferResizedService,
     getImageBase64Resized,
@@ -38,10 +36,7 @@ import { storeActivationRoutine } from '../services/activation.service';
 
 import sanitizeHtml from 'sanitize-html';
 
-import {
-    fetchAndValidateStore,
-    validateStoreOwner,
-} from '../utils/operations/store-checks';
+import { fetchAndValidateStore, validateStoreOwner } from '../utils/operations/store-checks';
 import moment from 'moment-timezone';
 
 export {
@@ -98,9 +93,7 @@ async function getSingleStoreService(storeId, userEmail) {
     }
 
     if (!store.adminActivation) {
-        throw new Error(
-            `Store with the id ${storeId} is not activated by the admins.`
-        );
+        throw new Error(`Store with the id ${storeId} is not activated by the admins.`);
     }
 
     if (store.deleted) {
@@ -169,10 +162,7 @@ async function createStoreService(data, userEmail) {
     // TODO validate the address, check if it exists, if it is in the correct country (legal) etc
 
     // sanitize the description
-    const sanitizedDescription = sanitizeHtml(
-        data.description,
-        sanitizeOptions
-    );
+    const sanitizedDescription = sanitizeHtml(data.description, sanitizeOptions);
 
     console.log(geoCodeResult[0]);
     let storeOptions = {
@@ -213,11 +203,7 @@ async function createStoreService(data, userEmail) {
     try {
         await session.withTransaction(async () => {
             // insert the store to the database
-            const insertResult = await createOneOperation(
-                databaseEntity.STORES,
-                storeObject,
-                session
-            );
+            const insertResult = await createOneOperation(databaseEntity.STORES, storeObject, session);
 
             store = insertResult.ops[0];
             console.log('Store creation successful!');
@@ -233,9 +219,7 @@ async function createStoreService(data, userEmail) {
                 store._id
             );
             const selfUrl = paypalLinks.links.find((obj) => obj.rel === 'self');
-            const actionUrl = paypalLinks.links.find(
-                (obj) => obj.rel === 'action_url'
-            );
+            const actionUrl = paypalLinks.links.find((obj) => obj.rel === 'action_url');
 
             await updateOneOperation(
                 databaseEntity.STORES,
@@ -287,10 +271,7 @@ async function editStoreService(data, storeId, userEmail) {
     validateStoreOwner(userEmail, store.userEmail);
 
     // sanitize the description
-    const sanitizedDescription = sanitizeHtml(
-        data.description,
-        sanitizeOptions
-    );
+    const sanitizedDescription = sanitizeHtml(data.description, sanitizeOptions);
 
     // const findResult = await readOneOperation(databaseEntity.STORES, {
     //     _id: storeId,
@@ -311,12 +292,10 @@ async function editStoreService(data, storeId, userEmail) {
     const geoCodeResult = await geoCoder.geocode(addressString);
     // throw error when address was not found
     if (geoCodeResult.length === 0) {
-        throw new Error(
-            `Invalid address provided (${JSON.stringify(data.address)}).`
-        );
+        throw new Error(`Invalid address provided (${JSON.stringify(data.address)}).`);
     }
 
-    // IMAGES - if image is base64 string, upload image to blob store and replace base64 string with blob url
+    // IMAGES - if image is base64 string, upload image to blob store and replace base64 string with blob url #######################
     for (const image of data.images) {
         if (image.src.startsWith('data:image/')) {
             // Resize file
@@ -333,10 +312,7 @@ async function editStoreService(data, storeId, userEmail) {
             image.size = resizedFile.size;
             console.log(image);
         }
-        if (
-            image.src.startsWith('https://') &&
-            image.src.includes('.blob.core.windows.net/')
-        ) {
+        if (image.src.startsWith('https://') && image.src.includes('.blob.core.windows.net/')) {
             console.log(`Image already uploaded.`);
         }
     }
@@ -356,12 +332,9 @@ async function editStoreService(data, storeId, userEmail) {
         }
         if (found === false) {
             // Delete Blob
-            const blobName = oldImage.src.substring(
-                oldImage.src.lastIndexOf('/') + 1,
-                oldImage.src.length
-            );
+            const blobName = oldImage.src.substring(oldImage.src.lastIndexOf('/') + 1, oldImage.src.length);
             console.log(`Old Image: ${blobName}`);
-            promises.push(deleteBlobService(blobName));
+            promises.push(deleteBlobService(blobName, 'images'));
         }
     }
     // do not abort when the deletion is unsuccessful
@@ -370,6 +343,49 @@ async function editStoreService(data, storeId, userEmail) {
     } catch (error) {
         console.log(error);
     }
+    // ###########################################################################################################################
+
+    // Legal Documents ###########################################################################################################
+    if (data.legalDocuments.length > 0) {
+        for (const document of data.legalDocuments) {
+            if (document.fileSrc.startsWith('data:application/pdf')) {
+                document.fileSrc = await uploadLegalDocumentService(document, 'application/pdf');
+            }
+            if (document.fileSrc.startsWith('https://') && document.fileSrc.includes('.blob.core.windows.net/')) {
+                console.log(`Legal document already uploaded.`);
+            }
+        }
+
+        // Iterate over old legal documents and see if the url is in the array of new legal documents. If not, delete the blob
+        let promisesLegalDocuments = [];
+        let found;
+        for (const oldLegalDocument of store.legalDocuments) {
+            found = false;
+            for (const newLegalDocument of data.legalDocuments) {
+                // if old image is found, set var to true
+                if (oldLegalDocument.fileSrc === newLegalDocument.fileSrc) {
+                    found = true;
+                    break;
+                }
+            }
+            if (found === false) {
+                // Delete Blob
+                const blobName = oldLegalDocument.fileSrc.substring(
+                    oldLegalDocument.fileSrc.lastIndexOf('/') + 1,
+                    oldLegalDocument.fileSrc.length
+                );
+                console.log(`Old legal document: ${blobName}`);
+                promisesLegalDocuments.push(deleteBlobService(blobName, 'others'));
+            }
+        }
+        // do not abort when the deletion is unsuccessful
+        try {
+            await Promise.all(promisesLegalDocuments);
+        } catch (error) {
+            console.log(error);
+        }
+    }
+    // ###########################################################################################################################
 
     const session = getMongoDbClient().startSession();
     try {
@@ -400,6 +416,7 @@ async function editStoreService(data, storeId, userEmail) {
                     'shipping.thresholdValue': data.shippingThresholdValue,
                     openingHours: openingHours,
                     contact: data.contact,
+                    legalDocuments: data.legalDocuments,
                     // 'activationSteps.profileComplete': activationProfileCompleteValue,
                     // 'activationSteps.shippingRegistered': activationShippingValue,
                     // 'activationSteps.paymentMethodRegistered':
@@ -417,7 +434,9 @@ async function editStoreService(data, storeId, userEmail) {
         await session.endSession();
     }
 
-    return;
+    return {
+        legalDocuments: data.legalDocuments,
+    };
 }
 
 function validateOpeningHours(openingHours) {
@@ -432,27 +451,18 @@ function validateOpeningHours(openingHours) {
         // current day object
         const currentDay = openingHours[day];
         // validate open time
-        if (
-            !currentDay.times.open ||
-            !validateTimeFormat(currentDay.times.open)
-        ) {
+        if (!currentDay.times.open || !validateTimeFormat(currentDay.times.open)) {
             returnObject[day].opened = false;
             returnObject[day].times.open = '00:00';
         }
         // validate close time
-        if (
-            !currentDay.times.close ||
-            !validateTimeFormat(currentDay.times.close)
-        ) {
+        if (!currentDay.times.close || !validateTimeFormat(currentDay.times.close)) {
             returnObject[day].close = false;
             returnObject[day].times.close = '00:00';
         }
         // validate if open is before close time
         if (
-            !validateOpenBeforeCloseTime(
-                currentDay.times.open,
-                currentDay.times.close
-            ) &&
+            !validateOpenBeforeCloseTime(currentDay.times.open, currentDay.times.close) &&
             currentDay.times.open !== '00:00' &&
             currentDay.times.close !== '00:00'
         ) {
@@ -525,9 +535,7 @@ async function deleteStoreService(storeId, userEmail) {
             );
         }, getMongoDbTransactionWriteOptions());
     } catch (e) {
-        console.log(
-            'The transaction was aborted due to an unexpected error: ' + e
-        );
+        console.log('The transaction was aborted due to an unexpected error: ' + e);
         throw e;
     } finally {
         await session.endSession();
@@ -620,21 +628,11 @@ async function updateStoreDistributionValues(storeId, session = null) {
 
     // set identified values
     if (currentDeliveryValue !== productsDeliveryValue) {
-        await setStoreDistributionValue(
-            storeId,
-            'delivery',
-            productsDeliveryValue,
-            session
-        );
+        await setStoreDistributionValue(storeId, 'delivery', productsDeliveryValue, session);
     }
 
     if (currentPickupValue !== productsPickupValue) {
-        await setStoreDistributionValue(
-            storeId,
-            'pickup',
-            productsPickupValue,
-            session
-        );
+        await setStoreDistributionValue(storeId, 'pickup', productsPickupValue, session);
     }
 
     return;

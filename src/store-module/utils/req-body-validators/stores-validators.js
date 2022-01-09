@@ -55,9 +55,9 @@ const editStoreVal = {
                     type: Joi.string().min(3).max(40).required(),
                     label: Joi.string().min(3).max(40).required(),
                     fileDetails: Joi.object({
-                        lastModified: Joi.string().required(),
+                        lastModified: Joi.number().required(),
                         lastModifiedDate: Joi.string().optional(),
-                        name: Joi.string().min(3).max(40).required(),
+                        name: Joi.string().min(3).max(60).required(),
                         size: Joi.number().required(),
                         type: Joi.string().min(3).max(40).required(),
                         webkitRelativePath: Joi.string().min(3).max(40).optional(),
