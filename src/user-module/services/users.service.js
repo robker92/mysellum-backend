@@ -23,6 +23,7 @@ import {
 
 export {
     getUserDataService,
+    updateUserDataService,
     addStoreToFavoritesService,
     removeStoreFromFavoritesService,
 };
@@ -47,10 +48,13 @@ async function getUserDataService(userEmail) {
             // 'storeId',
             // 'createdAt',
             // 'updatedAt',
+            'email',
+            'phoneNumber',
             'firstName',
             'lastName',
             'addressLine1',
             'city',
+            'country',
             'postcode',
             'companyName',
         ]
@@ -79,6 +83,21 @@ async function getUserDataService(userEmail) {
         throw new Error(`A user with the email "${userEmail}" was not found.`);
     }
     console.log(user);
+    return user;
+}
+
+async function updateUserDataService(userEmail, data) {
+    // TODO validate(data)
+
+    const user = await updateOneAndReturnOperation(
+        databaseEntity.USERS,
+        {
+            email: userEmail,
+        },
+        data,
+        'set'
+    );
+
     return user;
 }
 

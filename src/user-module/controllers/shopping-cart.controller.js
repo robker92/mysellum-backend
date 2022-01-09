@@ -14,7 +14,7 @@ export {
 };
 
 const addToShoppingCartController = async function (req, res, next) {
-    const email = req.params.email;
+    const userEmail = req.userEmail;
     const addedProduct = req.body.product;
     const addedAmount = parseInt(req.body.amount);
 
@@ -22,7 +22,7 @@ const addToShoppingCartController = async function (req, res, next) {
     let shippingCosts;
     try {
         shoppingCart = await addToShoppingCartService(
-            email,
+            userEmail,
             addedProduct,
             addedAmount
         );
@@ -39,7 +39,7 @@ const addToShoppingCartController = async function (req, res, next) {
 };
 
 const removeFromShoppingCartController = async function (req, res, next) {
-    const email = req.params.email;
+    const userEmail = req.userEmail;
     const removedProduct = req.body.product;
     const removedAmount = req.body.amount;
 
@@ -47,7 +47,7 @@ const removeFromShoppingCartController = async function (req, res, next) {
     let shippingCosts;
     try {
         shoppingCart = await removeFromShoppingCartService(
-            email,
+            userEmail,
             removedProduct,
             removedAmount
         );

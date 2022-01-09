@@ -10,11 +10,9 @@ const cartProductValidation = {
         email: Joi.string().email().required(),
         product: Joi.object({
             _id: Joi.string().required(),
-            productId: Joi.number().optional(),
             storeId: Joi.string()
                 .regex(/^[A-Za-z0-9]*$/)
                 .required(),
-            addDate: Joi.string().optional(),
             title: Joi.string().optional(),
             description: Joi.string().optional(),
             longDescription: Joi.string().optional(),
@@ -45,11 +43,9 @@ const cartUpdateValidation = {
                     .items(
                         Joi.object({
                             _id: Joi.string().required(),
-                            productId: Joi.number().optional(),
                             storeId: Joi.string()
                                 .regex(/^[A-Za-z0-9]*$/)
                                 .required(),
-                            addDate: Joi.string().optional(),
                             title: Joi.string().optional(),
                             description: Joi.string().optional(),
                             imgSrc: Joi.string().optional(),
@@ -63,17 +59,13 @@ const cartUpdateValidation = {
                             stockAmount: Joi.optional(),
                             delivery: Joi.boolean().optional(),
                             pickup: Joi.boolean().optional(),
-                            datetimeCreated: Joi.string()
-                                .allow(null, '')
-                                .optional(),
-                            datetimeAdjusted: Joi.string()
-                                .allow(null, '')
-                                .optional(),
+                            datetimeCreated: Joi.string().allow(null, '').optional(),
+                            datetimeAdjusted: Joi.string().allow(null, '').optional(),
                         }).required(),
                         Joi.number().required()
                     )
-                    .optional()
+                    .required()
             )
-            .optional(),
+            .required(),
     }),
 };

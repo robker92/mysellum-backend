@@ -8,6 +8,7 @@ import { parserJsonLimit } from '../../utils/bodyParsers';
 
 import {
     getUserDataController,
+    updateUserDataController,
     addStoreToFavoritesController,
     removeStoreFromFavoritesController,
 } from '../controllers/users.controller';
@@ -16,9 +17,15 @@ const routerPrefix = 'users';
 
 routerUsers.get(
     `/${routerPrefix}`,
-    parserJsonLimit,
     checkAuthentication,
     excHandler(getUserDataController)
+);
+
+routerUsers.post(
+    `/${routerPrefix}`,
+    parserJsonLimit,
+    checkAuthentication,
+    excHandler(updateUserDataController)
 );
 
 routerUsers.post(
@@ -30,7 +37,6 @@ routerUsers.post(
 
 routerUsers.delete(
     `/${routerPrefix}/favorite-store/:storeId`,
-    parserJsonLimit,
     checkAuthentication,
     excHandler(removeStoreFromFavoritesController)
 );

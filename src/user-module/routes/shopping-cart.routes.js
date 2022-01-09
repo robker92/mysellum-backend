@@ -25,14 +25,14 @@ import {
 const routerPrefix = 'cart';
 
 routerShoppingCart.patch(
-    `/${routerPrefix}/add/:email`,
+    `/${routerPrefix}/add`,
     parserJsonLimit,
     checkAuthentication,
     validate(cartProductValidation, opts),
     excHandler(addToShoppingCartController)
 );
 routerShoppingCart.patch(
-    `/${routerPrefix}/remove/:email`,
+    `/${routerPrefix}/remove`,
     parserJsonLimit,
     checkAuthentication,
     validate(cartProductValidation, opts),

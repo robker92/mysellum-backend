@@ -10,6 +10,7 @@ export function getUserModel(options) {
         addressLine1: options.addressLine1,
         city: options.city,
         postcode: options.postcode,
+        country: options.country ? 'DE' : '',
         companyName: options.companyName,
         //},
         birthdate: options.birthdate,
