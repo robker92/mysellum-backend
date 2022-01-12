@@ -4,6 +4,11 @@
       "@babel/preset-env", {"targets": {"node": "current"}}
     ]
   ],
+  "plugins": [
+    [
+      "@babel/plugin-transform-runtime", {"targets": {"node": "current"}}
+    ]
+  ],
   "env": {
     "test": {
       "plugins": ["@babel/plugin-transform-modules-commonjs"]
