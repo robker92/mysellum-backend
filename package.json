@@ -11,11 +11,11 @@
     "transpile": "npx babel ./src -d dist",
     "cpy:assets": "cp -R ./src/assets ./dist/assets",
     "server": "babel-node ./dist/index.js",
-    "start:dev": "cross-env NODE_ENV=development nodemon --exec babel-node ./src/index.js",
+    "start:dev:old": "cross-env NODE_ENV=development nodemon --exec babel-node ./src/index.js",
     "test": "jest --detectOpenHandles",
     "test2": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "start:dev:server": "babel-node ./src/index.js",
-    "start2": "cross-env NODE_ENV=development nodemon --exec npm run start:dev:server"
+    "start:dev": "cross-env NODE_ENV=development nodemon --exec npm run start:dev:server"
   },
   "author": "Robert Kerscher",
   "license": "",
