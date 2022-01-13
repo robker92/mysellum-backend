@@ -35,6 +35,13 @@ import {
 import { storeActivationRoutine } from '../services/activation.service';
 
 import sanitizeHtml from 'sanitize-html';
+const sanitizeOptions = {
+    allowedTags: ['b', 'i', 'u', 'font', 'div', 'br', 'ul', 'ol', 'li'],
+    allowedAttributes: {
+        font: ['size'],
+        div: ['style'],
+    },
+};
 
 import { fetchAndValidateStore, validateStoreOwner } from '../utils/operations/store-checks';
 import moment from 'moment-timezone';
@@ -48,14 +55,6 @@ export {
     updateStoreDistributionValues,
     adminActivationService,
     adminDeactivationService,
-};
-
-const sanitizeOptions = {
-    allowedTags: ['b', 'i', 'u', 'font', 'div', 'br', 'ul', 'ol', 'li'],
-    allowedAttributes: {
-        font: ['size'],
-        div: ['style'],
-    },
 };
 
 /**
@@ -286,13 +285,22 @@ async function editStoreService(data, storeId, userEmail) {
     //     );
     // }
 
-    //let storeData = storeModel.get(options);
-    const addressString = `${data.address.addressLine1}, ${data.address.postcode} ${data.address.city}, ${data.address.country}`;
-    console.log(addressString);
-    const geoCodeResult = await geoCoder.geocode(addressString);
-    // throw error when address was not found
-    if (geoCodeResult.length === 0) {
-        throw new Error(`Invalid address provided (${JSON.stringify(data.address)}).`);
+    // Check if address has been changed
+    if (
+        // store.mapData.address.addressLine1 !== data.address.addressLine1 ||
+        // store.mapData.address.postcode !== data.address.postcode ||
+        // store.mapData.address.city !== data.address.city ||
+        // store.mapData.address.country !== data.address.country
+
+        JSON.stringify(store.mapData.address) !== JSON.stringify(data.address)
+    ) {
+        const addressString = `${data.address.addressLine1}, ${data.address.postcode} ${data.address.city}, ${data.address.country}`;
+        console.log(addressString);
+        const geoCodeResult = await geoCoder.geocode(addressString);
+        // throw error when address was not found
+        if (geoCodeResult.length === 0) {
+            throw new Error(`Invalid address provided (${JSON.stringify(data.address)}).`);
+        }
     }
 
     // IMAGES - if image is base64 string, upload image to blob store and replace base64 string with blob url #######################

@@ -39,9 +39,7 @@ async function getStoresOrdersService(userEmail, pageSize, pageNum) {
         userEmail: userEmail,
     });
     if (!store) {
-        throw new Error(
-            `The store with the userEmail ${userEmail} could no be found.`
-        );
+        throw new Error(`The store with the userEmail ${userEmail} could no be found.`);
     }
 
     // Add filters, sort etc
@@ -58,21 +56,17 @@ async function getStoresOrdersService(userEmail, pageSize, pageNum) {
     const projectObject = {};
     const sortObject = { datetimeCreated: -1 };
 
-    let resultCursor = await collectionOrders
-        .find(queryArray[0])
-        .project(projectObject)
-        .sort(sortObject);
+    // Get total count
+    let resultCursor = await collectionOrders.find(queryArray[0]).project(projectObject).sort(sortObject);
     const totalCount = await resultCursor.count();
     console.log(totalCount);
 
+    // Get orders with pagination
     pageSize = parseInt(pageSize);
     pageNum = parseInt(pageNum);
     const skips = pageSize * (pageNum - 1);
 
-    const resultOrders = await resultCursor
-        .skip(skips)
-        .limit(pageSize)
-        .toArray();
+    const resultOrders = await resultCursor.skip(skips).limit(pageSize).toArray();
 
     return { orders: resultOrders, totalCount };
 }
@@ -96,14 +90,7 @@ async function getAllOrdersService() {
     return orders;
 }
 
-async function setStepStatusService(
-    userEmail,
-    storeId,
-    orderId,
-    step,
-    value,
-    type = ''
-) {
+async function setStepStatusService(userEmail, storeId, orderId, step, value, type = '') {
     // Fetch store and validate store owner
     const store = await readOneOperation(databaseEntity.STORES, {
         _id: storeId,
@@ -113,12 +100,9 @@ async function setStepStatusService(
     }
     //Guard to make sure that only the store owner is able to edit this store
     if (store.userEmail !== userEmail) {
-        throw new Error(
-            `The user with the email ${userEmail} is not authorized to edit this order.`
-        );
+        throw new Error(`The user with the email ${userEmail} is not authorized to edit this order.`);
     }
 
-    // TODO Check if step (value variable) in allowed values
     const setString = `status.steps.${step}`;
     const setObject = {};
     setObject[setString] = value;
@@ -178,9 +162,7 @@ async function searchOrderByTermService(storeId, userEmail, searchTerm) {
     }
     //Guard to make sure that only the store owner is able to edit this store
     if (store.userEmail !== userEmail) {
-        throw new Error(
-            `The user with the email ${userEmail} is unauthorized to fetch the orders of this store.`
-        );
+        throw new Error(`The user with the email ${userEmail} is unauthorized to fetch the orders of this store.`);
     }
 
     let queryArray = [];

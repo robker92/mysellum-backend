@@ -20,7 +20,7 @@ async function validateAddress(address) {
     // throw error when address was not found
     if (geoCodeResult.length === 0) {
         throw new Error(
-            `The provided address was not found and is therefore invalid ${addressString}`
+            `The provided address was not found and is therefore invalid: ${addressString}`
         );
     }
 

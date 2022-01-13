@@ -1,26 +1,23 @@
 'use strict';
 
 import { getPartnerReferralBody, getCreateOrderBody } from '../models';
-import {
-    paypalClient,
-    getAccessToken,
-} from '../client/rest/paypal-rest-client';
+import { paypalClient, getAccessToken } from '../client/rest/paypal-rest-client';
 import { PAYPAL_CLIENT_ID, PAYPAL_PLATFORM_MERCHANT_ID } from '../../config';
 import { v4 as uuidv4 } from 'uuid';
 
 export {
-    createSignUpLinkService,
+    // createSignUpLinkService,
     validatePaypalMerchantId,
     fetchWebhookPaypalMerchantId,
-    createPaypalOrder,
-    capturePaypalOrder,
-    refundPaypalOrder,
-    onboardingDataService,
-    onboardingData2Service,
+    // createPaypalOrder,
+    // capturePaypalOrder,
+    // refundPaypalOrder,
+    // onboardingDataService,
+    // onboardingData2Service,
     saveWebhookData,
     saveMerchantId,
-    fetchMerchantIds,
-    sendNotificationEmails,
+    // fetchMerchantIds,
+    // sendNotificationEmails,
 };
 
 /**
@@ -36,15 +33,11 @@ async function createSignUpLinkService(returnLink, trackingId) {
         const accessToken = await getAccessToken();
         // console.log(`hi2`);
         console.log(requestBody);
-        response = await paypalClient.post(
-            `/v2/customer/partner-referrals`,
-            requestBody,
-            {
-                headers: {
-                    Authorization: `Bearer ${accessToken}`,
-                },
-            }
-        );
+        response = await paypalClient.post(`/v2/customer/partner-referrals`, requestBody, {
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+            },
+        });
     } catch (error) {
         // console.log(error);
         throw error;
@@ -61,9 +54,7 @@ async function createSignUpLinkService(returnLink, trackingId) {
  */
 async function validatePaypalMerchantId(merchantIdInPaypal, trackingId) {
     let url = `/v1/customer/partners/${PAYPAL_PLATFORM_MERCHANT_ID}/merchant-integrations`;
-    url = merchantIdInPaypal
-        ? url + `/${merchantIdInPaypal}`
-        : url + `?tracking_id=${trackingId}`;
+    url = merchantIdInPaypal ? url + `/${merchantIdInPaypal}` : url + `?tracking_id=${trackingId}`;
     // if (!merchantIdInPaypal) {
     //     url = url + `?tracking_id=${trackingId}`;
     // } else {
@@ -121,13 +112,7 @@ async function fetchWebhookPaypalMerchantId(url) {
  */
 async function createPaypalOrder(orderData) {
     // const testEmail = 'sb-b10wx5264762@personal.example.com';
-    const requestBody = getCreateOrderBody(
-        orderData.currency,
-        orderData.totalSum,
-        orderData.userEmail,
-        'EUR',
-        '10.00'
-    );
+    const requestBody = getCreateOrderBody(orderData.currency, orderData.totalSum, orderData.userEmail, 'EUR', '10.00');
     console.log(JSON.stringify(requestBody));
     const accessToken = await getAccessToken();
 
@@ -157,15 +142,12 @@ async function capturePaypalOrder(orderId) {
 
     let response;
     try {
-        response = await paypalClient.post(
-            `/v2/checkout/orders/${orderId}/capture`,
-            {
-                headers: {
-                    Authorization: `Bearer ${accessToken}`,
-                    //'PayPal-Partner-Attribution-Id': '',
-                },
-            }
-        );
+        response = await paypalClient.post(`/v2/checkout/orders/${orderId}/capture`, {
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+                //'PayPal-Partner-Attribution-Id': '',
+            },
+        });
     } catch (error) {
         console.log(error);
         throw error;
@@ -197,17 +179,13 @@ async function refundPaypalOrder(captureId, value, currencyCode) {
 
     let response;
     try {
-        response = await paypalClient.post(
-            `/v2/payments/captures/${captureId}/refund`,
-            payload,
-            {
-                headers: {
-                    Authorization: `Bearer ${accessToken}`,
-                    'PayPal-Auth-Assertion': authAssertionHeader,
-                    'PayPal-Request-Id': paypalRequestId,
-                },
-            }
-        );
+        response = await paypalClient.post(`/v2/payments/captures/${captureId}/refund`, payload, {
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+                'PayPal-Auth-Assertion': authAssertionHeader,
+                'PayPal-Request-Id': paypalRequestId,
+            },
+        });
     } catch (error) {
         console.log(error);
         throw error;
@@ -218,8 +196,7 @@ function getAuthAssertionHeader(sellerEmail) {
     // const auth1 = btoa('{"alg":"none"}');
     const auth2Obj = { email: sellerEmail, iss: PAYPAL_CLIENT_ID };
     // const auth2 = btoa(JSON.stringify(auth2Obj));
-    const authAssertionHeader =
-        btoa('{"alg":"none"}') + '.' + btoa(JSON.stringify(auth2Obj)) + '.';
+    const authAssertionHeader = btoa('{"alg":"none"}') + '.' + btoa(JSON.stringify(auth2Obj)) + '.';
     return authAssertionHeader;
 }
 
@@ -239,9 +216,7 @@ async function onboardingDataService(
     // Validate store id & check if values are not already set
     const store = await fetchAndValidateStore(storeId);
     if (store.payment.paypal.common.merchantIdInPayPal) {
-        throw new Error(
-            'There is already a merchantIdInPayPal stored for this store.'
-        );
+        throw new Error('There is already a merchantIdInPayPal stored for this store.');
     }
     if (store.userEmail !== userEmail) {
         throw new Error('User not authorized to edit this store.');
@@ -288,9 +263,7 @@ async function onboardingData2Service(storeId, userEmail, merchantIdInPayPal) {
     // Validate store id & check if values are not already set
     const store = await fetchAndValidateStore(storeId);
     if (store.payment.paypal.common.merchantIdInPayPal) {
-        throw new Error(
-            'There is already a merchantIdInPayPal stored for this store.'
-        );
+        throw new Error('There is already a merchantIdInPayPal stored for this store.');
     }
     if (store.userEmail !== userEmail) {
         throw new Error('User not authorized to edit this store.');
@@ -325,9 +298,7 @@ async function onboardingData2Service(storeId, userEmail, merchantIdInPayPal) {
 async function saveMerchantId(merchantId, trackingId) {
     const store = await fetchAndValidateStore(trackingId);
     if (store.payment.paypal.common.merchantIdInPayPal) {
-        throw new Error(
-            'There is already a merchantIdInPayPal stored for this store.'
-        );
+        throw new Error('There is already a merchantIdInPayPal stored for this store.');
     }
     // console.log(merchantId);
     // console.log(trackingId);
@@ -385,10 +356,7 @@ async function sendNotificationEmails(customerEmail, captureArray) {
     promises.push(sendNodemailerMail(mailOptions));
 
     for (const purchaseUnit of captureArray) {
-        const storeId = purchaseUnit.paypalRefId.substring(
-            0,
-            purchaseUnit.paypalRefId.indexOf('~')
-        );
+        const storeId = purchaseUnit.paypalRefId.substring(0, purchaseUnit.paypalRefId.indexOf('~'));
         const store = await fetchAndValidateStore(storeId);
         let mailOptions = {
             email: store.userEmail,

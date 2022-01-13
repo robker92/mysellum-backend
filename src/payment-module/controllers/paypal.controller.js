@@ -12,18 +12,7 @@ import {
     fetchMerchantIds,
 } from '../services/paypal-utils.service';
 
-// import {
-//     createPaypalOrder,
-//     capturePaypalOrderProcedure,
-//     saveCaptureIdsToOrders,
-//     handleIncompleteCaptures,
-// } from '../services/paypal-orders.service';
-
-// import { sendNotificationEmails } from '../services/orders.service';
-
 import { checkIfInstrumentDeclined } from '../utils/checkForPaypalInstrumentDeclinedError';
-// import { validateAddress } from '../utils/validators/address-validator';
-// import { validateCurrencyCode } from '../utils/validators/currency-code-validator';
 
 import {
     capturePaypalOrderService,
@@ -36,7 +25,7 @@ import {
 export {
     createSignUpLinkController,
     onboardingDataController,
-    onboardingData2Controller,
+    // onboardingData2Controller,
     createPaypalOrderController,
     capturePaypalOrderController,
     fetchMerchantIdsController,
@@ -60,7 +49,6 @@ const createSignUpLinkController = async function (req, res, next) {
     }
 
     return res.status(200).json({
-        message: 'Sign-up link creation successful!',
         data: responseData,
     });
 };
@@ -103,44 +91,44 @@ const onboardingDataController = async function (req, res, next) {
     return res.sendStatus(200);
 };
 
-const onboardingData2Controller = async function (req, res, next) {
-    const storeId = req.params.storeId;
-    const userEmail = req.userEmail;
+// const onboardingData2Controller = async function (req, res, next) {
+//     const storeId = req.params.storeId;
+//     const userEmail = req.userEmail;
 
-    let result;
-    try {
-        // validate store -> check user; check if payment already registered
-        // TODO
-        // Validate Paypal Ids
-        result = await validatePaypalMerchantId('', storeId);
-        // Validate store id & store owner & check if values are not already set
-        // save data to store (paypal + status)
+//     let result;
+//     try {
+//         // validate store -> check user; check if payment already registered
+//         // TODO
+//         // Validate Paypal Ids
+//         result = await validatePaypalMerchantId('', storeId);
+//         // Validate store id & store owner & check if values are not already set
+//         // save data to store (paypal + status)
 
-        await onboardingData2Service(storeId, userEmail, result.merchant_id);
-        // save paypal data and adjust store status
+//         await onboardingData2Service(storeId, userEmail, result.merchant_id);
+//         // save paypal data and adjust store status
 
-        // TODO check activation
-        // await onboardingDataService(
-        //     storeId,
-        //     userEmail,
-        //     merchantId,
-        //     merchantIdInPayPal,
-        //     permissionsGranted,
-        //     consentStatus,
-        //     productIntentId,
-        //     productIntentID,
-        //     isEmailConfirmed,
-        //     accountStatus
-        // );
-    } catch (error) {
-        console.log(error);
-        return next({
-            status: 500,
-            message: 'Error while saving the onboarding data.',
-        });
-    }
-    return res.sendStatus(200);
-};
+//         // TODO check activation
+//         // await onboardingDataService(
+//         //     storeId,
+//         //     userEmail,
+//         //     merchantId,
+//         //     merchantIdInPayPal,
+//         //     permissionsGranted,
+//         //     consentStatus,
+//         //     productIntentId,
+//         //     productIntentID,
+//         //     isEmailConfirmed,
+//         //     accountStatus
+//         // );
+//     } catch (error) {
+//         console.log(error);
+//         return next({
+//             status: 500,
+//             message: 'Error while saving the onboarding data.',
+//         });
+//     }
+//     return res.sendStatus(200);
+// };
 
 const createPaypalOrderController = async function (req, res, next) {
     const orderData = req.body;
@@ -168,9 +156,7 @@ const capturePaypalOrderController = async function (req, res, next) {
         await capturePaypalOrderService(orderId, orderData, userEmail);
     } catch (error) {
         if (checkIfInstrumentDeclined(error) === true) {
-            return res
-                .status(error.statusCode)
-                .json(JSON.parse(error._originalError.text));
+            return res.status(error.statusCode).json(JSON.parse(error._originalError.text));
         }
         // Catch other errors
         console.log(error);
@@ -198,7 +184,6 @@ const fetchMerchantIdsController = async function (req, res, next) {
     }
 
     return res.status(200).json({
-        message: 'Merchant Ids successfully fetched.',
         merchantIds: merchantIdArray,
     });
 };
@@ -221,20 +206,16 @@ const paypalRefundController = async function (req, res, next) {
     }
     console.log(merchantIdArray);
 
-    return res.status(200).json({
-        message: 'Refund successful.',
-    });
+    return res.sendStatus(200);
 };
 
 const paypalOnboardingWebhookController = async function (req, res, next) {
     const webhookData = req.body;
     // verify that webhook is valid and not malicious &
     // Execute provided Get link to receive tracking id (= internal store id)
-    let resultObjct;
+    let resultObject;
     try {
-        resultObjct = await fetchWebhookPaypalMerchantId(
-            webhookData.resource.links[0].href
-        );
+        resultObject = await fetchWebhookPaypalMerchantId(webhookData.resource.links[0].href);
     } catch (error) {
         console.log(error);
         return next({
@@ -243,8 +224,8 @@ const paypalOnboardingWebhookController = async function (req, res, next) {
         });
     }
 
-    const merchantId = resultObjct.merchant_id;
-    const trackingId = resultObjct.tracking_id;
+    const merchantId = resultObject.merchant_id;
+    const trackingId = resultObject.tracking_id;
 
     // TODO activation status
     // save merchant id and update activation status

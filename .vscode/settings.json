@@ -6,5 +6,6 @@
         ".vscode{,/**}"
     ],
     "appService.defaultWebAppToDeploy": "/subscriptions/99a2597a-ebb3-47fd-b0f5-91ceafdc06ec/resourceGroups/prjct/providers/Microsoft.Web/sites/prjct-backend",
-    "appService.deploySubpath": "."
+    "appService.deploySubpath": ".",
+    "editor.formatOnSave": true
 }

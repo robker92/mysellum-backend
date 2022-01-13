@@ -20,6 +20,12 @@ import {
     searchOrderByTermController,
 } from '../controllers/orders.controller';
 
+import { validate } from 'express-validation';
+const opts = {
+    keyByField: true, //Reduces the validation error to a list with key/value pair "fieldname": "Message"
+};
+import {setOrderStatusValidation} from '../utils/validators/request-body-validators'
+
 const routerPrefix = 'orders';
 
 routerOrders.get(
@@ -60,6 +66,7 @@ routerOrders.post(
     `/${routerPrefix}/step-status`,
     checkAuthentication,
     parserJsonLimit,
+    validate(setOrderStatusValidation, opts),
     errHandler(setStepStatusController)
 );
 

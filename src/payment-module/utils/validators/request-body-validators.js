@@ -3,6 +3,7 @@ import { Joi } from 'express-validation';
 //===================================================================================================
 export {
     createSignUpLinkValidation,
+    setOrderStatusValidation,
     onboardingCompletedWebhookValidation,
     onboardingDataValidation,
     createPaypalOrderValidation,
@@ -18,6 +19,16 @@ const createSignUpLinkValidation = {
     }),
 };
 
+const setOrderStatusValidation = {
+    body: Joi.object({
+        storeId: Joi.string().min(5).max(100).required(),
+        orderId: Joi.string().min(5).max(100).required(),
+        step: Joi.string().valid('orderReceived', 'paymentReceived', 'inDelivery').required(), // orderReceived, paymentReceived, inDelivery
+        value: Joi.boolean().required(),
+        type: Joi.string().valid('delivery', 'pickup').required(), // delivery or pickup
+    }),
+};
+
 const onboardingCompletedWebhookValidation = {
     body: Joi.object({
         id: Joi.string()
@@ -26,9 +37,7 @@ const onboardingCompletedWebhookValidation = {
             .required(),
         create_time: Joi.date().iso().required(),
         resource_type: Joi.string().valid('merchant-onboarding').required(),
-        event_type: Joi.string()
-            .valid('"MERCHANT.ONBOARDING.COMPLETED"')
-            .required(),
+        event_type: Joi.string().valid('"MERCHANT.ONBOARDING.COMPLETED"').required(),
         resource: Joi.object({
             partner_client_id: Joi.string()
                 .regex(/^([A-Za-z0-9\-]+)*$/)
@@ -77,13 +86,12 @@ const createPaypalOrderValidation = {
                     .items(
                         Joi.object({
                             _id: Joi.string().required(),
-                            productId: Joi.number().optional(),
                             storeId: Joi.string()
                                 .regex(/^[A-Za-z0-9]*$/)
                                 .required(),
-                            addDate: Joi.string().optional(),
                             title: Joi.string().optional(),
                             description: Joi.string().optional(),
+                            longDescription: Joi.string().optional(),
                             imgSrc: Joi.string().optional(),
                             imageDetails: Joi.object().optional(),
                             price: Joi.string().optional(),
@@ -93,12 +101,11 @@ const createPaypalOrderValidation = {
                             quantityType: Joi.string().optional(),
                             quantityValue: Joi.string().optional(),
                             stockAmount: Joi.optional(),
-                            datetimeCreated: Joi.string()
-                                .allow(null, '')
-                                .optional(),
-                            datetimeAdjusted: Joi.string()
-                                .allow(null, '')
-                                .optional(),
+                            datetimeCreated: Joi.string().allow(null, '').optional(),
+                            datetimeAdjusted: Joi.string().allow(null, '').optional(),
+                            active: Joi.boolean().optional(),
+                            pickup: Joi.boolean().optional(),
+                            delivery: Joi.boolean().optional(),
                         }).required(),
                         Joi.number().required()
                     )
@@ -141,13 +148,12 @@ const capturePaypalOrderValidation = {
                 Joi.array().items(
                     Joi.object({
                         _id: Joi.string().required(),
-                        productId: Joi.number().optional(),
                         storeId: Joi.string()
                             .regex(/^[A-Za-z0-9]*$/)
                             .required(),
-                        addDate: Joi.string().optional(),
                         title: Joi.string().optional(),
                         description: Joi.string().optional(),
+                        longDescription: Joi.string().optional(),
                         imgSrc: Joi.string().optional(),
                         imageDetails: Joi.object().optional(),
                         price: Joi.string().optional(),
@@ -157,12 +163,11 @@ const capturePaypalOrderValidation = {
                         quantityType: Joi.string().optional(),
                         quantityValue: Joi.string().optional(),
                         stockAmount: Joi.optional(),
-                        datetimeCreated: Joi.string()
-                            .allow(null, '')
-                            .optional(),
-                        datetimeAdjusted: Joi.string()
-                            .allow(null, '')
-                            .optional(),
+                        datetimeCreated: Joi.string().allow(null, '').optional(),
+                        datetimeAdjusted: Joi.string().allow(null, '').optional(),
+                        active: Joi.boolean().optional(),
+                        pickup: Joi.boolean().optional(),
+                        delivery: Joi.boolean().optional(),
                     }).required(),
                     Joi.number().required()
                 )

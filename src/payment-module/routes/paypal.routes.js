@@ -36,32 +36,32 @@ const routerPrefix = 'paypal';
 
 routerPaypal.post(
     `/${routerPrefix}/signup-link`,
-    parserJsonLimit,
     checkAuthentication,
+    parserJsonLimit,
     validate(createSignUpLinkValidation, opts),
     excHandler(createSignUpLinkController)
 );
 
 routerPaypal.post(
     `/${routerPrefix}/create-order`,
-    parserJsonLimit,
     checkAuthentication,
-    // validate(createPaypalOrderValidation, opts),
+    parserJsonLimit,
+    validate(createPaypalOrderValidation, opts),
     excHandler(createPaypalOrderController)
 );
 
 routerPaypal.post(
     `/${routerPrefix}/capture-order`,
-    parserJsonLimit,
     checkAuthentication,
-    // validate(capturePaypalOrderValidation, opts),
+    parserJsonLimit,
+    validate(capturePaypalOrderValidation, opts),
     excHandler(capturePaypalOrderController)
 );
 
 routerPaypal.post(
     `/${routerPrefix}/fetch-merchant-ids`,
-    parserJsonLimit,
     checkAuthentication,
+    parserJsonLimit,
     validate(fetchMerchantIdsValidation, opts),
     excHandler(fetchMerchantIdsController)
 );
@@ -92,8 +92,8 @@ routerPaypal.post(
 
 routerPaypal.post(
     `/${routerPrefix}/onboarding-data/:storeId`,
-    parserJsonLimit,
     checkAuthentication,
+    parserJsonLimit,
     validate(onboardingDataValidation, opts),
     excHandler(onboardingDataController)
 );
