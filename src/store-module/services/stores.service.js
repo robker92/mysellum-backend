@@ -24,7 +24,7 @@ const geoCodeOptions = {
 const geoCoder = NodeGeocoder(geoCodeOptions);
 
 import { getStoreModel } from '../../data-models';
-import { createSignUpLink } from '../../payment-module/paypal/rest/paypal-rest-client';
+import { createSignUpLinkService } from '../../payment-module/services/paypal';
 import {
     uploadBlobService,
     uploadLegalDocumentService,
@@ -211,7 +211,7 @@ async function createStoreService(data, userEmail) {
             // Create paypal action link
             // Other option: use user email and not store id
             console.log(store._id);
-            const paypalLinks = await createSignUpLink(
+            const paypalLinks = await createSignUpLinkService(
                 // `https://prjct-frontend.azurewebsites.net/store-profile/${store._id}`,
                 `${FRONTEND_BASE_URL_PROD}/store-profile/${store._id}`,
                 // `http://127.0.0.1:8080/store-profile/${store._id}`,

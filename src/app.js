@@ -26,7 +26,7 @@ import { errorHandler } from './middlewares/ErrorHandler';
 
 // import { routerPaypal } from './payment-module/paypal/paypal-routes';
 // import { routerOrders } from './payment-module/routes';
-import { routerPaypal, routerOrders } from './payment-module2/routes';
+import { routerPaypal, routerOrders } from './payment-module/routes';
 
 // import { routerPgTest } from './pg/endpoint';
 

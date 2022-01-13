@@ -1,4 +1,4 @@
-import { currencyCode } from '../utils/currencyCode';
+import { currencyCode } from '../currencyCode';
 
 export { validateCurrencyCode };
 
