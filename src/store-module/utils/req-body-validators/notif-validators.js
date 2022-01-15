@@ -1,10 +1,11 @@
 import { Joi } from 'express-validation';
+import { joiMongoIdSchema } from '../../../utils/joiValidators';
 
 const registerProductAvailabilityNotificationVal = {
     body: Joi.object({
-        email: Joi.string().email().required(),
-        storeId: Joi.string().min(10).max(100).required(),
-        productId: Joi.string().min(10).max(100).required(),
+        email: Joi.string().email().max(500).required(),
+        storeId: joiMongoIdSchema.required(),
+        productId: joiMongoIdSchema.required(),
     }),
 };
 

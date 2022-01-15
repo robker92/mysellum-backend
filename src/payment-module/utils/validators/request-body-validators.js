@@ -1,4 +1,5 @@
 import { Joi } from 'express-validation';
+import { joiShoppingCartSchema, joiAddressSchema, joiMongoIdSchema } from '../../../utils/joiValidators';
 
 //===================================================================================================
 export {
@@ -46,7 +47,7 @@ const onboardingCompletedWebhookValidation = {
             links: Joi.array()
                 .items(
                     Joi.object({
-                        href: Joi.string().uri().required(),
+                        href: Joi.string().max(100).uri().required(),
                         rel: Joi.string().valid('self').required(),
                         method: Joi.string().valid('GET').required(),
                         description: Joi.string().max(250).required(),
@@ -71,72 +72,18 @@ const onboardingDataValidation = {
             .required(),
         permissionsGranted: Joi.boolean().required(),
         consentStatus: Joi.boolean().required(),
-        productIntentId: Joi.string().valid('addipmt'),
-        productIntentID: Joi.string().valid('addipmt'),
+        productIntentId: Joi.string().max(100).valid('addipmt'),
+        productIntentID: Joi.string().max(100).valid('addipmt'),
         isEmailConfirmed: Joi.boolean().required(),
-        accountStatus: Joi.string().valid('BUSINESS_ACCOUNT'),
+        accountStatus: Joi.string().max(100).valid('BUSINESS_ACCOUNT'),
     }),
 };
 
 const createPaypalOrderValidation = {
     body: Joi.object({
-        products: Joi.array()
-            .items(
-                Joi.array()
-                    .items(
-                        Joi.object({
-                            _id: Joi.string().required(),
-                            storeId: Joi.string()
-                                .regex(/^[A-Za-z0-9]*$/)
-                                .required(),
-                            title: Joi.string().optional(),
-                            description: Joi.string().optional(),
-                            longDescription: Joi.string().optional(),
-                            imgSrc: Joi.string().optional(),
-                            imageDetails: Joi.object().optional(),
-                            price: Joi.string().optional(),
-                            priceFloat: Joi.number().optional(),
-                            currency: Joi.string().optional(),
-                            currencySymbol: Joi.string().optional(),
-                            quantityType: Joi.string().optional(),
-                            quantityValue: Joi.string().optional(),
-                            stockAmount: Joi.optional(),
-                            datetimeCreated: Joi.string().allow(null, '').optional(),
-                            datetimeAdjusted: Joi.string().allow(null, '').optional(),
-                            active: Joi.boolean().optional(),
-                            pickup: Joi.boolean().optional(),
-                            delivery: Joi.boolean().optional(),
-                        }).required(),
-                        Joi.number().required()
-                    )
-                    .length(2)
-                    .required()
-            )
-            .required(),
-        billingAddress: Joi.object({
-            firstName: Joi.string().min(3).max(50).required(),
-            lastName: Joi.string().min(3).max(50).required(),
-            addressLine1: Joi.string().min(3).max(50).required(),
-            city: Joi.string()
-                .min(3)
-                .max(40)
-                .regex(/[a-zA-Z]/)
-                .required(),
-            postcode: Joi.string().length(5).regex(/[0-9]/).required(),
-            country: Joi.string().min(1).max(50).required(),
-        }).required(),
-        shippingAddress: Joi.object({
-            firstName: Joi.string().min(3).max(50).required(),
-            lastName: Joi.string().min(3).max(50).required(),
-            addressLine1: Joi.string().min(3).max(50).required(),
-            city: Joi.string()
-                .min(3)
-                .max(40)
-                .regex(/[a-zA-Z]/)
-                .required(),
-            postcode: Joi.string().length(5).regex(/[0-9]/).required(),
-            country: Joi.string().min(1).max(50).required(),
-        }).required(),
+        products: joiShoppingCartSchema.required(),
+        billingAddress: joiAddressSchema(true).required(),
+        shippingAddress: joiAddressSchema(true).required(),
         currencyCode: Joi.string().min(1).max(100).required(),
     }),
 };
@@ -144,104 +91,17 @@ const createPaypalOrderValidation = {
 const capturePaypalOrderValidation = {
     body: Joi.object({
         orderData: Joi.object({
-            products: Joi.array().items(
-                Joi.array().items(
-                    Joi.object({
-                        _id: Joi.string().required(),
-                        storeId: Joi.string()
-                            .regex(/^[A-Za-z0-9]*$/)
-                            .required(),
-                        title: Joi.string().optional(),
-                        description: Joi.string().optional(),
-                        longDescription: Joi.string().optional(),
-                        imgSrc: Joi.string().optional(),
-                        imageDetails: Joi.object().optional(),
-                        price: Joi.string().optional(),
-                        priceFloat: Joi.number().optional(),
-                        currency: Joi.string().optional(),
-                        currencySymbol: Joi.string().optional(),
-                        quantityType: Joi.string().optional(),
-                        quantityValue: Joi.string().optional(),
-                        stockAmount: Joi.optional(),
-                        datetimeCreated: Joi.string().allow(null, '').optional(),
-                        datetimeAdjusted: Joi.string().allow(null, '').optional(),
-                        active: Joi.boolean().optional(),
-                        pickup: Joi.boolean().optional(),
-                        delivery: Joi.boolean().optional(),
-                    }).required(),
-                    Joi.number().required()
-                )
-            ),
-            billingAddress: Joi.object({
-                firstName: Joi.string().min(3).max(50).required(),
-                lastName: Joi.string().min(3).max(50).required(),
-                addressLine1: Joi.string().min(3).max(50).required(),
-                city: Joi.string()
-                    .min(3)
-                    .max(40)
-                    .regex(/[a-zA-Z]/)
-                    .required(),
-                postcode: Joi.string().length(5).regex(/[0-9]/).required(),
-                country: Joi.string().min(1).max(50).required(),
-            }),
-            shippingAddress: Joi.object({
-                firstName: Joi.string().min(3).max(50).required(),
-                lastName: Joi.string().min(3).max(50).required(),
-                addressLine1: Joi.string().min(3).max(50).required(),
-                city: Joi.string()
-                    .min(3)
-                    .max(40)
-                    .regex(/[a-zA-Z]/)
-                    .required(),
-                postcode: Joi.string().length(5).regex(/[0-9]/).required(),
-                country: Joi.string().min(1).max(50).required(),
-            }),
+            products: joiShoppingCartSchema.required(),
+            billingAddress: joiAddressSchema(true).required(),
+            shippingAddress: joiAddressSchema(true).required(),
             currencyCode: Joi.string().min(1).max(100).required(),
         }),
-        orderId: Joi.string().min(3).max(50).required(),
+        orderId: joiMongoIdSchema.required(),
     }),
 };
 
-// const fetchMerchantIdsValidation2 = {
-//     body: Joi.object({
-//         shoppingCart: Joi.array().items(
-//             Joi.array().items(
-//                 Joi.object({
-//                     _id: Joi.string().required(),
-//                     productId: Joi.number().optional(),
-//                     storeId: Joi.string()
-//                         .regex(/^[A-Za-z0-9]*$/)
-//                         .required(),
-//                     title: Joi.string().optional(),
-//                     description: Joi.string().optional(),
-//                     imgSrc: Joi.string().optional(),
-//                     imageDetails: Joi.object().optional(),
-//                     price: Joi.string().optional(),
-//                     priceFloat: Joi.number().optional(),
-//                     currency: Joi.string().optional(),
-//                     currencySymbol: Joi.string().optional(),
-//                     quantityType: Joi.string().optional(),
-//                     quantityValue: Joi.string().optional(),
-//                     stockAmount: Joi.optional(),
-//                     delivery: Joi.boolean().optional(),
-//                     pickup: Joi.boolean().optional(),
-//                     datetimeCreated: Joi.string().allow(null, '').optional(),
-//                     datetimeAdjusted: Joi.string().allow(null, '').optional(),
-//                 }).required(),
-//                 Joi.number().optional()
-//             )
-//         ),
-//     }),
-// };
-
 const fetchMerchantIdsValidation = {
     body: Joi.object({
-        storeIds: Joi.array()
-            .items(
-                Joi.string()
-                    .regex(/^[A-Za-z0-9]*$/)
-                    .required()
-            )
-            .required(),
+        storeIds: Joi.array().items(joiMongoIdSchema.required()).required(),
     }),
 };

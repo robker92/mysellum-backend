@@ -272,35 +272,19 @@ async function editStoreService(data, storeId, userEmail) {
     // sanitize the description
     const sanitizedDescription = sanitizeHtml(data.description, sanitizeOptions);
 
-    // const findResult = await readOneOperation(databaseEntity.STORES, {
-    //     _id: storeId,
-    // });
-    // if (!findResult) {
-    //     throw new Error(`Store with the id ${storeId} not found.`);
-    // }
-    // //Guard to make sure that only the store owner is able to edit this store
-    // if (findResult.userEmail !== userEmail) {
-    //     throw new Error(
-    //         `User with the email address ${userEmail} unauthorized to edit this store.`
-    //     );
-    // }
-
     // Check if address has been changed
-    if (
-        // store.mapData.address.addressLine1 !== data.address.addressLine1 ||
-        // store.mapData.address.postcode !== data.address.postcode ||
-        // store.mapData.address.city !== data.address.city ||
-        // store.mapData.address.country !== data.address.country
-
-        JSON.stringify(store.mapData.address) !== JSON.stringify(data.address)
-    ) {
+    let geoCodeResult;
+    if (JSON.stringify(store.mapData.address) !== JSON.stringify(data.address)) {
         const addressString = `${data.address.addressLine1}, ${data.address.postcode} ${data.address.city}, ${data.address.country}`;
         console.log(addressString);
-        const geoCodeResult = await geoCoder.geocode(addressString);
+        geoCodeResult = await geoCoder.geocode(addressString);
         // throw error when address was not found
         if (geoCodeResult.length === 0) {
             throw new Error(`Invalid address provided (${JSON.stringify(data.address)}).`);
         }
+    } else {
+        // if address did not change, use the already saved location
+        geoCodeResult = [data.mapData.location.lat, data.mapData.location.lng];
     }
 
     // IMAGES - if image is base64 string, upload image to blob store and replace base64 string with blob url #######################

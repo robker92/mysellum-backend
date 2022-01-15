@@ -14,15 +14,9 @@ import { getMongoProductsCollection } from '../../storage/mongodb/collections';
 import { getProductModel } from '../../data-models';
 import { storeActivationRoutine } from './activation.service';
 import { sendNotificationsService } from './product-avail-notif.service';
-import {
-    setStoreDistributionValue,
-    updateStoreDistributionValues,
-} from './stores.service';
+import { setStoreDistributionValue, updateStoreDistributionValues } from './stores.service';
 
-import {
-    fetchAndValidateStore,
-    validateStoreOwner,
-} from '../utils/operations/store-checks';
+import { fetchAndValidateStore, validateStoreOwner } from '../utils/operations/store-checks';
 
 import {
     uploadBlobService,
@@ -32,10 +26,7 @@ import {
 } from './images.service';
 
 // MongoDB transaction
-import {
-    getMongoDbClient,
-    getMongoDbTransactionWriteOptions,
-} from '../../storage/mongodb/setup';
+import { getMongoDbClient, getMongoDbTransactionWriteOptions } from '../../storage/mongodb/setup';
 
 export {
     createProductService,
@@ -99,30 +90,16 @@ async function createProductService(data, userEmail, storeId) {
             const store = await fetchAndValidateStore(storeId, session);
             validateStoreOwner(userEmail, store.userEmail);
 
-            insertResult = await createOneOperation(
-                databaseEntity.PRODUCTS,
-                product,
-                session
-            );
+            insertResult = await createOneOperation(databaseEntity.PRODUCTS, product, session);
 
             await storeActivationRoutine(store, session);
 
             // set the store's distribution type when the value is true
             if (data.delivery === true) {
-                await setStoreDistributionValue(
-                    storeId,
-                    'delivery',
-                    true,
-                    session
-                );
+                await setStoreDistributionValue(storeId, 'delivery', true, session);
             }
             if (data.pickup === true) {
-                await setStoreDistributionValue(
-                    storeId,
-                    'pickup',
-                    true,
-                    session
-                );
+                await setStoreDistributionValue(storeId, 'pickup', true, session);
             }
         }, getMongoDbTransactionWriteOptions());
     } catch (error) {
@@ -185,9 +162,7 @@ async function editProductService(data, userEmail, storeId, productId) {
                     await deleteBlobService(blobName);
                 } catch (error) {
                     // when an error occurs during deletion, the flow is not interrupted
-                    console.log(
-                        `A blob could not be deleted. Message: ${error.message}`
-                    );
+                    console.log(`A blob could not be deleted. Message: ${error.message}`);
                 }
 
                 imageDetails = {
@@ -230,20 +205,10 @@ async function editProductService(data, userEmail, storeId, productId) {
 
             // set the store's distribution type when the value is true
             if (data.delivery === true) {
-                await setStoreDistributionValue(
-                    storeId,
-                    'delivery',
-                    true,
-                    session
-                );
+                await setStoreDistributionValue(storeId, 'delivery', true, session);
             }
             if (data.pickup === true) {
-                await setStoreDistributionValue(
-                    storeId,
-                    'pickup',
-                    true,
-                    session
-                );
+                await setStoreDistributionValue(storeId, 'pickup', true, session);
             }
         }, getMongoDbTransactionWriteOptions());
     } catch (error) {
@@ -277,10 +242,7 @@ async function deleteProductService(userEmail, storeId, productId) {
             });
 
             // Delete old image
-            const blobName = product.imgSrc.substring(
-                product.imgSrc.lastIndexOf('/') + 1,
-                product.imgSrc.length
-            );
+            const blobName = product.imgSrc.substring(product.imgSrc.lastIndexOf('/') + 1, product.imgSrc.length);
             console.log(`Old Image: ${blobName}`);
             // await deleteBlobService(blobName);
 
@@ -288,9 +250,7 @@ async function deleteProductService(userEmail, storeId, productId) {
                 await deleteBlobService(blobName);
             } catch (error) {
                 // when an error occurs during deletion, the flow is not interrupted
-                console.log(
-                    `A blob could not be deleted. Message: ${error.message}`
-                );
+                console.log(`A blob could not be deleted. Message: ${error.message}`);
             }
 
             // delete the product
@@ -383,13 +343,7 @@ async function getProductImageService(storeId, productId) {
     return imageSrc;
 }
 
-async function getStoreProductsService(
-    userEmail,
-    storeId,
-    searchTerm,
-    priceMin,
-    priceMax
-) {
+async function getStoreProductsService(userEmail, storeId, searchTerm, priceMin, priceMax) {
     const store = await fetchAndValidateStore(storeId);
     // let activeValue = true;
     let findObject = {

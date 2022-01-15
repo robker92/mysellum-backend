@@ -19,10 +19,7 @@ import { checkAuthentication } from '../../middlewares/CheckAuthentication';
 import { parserJsonLimit } from '../../utils/bodyParsers';
 
 // Validation
-import {
-    addReviewVal,
-    editReviewVal,
-} from '../utils/req-body-validators/reviews-validators.js';
+import { reviewVal } from '../utils/req-body-validators/reviews-validators.js';
 const opts = {
     keyByField: true, //Reduces the validation error to a list with key/value pair "fieldname": "Message"
 };
@@ -30,16 +27,13 @@ const opts = {
 const routerPrefix = 'stores';
 
 // Routes
-routerReviews.get(
-    `/${routerPrefix}/:storeId/reviews`,
-    excHandler(getStoresReviewController)
-);
+routerReviews.get(`/${routerPrefix}/:storeId/reviews`, excHandler(getStoresReviewController));
 
 routerReviews.post(
     `/${routerPrefix}/:storeId/reviews`,
     parserJsonLimit,
     checkAuthentication,
-    validate(addReviewVal, opts),
+    validate(reviewVal, opts),
     excHandler(addReviewController)
 );
 
@@ -47,7 +41,7 @@ routerReviews.patch(
     `/${routerPrefix}/:storeId/reviews/:reviewId`,
     parserJsonLimit,
     checkAuthentication,
-    validate(editReviewVal, opts),
+    validate(reviewVal, opts),
     excHandler(editReviewController)
 );
 
