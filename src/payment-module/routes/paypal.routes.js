@@ -4,7 +4,7 @@ import express from 'express';
 const routerPaypal = express.Router();
 
 import { excHandler } from '../../utils/routeExceptionHandler';
-import { checkAuthentication } from '../../middlewares';
+import { checkAuthentication, validateRequestBody } from '../../middlewares';
 import { parserJsonLimit } from '../../utils/bodyParsers';
 
 import {
@@ -36,32 +36,33 @@ const routerPrefix = 'paypal';
 
 routerPaypal.post(
     `/${routerPrefix}/signup-link`,
-    checkAuthentication,
     parserJsonLimit,
+    checkAuthentication,
     validate(createSignUpLinkValidation, opts),
     excHandler(createSignUpLinkController)
 );
 
 routerPaypal.post(
     `/${routerPrefix}/create-order`,
-    checkAuthentication,
     parserJsonLimit,
+    checkAuthentication,
+    // validateRequestBody(createPaypalOrderValidation),
     validate(createPaypalOrderValidation, opts),
     excHandler(createPaypalOrderController)
 );
 
 routerPaypal.post(
     `/${routerPrefix}/capture-order`,
-    checkAuthentication,
     parserJsonLimit,
+    checkAuthentication,
     validate(capturePaypalOrderValidation, opts),
     excHandler(capturePaypalOrderController)
 );
 
 routerPaypal.post(
     `/${routerPrefix}/fetch-merchant-ids`,
-    checkAuthentication,
     parserJsonLimit,
+    checkAuthentication,
     validate(fetchMerchantIdsValidation, opts),
     excHandler(fetchMerchantIdsController)
 );
@@ -92,8 +93,8 @@ routerPaypal.post(
 
 routerPaypal.post(
     `/${routerPrefix}/onboarding-data/:storeId`,
-    checkAuthentication,
     parserJsonLimit,
+    checkAuthentication,
     validate(onboardingDataValidation, opts),
     excHandler(onboardingDataController)
 );

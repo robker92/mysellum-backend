@@ -48,8 +48,10 @@ function joiProductSchema(complete) {
             currency: Joi.string().min(1).max(25).optional(),
             currencySymbol: Joi.string().min(1).max(10).optional(),
             quantityType: Joi.string().valid('Kilograms', 'Grams', 'Pieces').optional(),
-            quantityValue: Joi.string().min(5).max(200).optional(),
+            quantityValue: Joi.string().max(200).optional(),
             stockAmount: Joi.number().integer().min(0).optional(),
+            datetimeCreated: Joi.string().max(200).allow(null, '').optional(),
+            datetimeAdjusted: Joi.string().max(200).allow(null, '').optional(),
             delivery: Joi.boolean().optional(),
             pickup: Joi.boolean().optional(),
             active: Joi.boolean().optional(),
@@ -72,16 +74,22 @@ function joiProductSchema(complete) {
         currency: Joi.string().min(1).max(25).required(),
         currencySymbol: Joi.string().min(1).max(10).required(),
         quantityType: Joi.string().valid('Kilograms', 'Grams', 'Pieces').required(),
-        quantityValue: Joi.string().min(5).max(200).required(),
+        quantityValue: Joi.string().max(200).required(),
         stockAmount: Joi.number().integer().min(0).optional(),
+        datetimeCreated: Joi.string().max(200).allow(null, '').optional(),
+        datetimeAdjusted: Joi.string().max(200).allow(null, '').optional(),
         delivery: Joi.boolean().required(),
         pickup: Joi.boolean().required(),
         active: Joi.boolean().required(),
     });
 }
 
+// const joiShoppingCartSchema = Joi.array().items(
+//     Joi.array().items(joiProductSchema(false).required(), Joi.number().integer().required()).length(2).required()
+// );
+
 const joiShoppingCartSchema = Joi.array().items(
-    Joi.array().items(joiProductSchema(false).required(), Joi.number().required()).length(2).required()
+    Joi.array().items(joiProductSchema(false).required(), Joi.number().integer().required()).length(2).required()
 );
 
 /**
@@ -123,27 +131,3 @@ function joiRegisterUserSchema() {
         birthdate: joiBirthdate.required(),
     });
 }
-
-// const joiUserSchema = Joi.object({
-//     phoneNumber: Joi.string().min(5).max(30).required(),
-//     email: joiEmailSchema.required(),
-//     password: joiPassword.required(),
-//     firstName: Joi.string()
-//         .min(2)
-//         .max(30)
-//         .regex(/[a-zA-Z]/)
-//         .required(),
-//     lastName: Joi.string()
-//         .min(2)
-//         .max(30)
-//         .regex(/[a-zA-Z]/)
-//         .required(),
-//     birthdate: joiBirthdate.required(),
-//     city: Joi.string()
-//         .min(3)
-//         .max(40)
-//         .regex(/[a-zA-Z]/)
-//         .required(),
-//     postcode: Joi.string().length(5).regex(/[0-9]/).required(),
-//     addressLine1: Joi.string().min(3).max(40).required(),
-// });

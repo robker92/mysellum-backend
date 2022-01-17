@@ -6,10 +6,7 @@ import { ValidationError } from 'express-validation';
 
 const allowCrossDomain = (req, res, next) => {
     res.header('Access-Control-Allow-Origin', 'http://localhost:8080');
-    res.header(
-        'Access-Control-Allow-Methods',
-        'GET, HEAD, POST, PUT, DELETE, TRACE, OPTIONS, PATCH'
-    );
+    res.header('Access-Control-Allow-Methods', 'GET, HEAD, POST, PUT, DELETE, TRACE, OPTIONS, PATCH');
     //res.header('Access-Control-Allow-Headers', '*');
     res.header('Access-Control-Allow-Headers', 'authorization, Content-Type');
     res.header('Access-Control-Max-Age', '3600');
@@ -55,6 +52,7 @@ function grantAccess(role) {
 const checkAuthentication = (req, res, next) => {
     // check header or url parameters or post parameters for token
     const token = req.headers['x-access-token'];
+    // console.log(JSON.stringify(req.body));
     // console.log(token);
     if (!token) {
         console.error('token invalid');
@@ -88,6 +86,46 @@ const checkAuthentication = (req, res, next) => {
         req.userEmail = decoded.email;
         next();
     });
+};
+
+const validateRequestBody = (schema) => {
+    return (req, res, next) => {
+        const testSchema = schema.body;
+        const result = testSchema.validate(req.body);
+        console.log(result.value.products);
+        console.log(JSON.stringify(result.error.details));
+
+        // const testObj = {
+        //     _id: '61c8633f05317d26e0a17e8f',
+        //     storeId: '6137160fc72967106c582580',
+        //     datetimeCreated: '2021-12-26T12:42:39.658Z',
+        //     datetimeAdjusted: '2021-12-26T12:45:45.401Z',
+        //     title: 'Product 1',
+        //     description: 'Test Test Test Test Test ',
+        //     imgSrc: 'https://prjctstorageaccount.blob.core.windows.net/prjct-dev-images/G27Z_ZuQgK4S0nQBQLaM3~product3.jpg',
+        //     imageDetails: {
+        //         size: 2393496,
+        //         originalname: 'product3.jpg',
+        //         name: 'product3.jpg',
+        //     },
+        //     price: '1.50',
+        //     priceFloat: 1.5,
+        //     currency: 'EUR',
+        //     currencySymbol: '€',
+        //     quantityType: 'Kilograms',
+        //     quantityValue: '2',
+        //     delivery: true,
+        //     pickup: false,
+        //     stockAmount: 1,
+        //     active: true,
+        //     longDescription: 'asdas vasd asd dasd',
+        // };
+
+        // const result2 = testSchema.validate(testObj);
+        // console.log(result2);
+        // console.log(JSON.stringify(result2.error.details));
+        next();
+    };
 };
 
 // when a jwt is present, it is decoded and the results are added to the request
@@ -168,6 +206,7 @@ const errorHandler = (err, req, res, next) => {
 export {
     allowCrossDomain,
     checkAuthentication,
+    validateRequestBody,
     errorHandler,
     grantAccess,
     // jwtOptional,

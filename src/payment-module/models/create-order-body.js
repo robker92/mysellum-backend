@@ -2,10 +2,7 @@
 // https://developer.paypal.com/docs/platforms/checkout/configure-payments/multiseller-payments/
 // https://developer.paypal.com/docs/checkout/reference/customize-sdk/
 
-import {
-    PAYPAL_PLATFORM_MERCHANT_ID,
-    PAYPAL_PLATFORM_EMAIL,
-} from '../../config';
+import { PAYPAL_PLATFORM_MERCHANT_ID, PAYPAL_PLATFORM_EMAIL } from '../../config';
 import {
     getShippingCostsService,
     calculateShippingCosts,
@@ -15,15 +12,13 @@ import { hasValidProperty } from '../../utils/objectFunctions';
 
 /**
  * Returns the complete payload for the create order post request
- * @param {Object} orderData input data from the frontend
- * @param {Object} orderObject order object which was just created
+ * @param {Object} orderObject order object which was just created (Get the order format { "storeId 1": [{product: "", amount: ""}, {product: "", amount: ""}], "storeId 2": [] })
+ * @param {String} currencyCode
+ * @param {Object} shippingAddress
  */
-export async function getCreateOrderBody(orderData, orderObject) {
+export async function getCreateOrderBody(orderObject, currencyCode, shippingAddress) {
     // TODO check inputs
-    const purchaseUnitArray = await createPurchaseUnitArray(
-        orderData,
-        orderObject
-    );
+    const purchaseUnitArray = await createPurchaseUnitArray(orderObject, currencyCode, shippingAddress);
     console.log(purchaseUnitArray);
 
     const body = {
@@ -44,10 +39,11 @@ export async function getCreateOrderBody(orderData, orderObject) {
 
 /**
  * The function creates the purchase unit array. It will consist of one object for each store which is part of the order
- * @param {Object} orderData input data from the frontend
  * @param {Object} orderObject order object which was just created
+ * @param {String} currencyCode
+ * @param {Object} shippingAddress
  */
-async function createPurchaseUnitArray(orderData, orderObject) {
+async function createPurchaseUnitArray(orderObject, currencyCode, shippingAddress) {
     // TODO check inputs
     const purchaseUnitArray = [];
     const storeIds = Object.keys(orderObject);
@@ -64,17 +60,10 @@ async function createPurchaseUnitArray(orderData, orderObject) {
         //     .randomBytes(PAYPAL_REF_ID_HASH_NUM_BYTES)
         //     .toString('hex');
 
-        const amountObject = createAmount(
-            productArray,
-            orderData.currencyCode,
-            orderElement.store
-        );
-        const itemArray = createItemArray(productArray, orderData.currencyCode);
-        const shippingObject = createShippingAddress(orderData.shippingAddress);
-        const paymentInstructionObject = createPaymentInstruction(
-            amountObject.value,
-            orderData.currencyCode
-        );
+        const amountObject = createAmount(productArray, currencyCode, orderElement.store);
+        const itemArray = createItemArray(productArray, currencyCode);
+        const shippingObject = createShippingAddress(shippingAddress);
+        const paymentInstructionObject = createPaymentInstruction(amountObject.value, currencyCode);
         // create purchase unit object
         const purchaseUnitObject = {
             reference_id: `${storeIds[i]}~${i}`,
@@ -108,7 +97,6 @@ function createItemArray(productArray, currencyCode) {
     if (!Array.isArray(productArray)) {
         throw new Error('The productArray has to be an array.');
     }
-    // TODO check currency code
 
     let items = [];
     for (const element of productArray) {
@@ -194,12 +182,7 @@ function calculateBreakdown(productArray, store) {
     let taxTotal = 0;
     // iterate over products and calculate itemTotal and taxTotal
     for (const item of productArray) {
-        taxTotal =
-            taxTotal +
-            parseFloat(
-                calculateProductTax(item.product.priceFloat) *
-                    parseInt(item.amount)
-            );
+        taxTotal = taxTotal + parseFloat(calculateProductTax(item.product.priceFloat) * parseInt(item.amount));
         itemTotal = itemTotal + item.product.priceFloat * parseInt(item.amount);
     }
     let shippingCosts = getShippingCostForSingleStore(store, productArray);
@@ -262,9 +245,7 @@ function createShippingAddress(shippingAddress) {
         throw new Error('No lastName was provided with the shipping address.');
     }
     if (!hasValidProperty(shippingAddress, 'addressLine1')) {
-        throw new Error(
-            'No addressLine1 was provided with the shipping address.'
-        );
+        throw new Error('No addressLine1 was provided with the shipping address.');
     }
     if (!hasValidProperty(shippingAddress, 'city')) {
         throw new Error('No city was provided with the shipping address.');

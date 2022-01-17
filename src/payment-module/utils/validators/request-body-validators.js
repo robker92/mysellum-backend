@@ -79,23 +79,21 @@ const onboardingDataValidation = {
     }),
 };
 
+const joiOrderSchema = Joi.object({
+    products: joiShoppingCartSchema.required(),
+    billingAddress: joiAddressSchema(true).required(),
+    shippingAddress: joiAddressSchema(true).required(),
+    currencyCode: Joi.string().min(1).max(100).required(),
+    deliveryMethod: Joi.string().valid('delivery', 'pickup').required(),
+});
+
 const createPaypalOrderValidation = {
-    body: Joi.object({
-        products: joiShoppingCartSchema.required(),
-        billingAddress: joiAddressSchema(true).required(),
-        shippingAddress: joiAddressSchema(true).required(),
-        currencyCode: Joi.string().min(1).max(100).required(),
-    }),
+    body: joiOrderSchema.required(),
 };
 
 const capturePaypalOrderValidation = {
     body: Joi.object({
-        orderData: Joi.object({
-            products: joiShoppingCartSchema.required(),
-            billingAddress: joiAddressSchema(true).required(),
-            shippingAddress: joiAddressSchema(true).required(),
-            currencyCode: Joi.string().min(1).max(100).required(),
-        }),
+        orderData: joiOrderSchema.required(),
         orderId: joiMongoIdSchema.required(),
     }),
 };

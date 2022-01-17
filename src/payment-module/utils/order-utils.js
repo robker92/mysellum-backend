@@ -9,11 +9,8 @@ import {
     createOneOperation,
     databaseEntity,
 } from '../../storage/database-operations';
-import {
-    getShippingCostsService,
-    getShippingCostForSingleStore,
-} from '../../store-module/services/shipping.service';
-
+import { getShippingCostsService, getShippingCostForSingleStore } from '../../store-module/services/shipping.service';
+import { ValidationError } from '../errors/validation-error';
 import { getOrderModel } from '../models/order-model';
 
 export {
@@ -42,13 +39,14 @@ async function validateStoreId(storeId) {
  * The function creates the order Object out of the cart data ([[{ProductObject}, PurchasedAmount],[{ProductObject}, PurchasedAmount]])
  * Return data: { "storeId 1": {store: {merchantId: ""}, products: [{product: "", amount: ""}, {product: "", amount: ""}], "storeId 2": [] }}
  * @param {Array} cartArray [[{ProductObject}, PurchasedAmount],[{ProductObject}, PurchasedAmount]]
+ * @param {String} deliveryMethod delivery or pickup
  */
-async function createOrderDataStructure(cartArray) {
+async function createOrderDataStructure(cartArray, deliveryMethod) {
     // Create a data structure like: { "storeId 1": [{product: "", amount: ""}, {product: "", amount: ""}], "storeId 2": [] }
     let orderObject = {};
     for (const element of cartArray) {
         const amount = element[1];
-        const product = await fetchAndValidateProduct(element[0], amount);
+        const product = await fetchAndValidateProduct(element[0], amount, deliveryMethod);
 
         // Check if store id in order object, if not add it
         if (!(product.storeId in orderObject)) {
@@ -58,10 +56,8 @@ async function createOrderDataStructure(cartArray) {
             // add store data and product to the orderObject
             orderObject[product.storeId] = {
                 store: {
-                    merchantIdInPayPal:
-                        store.payment.paypal.common.merchantIdInPayPal,
-                    merchantEmailInPayPal:
-                        store.payment.paypal.common.merchantEmailInPayPal,
+                    merchantIdInPayPal: store.payment.paypal.common.merchantIdInPayPal,
+                    merchantEmailInPayPal: store.payment.paypal.common.merchantEmailInPayPal,
                     shippingMethod: store.shipping.method,
                     shippingThresholdValue: store.shipping.thresholdValue,
                     shippingCosts: store.shipping.costs,
@@ -88,10 +84,27 @@ async function fetchAndValidateStore(storeId) {
     });
 
     if (!findResult) {
-        throw new Error(
-            `A store with the store id ${storeId} could not be found.`
+        throw new ValidationError(`A store with the store id ${storeId} could not be found.`);
+    }
+
+    if (findResult.deleted) {
+        throw new ValidationError(`The store with the store id ${storeId} has been deleted.`);
+    }
+
+    if (!findResult.adminActivation) {
+        throw new ValidationError(
+            `The store with the store id ${storeId} has not been activated yet or has been deactivated by the admins.`
         );
     }
+
+    if (!findResult.userActivation) {
+        throw new ValidationError(`The store with the store id ${storeId} has been deactivated by the owner.`);
+    }
+
+    if (!findResult.activation) {
+        throw new ValidationError(`The store with the store id ${storeId} has not been activated yet.`);
+    }
+
     return findResult;
 }
 
@@ -100,8 +113,9 @@ async function fetchAndValidateStore(storeId) {
  * or if the id was not found
  * @param {Object} orderedProduct
  * @param {number} orderedAmount
+ * @param {String} deliveryMethod delivery or pickup
  */
-async function fetchAndValidateProduct(orderedProduct, orderedAmount) {
+async function fetchAndValidateProduct(orderedProduct, orderedAmount, deliveryMethod) {
     const findResult = await readOneOperation(
         'products',
         {
@@ -111,12 +125,27 @@ async function fetchAndValidateProduct(orderedProduct, orderedAmount) {
     );
 
     if (!findResult) {
-        throw new Error(`Wrong product id (${orderedProduct._id}) provided!`);
+        throw new ValidationError(`Wrong product id (${orderedProduct._id}) provided!`);
     }
+
     // Check if product is out of stock
     if (orderedAmount > findResult.stockAmount) {
-        throw new Error(
-            `Product (${findResult._id}; ${findResult.title}) out of stock!`
+        throw new ValidationError(
+            `There is not enough stock for the product (${findResult._id}; ${findResult.title}) available.`
+        );
+    }
+
+    // Check if product is inactive
+    if (!findResult.active) {
+        throw new ValidationError(
+            `The product with the id ${findResult._id} is inactive and can therefore not be purchased.`
+        );
+    }
+
+    // Check if the requested delivery method is available for the product
+    if (!findResult[deliveryMethod]) {
+        throw new ValidationError(
+            `The requested delivery method ${deliveryMethod} is not available for the product with the id ${findResult._id}.`
         );
     }
 
@@ -166,18 +195,14 @@ function createOrderArray(orderObject, orderData, userEmail, paypalOrderId) {
             // let product = await fetchAndValidateProduct(productArray[i]);
             // const product = productArray[i];
             order.products.push(element);
-            totalProductSum =
-                totalProductSum + element.product.priceFloat * element.amount;
+            totalProductSum = totalProductSum + element.product.priceFloat * element.amount;
         }
 
         // Calculation
         const totalTax = 0.0; // totalProductSum * 0.07;
         const platformFee = totalProductSum * 0.1;
         // const shippingCosts = 0.0; // value is configuered by store owner
-        const shippingCosts = getShippingCostForSingleStore(
-            orderObject[storeIds[i]].store,
-            productArray
-        );
+        const shippingCosts = getShippingCostForSingleStore(orderObject[storeIds[i]].store, productArray);
         console.log(JSON.stringify(orderObject[storeIds[i]].store));
         console.log(`[SHIPPING] Costs for ${storeIds[i]} are ${shippingCosts}`);
         const transferAmount = totalProductSum - platformFee + shippingCosts;

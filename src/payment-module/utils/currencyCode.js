@@ -1,5 +1,5 @@
 export const currencyCode = Object.freeze({
-    UNITED_STATES_DOLLAR: 'USD',
+    // UNITED_STATES_DOLLAR: 'USD',
     EURO: 'EUR',
 });
 
