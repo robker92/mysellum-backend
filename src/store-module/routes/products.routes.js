@@ -16,17 +16,11 @@ import {
 } from '../controllers/products.controller';
 
 // Utils
-import {
-    checkAuthentication,
-    jwtOptional,
-} from '../../middlewares/CheckAuthentication';
+import { checkAuthentication, jwtOptional } from '../../middlewares/CheckAuthentication';
 import { parserJsonLimit } from '../../utils/bodyParsers';
 
 // Validation
-import {
-    productVal,
-    stockAmountVal,
-} from '../utils/req-body-validators/products-validators';
+import { createProductVal, stockAmountVal, editProductVal } from '../utils/req-body-validators/products-validators';
 const opts = {
     keyByField: true, //Reduces the validation error to a list with key/value pair "fieldname": "Message"
 };
@@ -38,7 +32,7 @@ routerProducts.post(
     `/${routerPrefix}/:storeId/products`,
     parserJsonLimit,
     checkAuthentication,
-    validate(productVal, opts),
+    validate(createProductVal, opts),
     excHandler(createProductController)
 );
 
@@ -46,7 +40,7 @@ routerProducts.patch(
     `/${routerPrefix}/:storeId/products/:productId`,
     parserJsonLimit,
     checkAuthentication,
-    validate(productVal, opts),
+    validate(editProductVal, opts),
     excHandler(editProductController)
 );
 
@@ -64,11 +58,7 @@ routerProducts.patch(
     excHandler(updateStockAmountController)
 );
 
-routerProducts.get(
-    `/${routerPrefix}/:storeId/products`,
-    jwtOptional,
-    excHandler(getStoreProducts)
-);
+routerProducts.get(`/${routerPrefix}/:storeId/products`, jwtOptional, excHandler(getStoreProducts));
 
 // routerProducts.get(
 //     `/${routerPrefix}/:storeId/products/:productId/images`,

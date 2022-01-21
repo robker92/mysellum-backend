@@ -1,9 +1,6 @@
 'use strict';
 
-import {
-    getMongoDbClient,
-    getMongoDbTransactionWriteOptions,
-} from '../../../storage/mongodb/setup';
+import { getMongoDbClient, getMongoDbTransactionWriteOptions } from '../../../storage/mongodb/setup';
 
 // database operations
 import {
@@ -21,11 +18,7 @@ import { paypalClient } from './client/sdk/paypal-sdk-client';
 import { sendNodemailerMail, contentType } from '../../../mailing/nodemailer';
 
 // import { checkIfInstrumentDeclined } from '../utils/checkForPaypalInstrumentDeclinedError';
-import {
-    fetchAndValidateStore,
-    createOrderDataStructure,
-    createOrderArray,
-} from '../../utils/order-utils';
+import { fetchAndValidateStore, createOrderDataStructure, createOrderArray } from '../../utils/order-utils';
 
 export { capturePaypalOrderService };
 
@@ -37,11 +30,7 @@ async function capturePaypalOrderService(orderId, orderData, userEmail) {
     // Capture paypal order
     let captureResult;
     try {
-        captureResult = await capturePaypalOrderProcedure(
-            orderId,
-            orderData,
-            userEmail
-        );
+        captureResult = await capturePaypalOrderProcedure(orderId, orderData, userEmail);
     } catch (error) {
         console.log(error);
         throw error;
@@ -57,26 +46,11 @@ async function capturePaypalOrderService(orderId, orderData, userEmail) {
     // TODO: (when error occured: change to incompleted -> finished true; successf. false)
     try {
         let promises = [];
+        promises.push(saveCaptureIdsToOrders(orderId, captureResult.completeCapturesArray, captureResult.paypalPayer));
         promises.push(
-            saveCaptureIdsToOrders(
-                orderId,
-                captureResult.completeCapturesArray,
-                captureResult.paypalPayer
-            )
+            handleIncompleteCaptures(orderId, captureResult.incompleteCapturesArray, captureResult.paypalPayer)
         );
-        promises.push(
-            handleIncompleteCaptures(
-                orderId,
-                captureResult.incompleteCapturesArray,
-                captureResult.paypalPayer
-            )
-        );
-        promises.push(
-            sendNotificationEmails(
-                userEmail,
-                captureResult.completeCapturesArray
-            )
-        );
+        promises.push(sendNotificationEmails(userEmail, captureResult.completeCapturesArray));
 
         await Promise.all(promises);
     } catch (error) {
@@ -110,23 +84,14 @@ async function capturePaypalOrderProcedure(orderId, orderData, userEmail) {
     try {
         await mongoDbSession.withTransaction(async () => {
             // Create the order object; no mongo session needed here since we only fetch and dont update
-            const orderObject = await createOrderDataStructure(
-                orderData.products
-            );
+            const orderObject = await createOrderDataStructure(orderData.products);
 
             // Insert Orders and decrease stocks
-            const orderArray = createOrderArray(
-                orderObject,
-                orderData,
-                userEmail,
-                orderId
-            );
+            const orderArray = await createOrderArray(orderObject, orderData, userEmail, orderId);
 
             let promises = [];
             // save new stocks
-            promises.push(
-                updateProductStockAmount(orderObject, mongoDbSession)
-            );
+            promises.push(updateProductStockAmount(orderObject, mongoDbSession));
             // create orders
             promises.push(insertOrders(orderArray, mongoDbSession));
 
@@ -262,11 +227,7 @@ async function capturePaypalOrder(orderId) {
  * @param {string} captureArray the paypal capture id
  * @param {string} paypalPayer payer object which is returned at the capture step
  */
-async function saveCaptureIdsToOrders(
-    paypalOrderId,
-    captureArray,
-    paypalPayer
-) {
+async function saveCaptureIdsToOrders(paypalOrderId, captureArray, paypalPayer) {
     console.log(`paypal order id: ${paypalOrderId}`);
     console.log(captureArray);
     let updates = [];
@@ -340,10 +301,7 @@ async function sendNotificationEmails(customerEmail, captureArray) {
 
     // send store notifications
     for (const purchaseUnit of captureArray) {
-        const storeId = purchaseUnit.paypalRefId.substring(
-            0,
-            purchaseUnit.paypalRefId.indexOf('~')
-        );
+        const storeId = purchaseUnit.paypalRefId.substring(0, purchaseUnit.paypalRefId.indexOf('~'));
         const store = await fetchAndValidateStore(storeId);
         let mailOptions = {
             email: store.userEmail,

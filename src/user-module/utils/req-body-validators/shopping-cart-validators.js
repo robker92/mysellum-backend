@@ -13,5 +13,5 @@ const cartProductValidation = {
 const cartUpdateValidation = {
     body: Joi.object({
         shoppingCart: joiShoppingCartSchema.required(),
-    }),
+    }).required(),
 };

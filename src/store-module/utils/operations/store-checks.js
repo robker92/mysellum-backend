@@ -1,7 +1,6 @@
 'use strict';
 
-import { databaseEntity } from '../../../storage/utils/database-entity';
-import { readOneOperation } from '../../../storage/database-operations/read-one-operation';
+import { readOneOperation, databaseEntity } from '../../../storage/database-operations';
 
 export { fetchAndValidateStore, fetchAndValidateProduct, validateStoreOwner };
 
@@ -53,9 +52,7 @@ async function fetchAndValidateProduct(id, session = null) {
 function validateStoreOwner(userEmail, storeOwnerEmail) {
     //Guard to make sure that only the store owner is able to edit this store
     if (storeOwnerEmail !== userEmail) {
-        throw new Error(
-            `User with the email address ${userEmail} unauthorized to edit this store.`
-        );
+        throw new Error(`User with the email address ${userEmail} unauthorized to edit this store.`);
     }
 }
 

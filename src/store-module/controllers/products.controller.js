@@ -69,10 +69,10 @@ const updateStockAmountController = async function (req, res, next) {
     const storeId = req.params.storeId;
     const productId = req.params.productId;
     const userEmail = req.userEmail;
-    const data = req.body;
+    const stockAmount = req.body.stockAmount;
 
     try {
-        await updateStockAmountService(data, userEmail, storeId, productId);
+        await updateStockAmountService(stockAmount, userEmail, storeId, productId);
     } catch (error) {
         return next(error);
     }
@@ -89,13 +89,7 @@ const getStoreProducts = async function (req, res, next) {
 
     let products;
     try {
-        products = await getStoreProductsService(
-            userEmail,
-            storeId,
-            searchTerm,
-            priceMin,
-            priceMax
-        );
+        products = await getStoreProductsService(userEmail, storeId, searchTerm, priceMin, priceMax);
     } catch (error) {
         return next(error);
     }

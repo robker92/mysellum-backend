@@ -8,4 +8,5 @@ const databaseEntity = Object.freeze({
     PRODUCT_NOTIFICATIONS: 'prdctNotif',
     PAYPAL_WEBHOOKS: 'paypalWebhooks',
     SHOPPING_CARTS: 'shoppingCarts',
+    PLATFORM_FEES: 'platformFees',
 });

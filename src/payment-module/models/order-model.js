@@ -1,5 +1,3 @@
-//  { getOrderModel };
-
 export function getOrderModel(data) {
     const model = {
         storeId: data.storeId,
@@ -23,6 +21,7 @@ export function getOrderModel(data) {
         totalSum: data.totalSum,
         totalTax: 0,
         totalShippingCosts: 0,
+        platformFeeRate: data.platformFeeRate,
         currencyCode: data.currencyCode,
         // payment: data.payment,
         payment: {

@@ -6,7 +6,7 @@ const registerProductAvailabilityNotificationVal = {
         email: Joi.string().email().max(500).required(),
         storeId: joiMongoIdSchema.required(),
         productId: joiMongoIdSchema.required(),
-    }),
+    }).required(),
 };
 
 //===================================================================================================

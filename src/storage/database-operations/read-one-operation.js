@@ -10,14 +10,9 @@ export { readOneOperation };
  * @param {object} queryObject
  * @param {object} projectionObject
  * @param {object} session mongo db session if needed
- * @returns the user or an empty object if nothing was not found
+ * @returns the user or undefined/null if nothing was not found
  */
-async function readOneOperation(
-    entity,
-    queryObject,
-    projectionObject = {},
-    session = null
-) {
+async function readOneOperation(entity, queryObject, projectionObject = {}, session = null) {
     const collection = switchCollections(entity);
 
     queryObject = checkForObjectId(queryObject);

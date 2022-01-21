@@ -2,13 +2,15 @@
 // https://developer.paypal.com/docs/platforms/checkout/configure-payments/multiseller-payments/
 // https://developer.paypal.com/docs/checkout/reference/customize-sdk/
 
-import { PAYPAL_PLATFORM_MERCHANT_ID, PAYPAL_PLATFORM_EMAIL } from '../../config';
+import { PAYPAL_PLATFORM_MERCHANT_ID, PAYPAL_PLATFORM_EMAIL, PLATFORM_FEE_RATE_DEFAULT } from '../../config';
+import { readOneOperation, databaseEntity } from '../../storage/database-operations';
 import {
     getShippingCostsService,
     calculateShippingCosts,
     getShippingCostForSingleStore,
 } from '../../store-module/services/shipping.service';
 import { hasValidProperty } from '../../utils/objectFunctions';
+import { getStorePlatformFeeRate } from '../utils/order-utils';
 
 /**
  * Returns the complete payload for the create order post request
@@ -17,9 +19,7 @@ import { hasValidProperty } from '../../utils/objectFunctions';
  * @param {Object} shippingAddress
  */
 export async function getCreateOrderBody(orderObject, currencyCode, shippingAddress) {
-    // TODO check inputs
     const purchaseUnitArray = await createPurchaseUnitArray(orderObject, currencyCode, shippingAddress);
-    console.log(purchaseUnitArray);
 
     const body = {
         intent: 'CAPTURE',
@@ -33,7 +33,7 @@ export async function getCreateOrderBody(orderObject, currencyCode, shippingAddr
         },
         purchase_units: purchaseUnitArray,
     };
-    console.log(JSON.stringify(body));
+    // console.log(JSON.stringify(body));
     return body;
 }
 
@@ -44,26 +44,23 @@ export async function getCreateOrderBody(orderObject, currencyCode, shippingAddr
  * @param {Object} shippingAddress
  */
 async function createPurchaseUnitArray(orderObject, currencyCode, shippingAddress) {
-    // TODO check inputs
     const purchaseUnitArray = [];
     const storeIds = Object.keys(orderObject);
-    console.log(storeIds);
 
     for (let i = 0; i < storeIds.length; i++) {
         const orderElement = orderObject[storeIds[i]];
-        console.log(`Order Element: `);
-        console.log(orderElement);
-        // for (const storeId of storeIds) {
         const productArray = orderElement.products;
 
-        // const hashRefId = crypto
-        //     .randomBytes(PAYPAL_REF_ID_HASH_NUM_BYTES)
-        //     .toString('hex');
+        // TODO product tax rates
 
         const amountObject = createAmount(productArray, currencyCode, orderElement.store);
         const itemArray = createItemArray(productArray, currencyCode);
         const shippingObject = createShippingAddress(shippingAddress);
-        const paymentInstructionObject = createPaymentInstruction(amountObject.value, currencyCode);
+        const paymentInstructionObject = await createPaymentInstruction(
+            amountObject.value,
+            currencyCode,
+            element.product.storeId
+        );
         // create purchase unit object
         const purchaseUnitObject = {
             reference_id: `${storeIds[i]}~${i}`,
@@ -79,11 +76,10 @@ async function createPurchaseUnitArray(orderObject, currencyCode, shippingAddres
             shipping: shippingObject,
             payment_instruction: paymentInstructionObject,
         };
-        // console.log(purchaseUnitObject.amount.breakdown);
-        console.log(purchaseUnitObject.items);
-        // console.log(purchaseUnitObject.shipping.address);
+
         purchaseUnitArray.push(purchaseUnitObject);
     }
+
     return purchaseUnitArray;
 }
 
@@ -117,6 +113,7 @@ function createItemArray(productArray, currencyCode) {
         };
         items.push(item);
     }
+
     return items;
 }
 
@@ -134,6 +131,7 @@ function createAmount(productArray, currencyCode, store) {
     if (!Array.isArray(productArray)) {
         throw new Error('The productArray has to be an array.');
     }
+
     // TODO check currency code
     const breakdownValues = calculateBreakdown(productArray, store);
     const amount = {
@@ -164,6 +162,7 @@ function createAmount(productArray, currencyCode, store) {
             //     },
         },
     };
+
     console.log(amount);
     return amount;
 }
@@ -178,6 +177,7 @@ function calculateBreakdown(productArray, store) {
     if (!Array.isArray(productArray)) {
         throw new Error('The productArray has to be an array.');
     }
+
     let itemTotal = 0;
     let taxTotal = 0;
     // iterate over products and calculate itemTotal and taxTotal
@@ -185,15 +185,18 @@ function calculateBreakdown(productArray, store) {
         taxTotal = taxTotal + parseFloat(calculateProductTax(item.product.priceFloat) * parseInt(item.amount));
         itemTotal = itemTotal + item.product.priceFloat * parseInt(item.amount);
     }
+
     let shippingCosts = getShippingCostForSingleStore(store, productArray);
     console.log(`[SHIPPING] Costs are ${shippingCosts}`);
+
     const totalSum = (itemTotal + shippingCosts).toFixed(2);
+
     // subtract the tax from the item total
     itemTotal = itemTotal - taxTotal;
-
     taxTotal = taxTotal.toFixed(2);
     itemTotal = itemTotal.toFixed(2);
     shippingCosts = shippingCosts.toFixed(2);
+
     return { totalSum, itemTotal, taxTotal, shippingCosts };
 }
 
@@ -201,19 +204,20 @@ function calculateBreakdown(productArray, store) {
  * The function takes the order data from the frontend and creates the payment instruction object as it is required for paypal
  * @param {string | number} totalSum the total sum of the payment
  * @param {string} currencyCode the currency as string code
+ * @param {string} storeId
  */
-function createPaymentInstruction(totalSum, currencyCode) {
+async function createPaymentInstruction(totalSum, currencyCode, storeId) {
     const floatTotalSum = parseFloat(totalSum);
     if (floatTotalSum < 0) {
         throw new Error('A negative total sum is not supported.');
     }
-    // TODO Check if currencyCode in enum
-    // if (currencyCode < 0) {
-    //     throw new Error('A negative total sum is not supported.');
-    // }
-    const platformFeeRate = 0.1;
+
+    const platformFeeRate = await getStorePlatformFeeRate(storeId);
+
+    // const platformFeeRate = 0.1;
     const platformFeeValue = (floatTotalSum * platformFeeRate).toFixed(2);
     console.log(`Fee value: ${platformFeeValue}`);
+
     const paymentInstructionObject = {
         disbursement_mode: 'INSTANT',
         platform_fees: [
@@ -229,6 +233,7 @@ function createPaymentInstruction(totalSum, currencyCode) {
             },
         ],
     };
+
     return paymentInstructionObject;
 }
 

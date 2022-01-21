@@ -177,6 +177,8 @@ if (process.env.NODE_ENV === APP_ENV.PROD) {
     BACKEND_BASE_URL = process.env.BACKEND_BASE_URL_DEV;
 }
 
+const PLATFORM_FEE_RATE_DEFAULT = parseFloat(process.env.PLATFORM_FEE_RATE_DEFAULT);
+
 //=============================================================================
 export {
     APP_ENV,
@@ -223,5 +225,6 @@ export {
     FRONTEND_BASE_URL_PROD, // also exported, because sometimes we need the prod url during dev as well
     FRONTEND_BASE_URL,
     BACKEND_BASE_URL,
+    PLATFORM_FEE_RATE_DEFAULT,
 };
 //=============================================================================

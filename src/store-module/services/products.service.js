@@ -80,6 +80,7 @@ async function createProductService(data, userEmail, storeId) {
         delivery: data.delivery,
         pickup: data.pickup,
         active: data.active,
+        taxRate: data.taxRate,
     };
     const product = getProductModel(options);
 
@@ -196,6 +197,7 @@ async function editProductService(data, userEmail, storeId, productId) {
                     quantityValue: data.quantityValue,
                     delivery: data.delivery,
                     pickup: data.pickup,
+                    taxRate: data.taxRate,
                     active: data.active,
                 },
                 'set',
@@ -281,13 +283,13 @@ async function deleteProductService(userEmail, storeId, productId) {
 
 /**
  *
- * @param {object} data
+ * @param {number} stockAmount
  * @param {string} userEmail
  * @param {string} storeId
  * @param {string} productId
  * @returns
  */
-async function updateStockAmountService(data, userEmail, storeId, productId) {
+async function updateStockAmountService(stockAmount, userEmail, storeId, productId) {
     const session = getMongoDbClient().startSession();
     try {
         await session.withTransaction(async () => {
@@ -301,7 +303,7 @@ async function updateStockAmountService(data, userEmail, storeId, productId) {
                     storeId: storeId,
                 },
                 {
-                    stockAmount: parseInt(data.stockAmount),
+                    stockAmount: parseInt(stockAmount),
                 },
                 'set',
                 session

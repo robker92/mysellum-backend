@@ -6,7 +6,7 @@ import {
     getMongoCollectionOrders,
     getMongoCollectionPrdctNotif,
 } from '../mongodb/collections';
-import { databaseEntity } from './database-entity';
+import { databaseEntity } from './database-entity.enum';
 
 export { switchCollections };
 

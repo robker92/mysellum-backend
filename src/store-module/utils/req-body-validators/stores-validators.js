@@ -2,13 +2,7 @@
 //https://github.com/sideway/joi/blob/v13.1.2/API.md
 
 import { Joi } from 'express-validation';
-import {
-    joiProductSchema,
-    joiShoppingCartSchema,
-    joiAddressSchema,
-    joiMongoIdSchema,
-    joiTimeStringSchema,
-} from '../../../utils/joiValidators';
+import { joiAddressSchema, joiMongoIdSchema, joiTimeStringSchema } from '../../../utils/joiValidators';
 
 export { editStoreVal, createStoreVal };
 
@@ -139,7 +133,7 @@ const editStoreVal = {
             }).required(),
         }).optional(),
         hasOpened: Joi.boolean().optional(),
-    }),
+    }).required(),
 };
 
 const createStoreVal = {
@@ -160,5 +154,5 @@ const createStoreVal = {
         shippingCostsCurrency: joiShippingCostsCurrency.optional(),
         shippingCostsCurrencySymbol: joiShippingCostsCurrencySymbol.optional(),
         shippingThresholdValue: joiShippingThresholdValue.optional(),
-    }),
+    }).required(),
 };

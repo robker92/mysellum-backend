@@ -12,6 +12,7 @@ import {
 import { getShippingCostsService, getShippingCostForSingleStore } from '../../store-module/services/shipping.service';
 import { ValidationError } from '../errors/validation-error';
 import { getOrderModel } from '../models/order-model';
+import { PLATFORM_FEE_RATE_DEFAULT } from '../../config';
 
 export {
     createOrderDataStructure,
@@ -163,16 +164,18 @@ async function fetchAndValidateProduct(orderedProduct, orderedAmount, deliveryMe
  * @param {string} paypalOrderId
  * @returns
  */
-function createOrderArray(orderObject, orderData, userEmail, paypalOrderId) {
+async function createOrderArray(orderObject, orderData, userEmail, paypalOrderId) {
     let orderArray = [];
     // iterate over stores
     const storeIds = Object.keys(orderObject);
-    for (let i = 0; i < storeIds.length; i++) {
-        const productArray = orderObject[storeIds[i]].products;
+    // for (let i = 0; i < storeIds.length; i++) {
+    for (storeId of storeIds) {
+        const productArray = orderObject[storeId].products;
+        const platformFeeRate = await getStorePlatformFeeRate(storeid);
 
         const orderOptions = {
             arrayIndex: i,
-            storeId: storeIds[i],
+            storeId: storeId,
             userEmail: userEmail,
             datetimeCreated: new Date().toISOString(),
             datetimeAdjusted: '',
@@ -184,6 +187,7 @@ function createOrderArray(orderObject, orderData, userEmail, paypalOrderId) {
             shippingAddress: orderData.shippingAddress,
             paypalOrderId: paypalOrderId,
             paypalStatus: 'captured',
+            platformFeeRate: platformFeeRate,
         };
         const order = getOrderModel(orderOptions);
 
@@ -202,9 +206,9 @@ function createOrderArray(orderObject, orderData, userEmail, paypalOrderId) {
         const totalTax = 0.0; // totalProductSum * 0.07;
         const platformFee = totalProductSum * 0.1;
         // const shippingCosts = 0.0; // value is configuered by store owner
-        const shippingCosts = getShippingCostForSingleStore(orderObject[storeIds[i]].store, productArray);
-        console.log(JSON.stringify(orderObject[storeIds[i]].store));
-        console.log(`[SHIPPING] Costs for ${storeIds[i]} are ${shippingCosts}`);
+        const shippingCosts = getShippingCostForSingleStore(orderObject[storeId].store, productArray);
+        console.log(JSON.stringify(orderObject[storeId].store));
+        console.log(`[SHIPPING] Costs for ${storeId} are ${shippingCosts}`);
         const transferAmount = totalProductSum - platformFee + shippingCosts;
 
         // to string
@@ -270,6 +274,27 @@ async function insertOrders(orderArray, mongoDbSession) {
     await Promise.all(insertions);
 
     return;
+}
+
+/**
+ * The function returns the platform fee rate for a store
+ * @param {String} storeId the store id
+ * @param {*} mongoDbSession the mongo db session
+ * @throws when no platform fee rate was identified
+ * @returns the platformFeeRate for the store when there is one. If not, the default value is returned
+ */
+async function getStorePlatformFeeRate(storeId, mongoDbSession) {
+    const platformFee = await readOneOperation(databaseEntity.PLATFORM_FEES, { storeId: storeId }, {}, mongoDbSession);
+
+    if (platformFee) {
+        return platformFee.value;
+    }
+
+    if (!PLATFORM_FEE_RATE_DEFAULT) {
+        throw new Error(`No platform fee could be identified for the store id ${storeId}.`);
+    }
+
+    return PLATFORM_FEE_RATE_DEFAULT;
 }
 
 /**

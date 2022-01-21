@@ -10,6 +10,7 @@ export {
     joiBirthdate,
     joiPassword,
     joiRegisterUserSchema,
+    joiProductStockAmount,
 };
 
 const joiMongoIdSchema = Joi.string()
@@ -24,6 +25,8 @@ const joiPassword = Joi.string()
     .max(30)
     .regex(/(?=.*[$&+,:;=_?@#|'<>.^*()%!-])(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])/);
 
+const joiProductStockAmount = Joi.number().integer().min(0);
+
 /**
  * joiProductSchema
  * @param {Boolean} complete defines if the product has to be complete. If false, only the IDs are required
@@ -37,7 +40,7 @@ function joiProductSchema(complete) {
             title: Joi.string().min(5).max(30).optional(),
             description: Joi.string().min(20).max(200).optional(),
             longDescription: Joi.string().max(1000).optional(),
-            imgSrc: Joi.string().optional(),
+            imgSrc: Joi.string().allow(null, '').optional(),
             imageDetails: Joi.object({
                 size: Joi.number().min(0).optional(),
                 name: Joi.string().min(1).max(100).optional(),
@@ -49,21 +52,21 @@ function joiProductSchema(complete) {
             currencySymbol: Joi.string().min(1).max(10).optional(),
             quantityType: Joi.string().valid('Kilograms', 'Grams', 'Pieces').optional(),
             quantityValue: Joi.string().max(200).optional(),
-            stockAmount: Joi.number().integer().min(0).optional(),
+            stockAmount: joiProductStockAmount.optional(),
             datetimeCreated: Joi.string().max(200).allow(null, '').optional(),
             datetimeAdjusted: Joi.string().max(200).allow(null, '').optional(),
             delivery: Joi.boolean().optional(),
             pickup: Joi.boolean().optional(),
+            taxRate: Joi.string().valid('normal', 'reduced').optional(),
             active: Joi.boolean().optional(),
         });
     }
     return Joi.object({
-        storeId: joiMongoIdSchema.optional(),
-        _id: joiMongoIdSchema.optional(),
+        storeId: joiMongoIdSchema.required(),
         title: Joi.string().min(5).max(30).required(),
         description: Joi.string().min(20).max(200).required(),
-        longDescription: Joi.string().max(1000).optional(),
-        imgSrc: Joi.string().min(1).required(),
+        longDescription: Joi.string().allow('').max(1000).optional(),
+        imgSrc: Joi.string().allow(null, '').required(),
         imageDetails: Joi.object({
             size: Joi.number().min(0).required(),
             name: Joi.string().min(1).max(100).required(),
@@ -75,18 +78,15 @@ function joiProductSchema(complete) {
         currencySymbol: Joi.string().min(1).max(10).required(),
         quantityType: Joi.string().valid('Kilograms', 'Grams', 'Pieces').required(),
         quantityValue: Joi.string().max(200).required(),
-        stockAmount: Joi.number().integer().min(0).optional(),
+        stockAmount: joiProductStockAmount.optional(),
         datetimeCreated: Joi.string().max(200).allow(null, '').optional(),
         datetimeAdjusted: Joi.string().max(200).allow(null, '').optional(),
         delivery: Joi.boolean().required(),
         pickup: Joi.boolean().required(),
+        taxRate: Joi.string().valid('normal', 'reduced').required(),
         active: Joi.boolean().required(),
     });
 }
-
-// const joiShoppingCartSchema = Joi.array().items(
-//     Joi.array().items(joiProductSchema(false).required(), Joi.number().integer().required()).length(2).required()
-// );
 
 const joiShoppingCartSchema = Joi.array().items(
     Joi.array().items(joiProductSchema(false).required(), Joi.number().integer().required()).length(2).required()

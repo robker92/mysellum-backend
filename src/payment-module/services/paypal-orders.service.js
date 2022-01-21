@@ -3,16 +3,9 @@ import { PAYPAL_BN_CODE } from '../../config';
 import { paypalClient } from '../client/sdk/paypal-sdk-client';
 import { getCreateOrderBody } from '../models/create-order-body';
 
-import {
-    getMongoDbClient,
-    getMongoDbTransactionWriteOptions,
-} from '../../storage/mongodb/setup';
+import { getMongoDbClient, getMongoDbTransactionWriteOptions } from '../../storage/mongodb/setup';
 
-import {
-    updateProductStockAmount,
-    insertOrders,
-    emptyShoppingCart,
-} from './orders.service';
+import { updateProductStockAmount, insertOrders, emptyShoppingCart } from './orders.service';
 
 import {
     createOrderDataStructure,
@@ -22,12 +15,7 @@ import {
     fetchAndValidateProduct,
 } from '../utils/order-utils';
 
-export {
-    createPaypalOrder,
-    capturePaypalOrderProcedure,
-    saveCaptureIdsToOrders,
-    handleIncompleteCaptures,
-};
+export { createPaypalOrder, capturePaypalOrderProcedure, saveCaptureIdsToOrders, handleIncompleteCaptures };
 
 /**
  * Creates the Paypal Order using the Paypal Checkout SDK
@@ -71,17 +59,10 @@ async function capturePaypalOrderProcedure(orderId, orderData, userEmail) {
     try {
         await mongoDbSession.withTransaction(async () => {
             // Create the order object
-            const orderObject = await createOrderDataStructure(
-                orderData.products
-            );
+            const orderObject = await createOrderDataStructure(orderData.products);
 
             // Insert Orders and decrease stocks
-            const orderArray = createOrderArray(
-                orderObject,
-                orderData,
-                userEmail,
-                orderId
-            );
+            const orderArray = await createOrderArray(orderObject, orderData, userEmail, orderId);
 
             let promises = [];
             // save new stocks
@@ -194,11 +175,7 @@ function getCaptureResultArrays(capture) {
  * @param {string} captureArray the paypal capture id
  * @param {string} paypalPayer payer object which is returned at the capture step
  */
-async function saveCaptureIdsToOrders(
-    paypalOrderId,
-    captureArray,
-    paypalPayer
-) {
+async function saveCaptureIdsToOrders(paypalOrderId, captureArray, paypalPayer) {
     console.log(`paypal order id: ${paypalOrderId}`);
     console.log(captureArray);
     let updates = [];

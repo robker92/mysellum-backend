@@ -17,7 +17,7 @@ const createSignUpLinkValidation = {
     body: Joi.object({
         returnLink: Joi.string().max(10000).required(),
         trackingId: Joi.string().max(10000).required(),
-    }),
+    }).required(),
 };
 
 const setOrderStatusValidation = {
@@ -27,7 +27,7 @@ const setOrderStatusValidation = {
         step: Joi.string().valid('orderReceived', 'paymentReceived', 'inDelivery').required(), // orderReceived, paymentReceived, inDelivery
         value: Joi.boolean().required(),
         type: Joi.string().valid('delivery', 'pickup').required(), // delivery or pickup
-    }),
+    }).required(),
 };
 
 const onboardingCompletedWebhookValidation = {
@@ -57,7 +57,7 @@ const onboardingCompletedWebhookValidation = {
             merchant_id: Joi.string().max(100).required(),
         }),
         links: Joi.array().length(0).optional(),
-    }),
+    }).required(),
 };
 
 const onboardingDataValidation = {
@@ -76,7 +76,7 @@ const onboardingDataValidation = {
         productIntentID: Joi.string().max(100).valid('addipmt'),
         isEmailConfirmed: Joi.boolean().required(),
         accountStatus: Joi.string().max(100).valid('BUSINESS_ACCOUNT'),
-    }),
+    }).required(),
 };
 
 const joiOrderSchema = Joi.object({
@@ -85,7 +85,7 @@ const joiOrderSchema = Joi.object({
     shippingAddress: joiAddressSchema(true).required(),
     currencyCode: Joi.string().min(1).max(100).required(),
     deliveryMethod: Joi.string().valid('delivery', 'pickup').required(),
-});
+}).required();
 
 const createPaypalOrderValidation = {
     body: joiOrderSchema.required(),
@@ -95,11 +95,11 @@ const capturePaypalOrderValidation = {
     body: Joi.object({
         orderData: joiOrderSchema.required(),
         orderId: joiMongoIdSchema.required(),
-    }),
+    }).required(),
 };
 
 const fetchMerchantIdsValidation = {
     body: Joi.object({
         storeIds: Joi.array().items(joiMongoIdSchema.required()).required(),
-    }),
+    }).required(),
 };

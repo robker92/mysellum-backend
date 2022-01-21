@@ -24,5 +24,5 @@ const updateUserDataValidation = {
         postcode: Joi.string().length(5).regex(/[0-9]/).required(),
         addressLine1: Joi.string().min(3).max(100).required(),
         country: Joi.string().min(3).max(30).optional(),
-    }),
+    }).required(),
 };

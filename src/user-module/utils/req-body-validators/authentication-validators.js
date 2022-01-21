@@ -20,25 +20,25 @@ const loginUserValidation = {
     body: Joi.object({
         email: joiEmailSchema.required(),
         password: joiPassword.required(),
-    }),
+    }).required(),
 };
 
 const resendVerificationEmailValidation = {
     body: Joi.object({
         email: joiEmailSchema.required(),
         birthdate: joiBirthdate.required(),
-    }),
+    }).required(),
 };
 
 const sendPasswordResetMailValidation = {
     body: Joi.object({
         email: joiEmailSchema.required(),
         birthdate: joiBirthdate.required(),
-    }),
+    }).required(),
 };
 
 const resetPasswordValidation = {
     body: Joi.object({
         password: joiPassword.required(),
-    }),
+    }).required(),
 };

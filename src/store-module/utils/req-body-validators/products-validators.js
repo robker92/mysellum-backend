@@ -1,16 +1,22 @@
 import { Joi } from 'express-validation';
-import { joiProductSchema, joiMongoIdSchema } from '../../../utils/joiValidators';
+import { joiProductSchema, joiMongoIdSchema, joiProductStockAmount } from '../../../utils/joiValidators';
 
-export { productVal, stockAmountVal };
+export { createProductVal, stockAmountVal, editProductVal };
 
 const stockAmountVal = {
     body: Joi.object({
-        storeId: joiMongoIdSchema.optional(),
-        _id: joiMongoIdSchema.optional(),
-        stockAmount: Joi.number().integer().min(0).required(),
-    }),
+        stockAmount: joiProductStockAmount.required(),
+    }).required(),
 };
 
-const productVal = {
+const createProductVal = {
     body: joiProductSchema(true).required(),
+};
+
+const editProductVal = {
+    body: joiProductSchema(true)
+        .keys({
+            _id: joiMongoIdSchema.required(),
+        })
+        .required(),
 };

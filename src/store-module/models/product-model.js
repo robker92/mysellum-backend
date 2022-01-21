@@ -18,6 +18,7 @@ export function getProductModel(options) {
         pickup: options.pickup,
         stockAmount: 1,
         active: options.active,
+        taxRate: options.taxRate,
     };
     return model;
 }
