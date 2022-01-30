@@ -11,7 +11,7 @@ import {
 } from '../../storage/database-operations';
 import { getMongoProductsCollection } from '../../storage/mongodb/collections';
 
-import { getProductModel } from '../../data-models';
+import { getProductModel } from '../models/product-model';
 import { storeActivationRoutine } from './activation.service';
 import { sendNotificationsService } from './product-avail-notif.service';
 import { setStoreDistributionValue, updateStoreDistributionValues } from './stores.service';

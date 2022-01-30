@@ -13,16 +13,11 @@ import {
 } from '../../storage/database-operations';
 import { switchCollections } from '../../storage/utils/switch-collections';
 
-import { getReviewModel } from '../../data-models';
+import { getReviewModel } from '../models/review-model';
 
 import { fetchAndValidateStore } from '../utils/operations/store-checks';
 
-export {
-    getStoresReviewsService,
-    addReviewService,
-    editReviewService,
-    deleteReviewService,
-};
+export { getStoresReviewsService, addReviewService, editReviewService, deleteReviewService };
 
 /**
  * Returns all reviews to a specific store
@@ -30,11 +25,7 @@ export {
  * @returns
  */
 async function getStoresReviewsService(storeId) {
-    const reviews = await readManyOperation(
-        databaseEntity.REVIEWS,
-        { storeId: storeId },
-        {}
-    );
+    const reviews = await readManyOperation(databaseEntity.REVIEWS, { storeId: storeId }, {});
     console.log(reviews);
     return reviews;
 }

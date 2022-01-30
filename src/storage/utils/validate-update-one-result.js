@@ -9,6 +9,13 @@ export { validateUpdateOneResult };
  * @returns true when a document was updated correctly and false if not
  */
 function validateUpdateOneResult(result, entity, queryObject, updateObject) {
+    if (result.result.n === 0) {
+        console.log(JSON.stringify(result));
+        console.log(JSON.stringify(entity));
+        console.log(JSON.stringify(queryObject));
+        console.log(JSON.stringify(updateObject));
+    }
+
     if (
         result.result.n !== 0 &&
         result.result.ok !== 0

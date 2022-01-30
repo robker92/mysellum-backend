@@ -7,10 +7,7 @@ import { checkAuthentication } from '../../middlewares/CheckAuthentication';
 import { parserJsonLimit } from '../../utils/bodyParsers';
 
 //Validation
-import {
-    cartProductValidation,
-    cartUpdateValidation,
-} from '../utils/req-body-validators/shopping-cart-validators';
+import { cartProductValidation, cartUpdateValidation } from '../utils/req-body-validators/shopping-cart-validators';
 import { validate } from 'express-validation';
 const opts = {
     keyByField: true, //Reduces the validation error to a list with key/value pair "fieldname": "Message"
@@ -31,6 +28,7 @@ routerShoppingCart.patch(
     validate(cartProductValidation, opts),
     excHandler(addToShoppingCartController)
 );
+
 routerShoppingCart.patch(
     `/${routerPrefix}/remove`,
     parserJsonLimit,
@@ -38,11 +36,12 @@ routerShoppingCart.patch(
     validate(cartProductValidation, opts),
     excHandler(removeFromShoppingCartController)
 );
+
 routerShoppingCart.patch(
     `/${routerPrefix}/update`,
     parserJsonLimit,
     checkAuthentication,
-    // validate(cartUpdateValidation, opts),
+    validate(cartUpdateValidation, opts),
     excHandler(updateShoppingCartController)
 );
 

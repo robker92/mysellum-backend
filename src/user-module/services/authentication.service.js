@@ -30,7 +30,7 @@ import {
     USER_VERIFICATION_TOKEN_EXPIRES,
 } from '../../config';
 import { sendNodemailerMail } from '../../mailing/nodemailer';
-import { getUserModel } from '../../data-models';
+import { getUserModel } from '../models/user-model';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
@@ -107,10 +107,7 @@ async function loginUserService(email, password) {
     console.log(user.password);
 
     // Verify password
-    const match = await bcrypt.compare(
-        `${password}${user.passwordSalt}`,
-        `${user.password}`
-    );
+    const match = await bcrypt.compare(`${password}${user.passwordSalt}`, `${user.password}`);
 
     // Password does not match
     if (!match) {
@@ -132,10 +129,7 @@ async function loginUserService(email, password) {
     let orderCount;
     if (user.ownedStoreId) {
         orderCount = await countDocumentsOperation(databaseEntity.ORDERS, {
-            $and: [
-                { storeId: user.ownedStoreId.toString() },
-                { 'status.finished': false },
-            ],
+            $and: [{ storeId: user.ownedStoreId.toString() }, { 'status.finished': false }],
         });
         console.log(`order count: ${orderCount}`);
     }
@@ -168,9 +162,7 @@ async function loginUserService(email, password) {
 }
 
 function createVerificationToken() {
-    const verificationToken = crypto
-        .randomBytes(PW_RESET_TOKEN_NUM_BYTES)
-        .toString('hex');
+    const verificationToken = crypto.randomBytes(PW_RESET_TOKEN_NUM_BYTES).toString('hex');
     if (!verificationToken) {
         throw {
             status: 401,
@@ -195,10 +187,7 @@ async function registerUserService(data) {
     }
     const passwordSalt = createPasswordSalt();
     const valueToBeHashed = `${data.password}${passwordSalt}`;
-    const passwordHash = await bcrypt.hash(
-        valueToBeHashed,
-        PW_HASH_SALT_ROUNDS
-    );
+    const passwordHash = await bcrypt.hash(valueToBeHashed, PW_HASH_SALT_ROUNDS);
     const verificationToken = createVerificationToken();
     // const verificationToken = crypto
     //     .randomBytes(PW_RESET_TOKEN_NUM_BYTES)
@@ -229,10 +218,7 @@ async function registerUserService(data) {
     const userData = getUserModel(options);
 
     // Create the user
-    const insertResult = await createOneOperation(
-        databaseEntity.USERS,
-        userData
-    );
+    const insertResult = await createOneOperation(databaseEntity.USERS, userData);
     if (!insertResult) {
         throw {
             status: 500,
@@ -280,12 +266,7 @@ async function verifyRegistrationService(verificationToken) {
 
     let user;
     try {
-        user = await updateOneAndReturnOperation(
-            databaseEntity.USERS,
-            queryObject,
-            updateObject,
-            'set'
-        );
+        user = await updateOneAndReturnOperation(databaseEntity.USERS, queryObject, updateObject, 'set');
     } catch (error) {
         console.log(error);
         throw {
@@ -344,11 +325,7 @@ async function resendVerificationEmailService(email, birthdate) {
         };
     }
     console.log(user.birthdate);
-    if (
-        user.birthdate !== birthdate ||
-        user.deleted === true ||
-        user.blocked === true
-    ) {
+    if (user.birthdate !== birthdate || user.deleted === true || user.blocked === true) {
         throw {
             status: 400,
             type: 'unauthorized',
@@ -370,8 +347,7 @@ async function resendVerificationEmailService(email, birthdate) {
         { email: email },
         {
             verifyRegistrationToken: verificationToken,
-            verifyRegistrationExpires:
-                Date.now() + USER_VERIFICATION_TOKEN_EXPIRES, //Date now + 60min
+            verifyRegistrationExpires: Date.now() + USER_VERIFICATION_TOKEN_EXPIRES, //Date now + 60min
         }
     );
     //send email verification e-mail
@@ -414,9 +390,7 @@ async function sendPasswordResetMailService(email, birthdate) {
         };
     }
 
-    const resetPasswordToken = crypto
-        .randomBytes(PW_RESET_TOKEN_NUM_BYTES)
-        .toString('hex');
+    const resetPasswordToken = crypto.randomBytes(PW_RESET_TOKEN_NUM_BYTES).toString('hex');
     const resetPasswordExpires = Date.now() + 3600000; //Current time in milliseconds + one hour
     console.log(resetPasswordToken);
     console.log(resetPasswordExpires);
@@ -479,10 +453,7 @@ async function checkResetTokenService(receivedToken) {
 async function resetPasswordService(receivedToken, password) {
     const passwordSalt = createPasswordSalt();
     const valueToBeHashed = `${password}${passwordSalt}`;
-    const passwordHash = await bcrypt.hash(
-        valueToBeHashed,
-        PW_HASH_SALT_ROUNDS
-    );
+    const passwordHash = await bcrypt.hash(valueToBeHashed, PW_HASH_SALT_ROUNDS);
 
     await updateOneOperation(
         databaseEntity.USERS,

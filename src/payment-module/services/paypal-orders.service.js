@@ -1,7 +1,7 @@
 import * as paypalSdk from '@paypal/checkout-server-sdk';
 import { PAYPAL_BN_CODE } from '../../config';
 import { paypalClient } from '../client/sdk/paypal-sdk-client';
-import { getCreateOrderBody } from '../models/create-order-body';
+import { getCreatePaypalOrderBody } from '../models/create-paypal-order-body';
 
 import { getMongoDbClient, getMongoDbTransactionWriteOptions } from '../../storage/mongodb/setup';
 
@@ -25,7 +25,7 @@ export { createPaypalOrder, capturePaypalOrderProcedure, saveCaptureIdsToOrders,
 async function createPaypalOrder(orderData, orderObject) {
     console.log(orderData);
 
-    const requestBody = await getCreateOrderBody(orderData, orderObject);
+    const requestBody = await getCreatePaypalOrderBody(orderData, orderObject);
     console.log(JSON.stringify(requestBody));
 
     const request = new paypalSdk.orders.OrdersCreateRequest();

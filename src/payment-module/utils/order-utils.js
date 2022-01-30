@@ -23,6 +23,9 @@ export {
     updateProductStockAmount,
     insertOrders,
     emptyShoppingCart,
+    getStorePlatformFeeRate,
+    calculateProductTax,
+    calculateShippingTax,
 };
 
 async function validateStoreId(storeId) {
@@ -157,7 +160,7 @@ async function fetchAndValidateProduct(orderedProduct, orderedAmount, deliveryMe
 }
 
 /**
- * Creates an array which contains all the orders from the request in the order format
+ * Creates an array which contains all the internal orders from the request in the order format
  * @param {object} orderObject
  * @param {object} orderData
  * @param {string} userEmail
@@ -165,66 +168,82 @@ async function fetchAndValidateProduct(orderedProduct, orderedAmount, deliveryMe
  * @returns
  */
 async function createOrderArray(orderObject, orderData, userEmail, paypalOrderId) {
+    // iterate over store ids, which are part of the order
     let orderArray = [];
-    // iterate over stores
     const storeIds = Object.keys(orderObject);
-    // for (let i = 0; i < storeIds.length; i++) {
-    for (storeId of storeIds) {
+
+    for (let index = 0; index < storeIds.length; index++) {
+        const storeId = storeIds[index];
+
         const productArray = orderObject[storeId].products;
-        const platformFeeRate = await getStorePlatformFeeRate(storeid);
+
+        let grossItemTotal = 0;
+        let itemTaxTotal = 0;
+        // iterate over products to calculate the total sum and push the products to the order
+        for (const element of productArray) {
+            grossItemTotal = grossItemTotal + element.product.priceFloat * element.amount;
+            itemTaxTotal =
+                itemTaxTotal +
+                parseFloat(
+                    calculateProductTax(element.product.priceFloat, element.product.taxRate, element.product._id) *
+                        parseInt(element.amount)
+                );
+        }
+
+        // Shipping
+        const grossShippingCosts = getShippingCostForSingleStore(orderObject[storeId].store, productArray);
+        const shippingTaxAmount = calculateShippingTax(grossItemTotal, itemTaxTotal, grossShippingCosts);
+        const netShippingCosts = grossShippingCosts - shippingTaxAmount;
+
+        const taxTotal = itemTaxTotal + shippingTaxAmount;
+        const netItemTotal = grossItemTotal - itemTaxTotal;
+
+        // Fee
+        const platformFeeRate = await getStorePlatformFeeRate(storeId);
+        const platformFeeTotal = platformFeeRate * (grossItemTotal + grossShippingCosts);
+
+        const transferTotal = grossItemTotal + grossShippingCosts - platformFeeTotal;
+        const orderTotal = grossItemTotal + grossShippingCosts;
+
+        const taxForTransferAmount = calculateTaxAccordingToRate(grossItemTotal, itemTaxTotal, platformFeeTotal);
+
+        const valueBreakdown = {
+            orderTotal: orderTotal.toFixed(2),
+            netItemTotal: netItemTotal.toFixed(2),
+            grossItemTotal: grossItemTotal.toFixed(2),
+            netShippingCosts: netShippingCosts.toFixed(2),
+            grossShippingCosts: grossShippingCosts.toFixed(2),
+            taxTotal: taxTotal.toFixed(2),
+            transferTotal: transferTotal.toFixed(2),
+            platformFeeTotal: platformFeeTotal.toFixed(2),
+            taxForTransferAmount: taxForTransferAmount.toFixed(2),
+        };
 
         const orderOptions = {
-            arrayIndex: i,
+            arrayIndex: index,
             storeId: storeId,
             userEmail: userEmail,
             datetimeCreated: new Date().toISOString(),
             datetimeAdjusted: '',
-            shippingType: 'delivery',
-            // products: productArray,
+            deliveryMethod: orderData.deliveryMethod,
+            valueBreakdown: valueBreakdown,
+            products: productArray,
             currencyCode: orderData.currencyCode,
-            totalSum: 0,
             billingAddress: orderData.billingAddress,
             shippingAddress: orderData.shippingAddress,
             paypalOrderId: paypalOrderId,
-            paypalStatus: 'captured',
+            paypalStatus: 'not-captured', // the paypal order has already been captured
             platformFeeRate: platformFeeRate,
         };
         const order = getOrderModel(orderOptions);
 
-        let totalProductSum = 0;
-        // iterate over products to calculate the total sum and push the products to the order
-        for (const element of productArray) {
-            // for (let i = 0; i < productArray.length; i++) {
-            // check if product exists and use it in the order
-            // let product = await fetchAndValidateProduct(productArray[i]);
-            // const product = productArray[i];
-            order.products.push(element);
-            totalProductSum = totalProductSum + element.product.priceFloat * element.amount;
-        }
-
-        // Calculation
-        const totalTax = 0.0; // totalProductSum * 0.07;
-        const platformFee = totalProductSum * 0.1;
-        // const shippingCosts = 0.0; // value is configuered by store owner
-        const shippingCosts = getShippingCostForSingleStore(orderObject[storeId].store, productArray);
-        console.log(JSON.stringify(orderObject[storeId].store));
-        console.log(`[SHIPPING] Costs for ${storeId} are ${shippingCosts}`);
-        const transferAmount = totalProductSum - platformFee + shippingCosts;
-
-        // to string
-        order.totalSum = totalProductSum.toFixed(2);
-        order.totalTax = totalTax.toFixed(2);
-        order.platformFee = platformFee.toFixed(2);
-        order.shippingCosts = shippingCosts.toFixed(2);
-        order.transferAmount = transferAmount.toFixed(2);
-
-        // console.log(`Order: ${JSON.stringify(order)}`);
-        // push to order Array
         orderArray.push(order);
     }
+
     if (!orderArray.length) {
-        throw new Error('Order Array is empty');
+        throw new Error('Order Array is empty, something went wrong.');
     }
+
     return orderArray;
 }
 
@@ -358,4 +377,58 @@ async function fetchAndValidateOrderByPaypalId(paypalOrderId) {
         throw new Error(`No order to the order id ${orderId} has been found.`);
     }
     return order;
+}
+
+/**
+ * Calculates the tax rate amount for a specific product
+ * @param {number} price the product price
+ * @param {string} productTaxRate "normal" or "reduced"
+ * @param {string} productId the product id
+ * @returns
+ */
+function calculateProductTax(price, productTaxRate, productId) {
+    let taxRate;
+    if (productTaxRate === 'normal') {
+        taxRate = 0.19;
+    }
+
+    if (productTaxRate === 'reduced') {
+        taxRate = 0.07;
+    }
+
+    if (!productTaxRate) {
+        throw new Error(`The product's (${productId}) tax rate is neither normal nor reduced.`);
+    }
+
+    const priceFloat = parseFloat(price);
+    const productNetPrice = priceFloat / (1 + taxRate);
+    const productTaxAmount = priceFloat - productNetPrice;
+
+    return productTaxAmount;
+}
+
+/**
+ *
+ * @param {number} productGrossTotal
+ * @param {number} productTaxTotal
+ * @param {number} shippingCosts
+ */
+function calculateShippingTax(productGrossTotal, productTaxTotal, shippingCosts) {
+    const taxRatio = productTaxTotal / productGrossTotal;
+    const shippingCostTax = shippingCosts * taxRatio;
+
+    return shippingCostTax;
+}
+
+/**
+ *
+ * @param {number} productGrossTotal
+ * @param {number} productTaxTotal
+ * @param {number} costsToCalcTax
+ */
+function calculateTaxAccordingToRate(productGrossTotal, productTaxTotal, costsToCalcTax) {
+    const taxRatio = productTaxTotal / productGrossTotal;
+    const taxAmount = costsToCalcTax * taxRatio;
+
+    return taxAmount;
 }

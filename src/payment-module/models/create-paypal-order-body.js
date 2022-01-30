@@ -10,7 +10,7 @@ import {
     getShippingCostForSingleStore,
 } from '../../store-module/services/shipping.service';
 import { hasValidProperty } from '../../utils/objectFunctions';
-import { getStorePlatformFeeRate } from '../utils/order-utils';
+import { getStorePlatformFeeRate, calculateProductTax, calculateShippingTax } from '../utils/order-utils';
 
 /**
  * Returns the complete payload for the create order post request
@@ -18,7 +18,7 @@ import { getStorePlatformFeeRate } from '../utils/order-utils';
  * @param {String} currencyCode
  * @param {Object} shippingAddress
  */
-export async function getCreateOrderBody(orderObject, currencyCode, shippingAddress) {
+export async function getCreatePaypalOrderBody(orderObject, currencyCode, shippingAddress) {
     const purchaseUnitArray = await createPurchaseUnitArray(orderObject, currencyCode, shippingAddress);
 
     const body = {
@@ -59,7 +59,7 @@ async function createPurchaseUnitArray(orderObject, currencyCode, shippingAddres
         const paymentInstructionObject = await createPaymentInstruction(
             amountObject.value,
             currencyCode,
-            element.product.storeId
+            orderElement.store._id
         );
         // create purchase unit object
         const purchaseUnitObject = {
@@ -96,18 +96,24 @@ function createItemArray(productArray, currencyCode) {
 
     let items = [];
     for (const element of productArray) {
-        const productTax = calculateProductTax(element.product.priceFloat);
-        const productPrice = element.product.priceFloat - productTax;
+        const productTaxAmount = calculateProductTax(
+            element.product.priceFloat,
+            element.product.taxRate,
+            element.product._id
+        );
+
+        const productNetPrice = element.product.priceFloat - productTaxAmount;
+
         const item = {
             name: element.product.title,
             description: element.product.description,
             unit_amount: {
                 currency_code: currencyCode,
-                value: productPrice.toString(),
+                value: productNetPrice.toFixed(2),
             },
             tax: {
                 currency_code: currencyCode,
-                value: productTax.toString(), //'5.00',
+                value: productTaxAmount.toFixed(2), //'5.00',
             },
             quantity: element.amount.toString(),
         };
@@ -115,12 +121,6 @@ function createItemArray(productArray, currencyCode) {
     }
 
     return items;
-}
-
-function calculateProductTax(price) {
-    // const taxRate = 0.19;
-    const taxRate = 0.07;
-    return (parseFloat(price) * taxRate).toFixed(2); // current tax rate: 19%
 }
 
 /**
@@ -132,7 +132,6 @@ function createAmount(productArray, currencyCode, store) {
         throw new Error('The productArray has to be an array.');
     }
 
-    // TODO check currency code
     const breakdownValues = calculateBreakdown(productArray, store);
     const amount = {
         currency_code: currencyCode,
@@ -171,6 +170,7 @@ function createAmount(productArray, currencyCode, store) {
  * The function calculates the values for the breakdown object
  * @param {Array} productArray
  * @param {Object} store
+ * @return {{totalSum: string; itemTotal: string; taxTotal: string; shippingCosts: string; }}
  */
 function calculateBreakdown(productArray, store) {
     // Check the input array
@@ -178,26 +178,34 @@ function calculateBreakdown(productArray, store) {
         throw new Error('The productArray has to be an array.');
     }
 
-    let itemTotal = 0;
+    let grossItemTotal = 0;
     let taxTotal = 0;
     // iterate over products and calculate itemTotal and taxTotal
     for (const item of productArray) {
-        taxTotal = taxTotal + parseFloat(calculateProductTax(item.product.priceFloat) * parseInt(item.amount));
-        itemTotal = itemTotal + item.product.priceFloat * parseInt(item.amount);
+        taxTotal =
+            taxTotal +
+            parseFloat(
+                calculateProductTax(item.product.priceFloat, item.product.taxRate, item.product._id) *
+                    parseInt(item.amount)
+            );
+        grossItemTotal = grossItemTotal + item.product.priceFloat * parseInt(item.amount);
     }
 
-    let shippingCosts = getShippingCostForSingleStore(store, productArray);
-    console.log(`[SHIPPING] Costs are ${shippingCosts}`);
+    const netItemTotal = (grossItemTotal - taxTotal).toFixed(2);
 
-    const totalSum = (itemTotal + shippingCosts).toFixed(2);
+    // Shipping
+    const grossShippingCosts = getShippingCostForSingleStore(store, productArray);
+    // That is currently not needed, because calculating the shipping tax does not work with paypal
+    /*
+    const shippingCostTaxAmount = calculateShippingTax(grossItemTotal, taxTotal, grossShippingCosts);
+    const netShippingCosts = (grossShippingCosts - shippingCostTaxAmount).toFixed(2);
+    taxTotal = (taxTotal + shippingCostTaxAmount).toFixed(2);
+    */
 
-    // subtract the tax from the item total
-    itemTotal = itemTotal - taxTotal;
+    const totalSum = (grossItemTotal + grossShippingCosts).toFixed(2);
     taxTotal = taxTotal.toFixed(2);
-    itemTotal = itemTotal.toFixed(2);
-    shippingCosts = shippingCosts.toFixed(2);
 
-    return { totalSum, itemTotal, taxTotal, shippingCosts };
+    return { totalSum: totalSum, itemTotal: netItemTotal, taxTotal: taxTotal, shippingCosts: grossShippingCosts };
 }
 
 /**
@@ -276,65 +284,3 @@ function createShippingAddress(shippingAddress) {
 
     return shippingAddressObject;
 }
-
-// function calculateAmountDetails(products, currencyCode) {
-//     const breakdownObject = {
-//         breakdown: {
-//             item_total: {
-//                 currency_code: 'EUR',
-//                 value: '',
-//             },
-//         },
-//     };
-
-//     if (shippingCosts) {
-//         breakdownObject.breakdown.shipping = {
-//             currency_code: 'EUR',
-//             value: shippingCosts,
-//         };
-//     }
-//     if (handlingCosts) {
-//         breakdownObject.breakdown.tax_total = {
-//             currency_code: 'EUR',
-//             value: taxTotal,
-//         };
-//     }
-//     breakdownObject.breakdown.handling = {
-//         currency_code: 'EUR',
-//         value: handlingCosts,
-//     };
-//     if (shippingDiscount) {
-//         breakdownObject.breakdown.shipping_discount = {
-//             currency_code: 'EUR',
-//             value: shippingDiscount,
-//         };
-//     }
-//     delete details.shipping_discount;
-//     return details;
-// }
-
-// return {
-//     intent: 'CAPTURE',
-//     purchase_units: [
-//         {
-//             amount: {
-//                 currency_code: 'EUR',
-//                 value: '100.00',
-//             },
-//             // payee: {
-//             //     email_address: payeeEmailAddress,
-//             // },
-//             payment_instruction: {
-//                 disbursement_mode: 'INSTANT',
-//                 platform_fees: [
-//                     {
-//                         amount: {
-//                             currency_code: 'EUR',
-//                             value: '25.00',
-//                         },
-//                     },
-//                 ],
-//             },
-//         },
-//     ],
-// };

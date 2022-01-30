@@ -1,7 +1,7 @@
 import * as paypalSdk from '@paypal/checkout-server-sdk';
 import { PAYPAL_BN_CODE } from '../../../config';
 import { paypalClient } from './client/sdk/paypal-sdk-client';
-import { getCreateOrderBody } from '../../models/create-order-body';
+import { getCreatePaypalOrderBody } from '../../models/create-paypal-order-body';
 
 import { createOrderDataStructure } from '../../utils/order-utils';
 // import { getShippingCostsService } from '../../../store-module/services/shipping.service';
@@ -59,7 +59,7 @@ async function createPaypalOrderService(orderData, userEmail) {
  */
 async function createOrderInPaypal(orderObject, currencyCode, shippingAddress) {
     // const shippingCosts = await getShippingCostsService(orderData.products);
-    const requestBody = await getCreateOrderBody(
+    const requestBody = await getCreatePaypalOrderBody(
         orderObject,
         currencyCode,
         shippingAddress

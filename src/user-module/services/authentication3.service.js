@@ -32,7 +32,7 @@ import {
     USER_VERIFICATION_TOKEN_EXPIRES,
 } from '../../config';
 import { sendNodemailerMail } from '../../mailing/nodemailer';
-import { getUserModel } from '../../data-models';
+import { getUserModel } from '../models/user-model';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
@@ -153,9 +153,7 @@ async function registerUserService(data) {
     }
 
     const passwordHash = await bcrypt.hash(data.password, PW_HASH_SALT_ROUNDS);
-    const verificationToken = crypto
-        .randomBytes(PW_RESET_TOKEN_NUM_BYTES)
-        .toString('hex');
+    const verificationToken = crypto.randomBytes(PW_RESET_TOKEN_NUM_BYTES).toString('hex');
     console.log(`verification token: ${verificationToken}`);
     if (!verificationToken) {
         throw new Error('Verification token invalid.');
@@ -179,10 +177,7 @@ async function registerUserService(data) {
     const userData = getNewUserData(options);
 
     // Create the user
-    const insertResult = await seqCreateOperation(
-        seqDatabaseEntity.USER,
-        userData
-    );
+    const insertResult = await seqCreateOperation(seqDatabaseEntity.USER, userData);
     if (!insertResult) {
         throw new Error('Could not create user.');
     }
@@ -221,16 +216,10 @@ async function verifyRegistrationService(verificationToken) {
 
     let user;
     try {
-        user = await seqUpdateOperation(
-            databaseEntity.USERS,
-            valueObject,
-            whereObject
-        );
+        user = await seqUpdateOperation(databaseEntity.USERS, valueObject, whereObject);
     } catch (error) {
         console.log(error);
-        throw new Error(
-            `Update operation during E-Mail verification failed using the token ${verificationToken}.`
-        );
+        throw new Error(`Update operation during E-Mail verification failed using the token ${verificationToken}.`);
     }
     console.log(user);
     const accessToken = createToken({
@@ -270,14 +259,10 @@ async function sendPasswordResetMailService(email, birthdate) {
     });
     if (!user) {
         console.log(`User not found`);
-        throw new Error(
-            `A user with the email address '${email}' and birthdate '${birthdate}' was not found.`
-        );
+        throw new Error(`A user with the email address '${email}' and birthdate '${birthdate}' was not found.`);
     }
 
-    const resetPasswordToken = crypto
-        .randomBytes(PW_RESET_TOKEN_NUM_BYTES)
-        .toString('hex');
+    const resetPasswordToken = crypto.randomBytes(PW_RESET_TOKEN_NUM_BYTES).toString('hex');
     const resetPasswordExpires = Date.now() + 3600000; // Current time in milliseconds + one hour
     console.log(resetPasswordToken);
     console.log(resetPasswordExpires);

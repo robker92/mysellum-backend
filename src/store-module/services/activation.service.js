@@ -1,9 +1,5 @@
 // database operations
-import {
-    updateOneOperation,
-    readOneOperation,
-    databaseEntity,
-} from '../../storage/database-operations';
+import { updateOneOperation, readOneOperation, databaseEntity } from '../../storage/database-operations';
 
 export { storeActivationRoutine, activationStep };
 
@@ -12,6 +8,7 @@ const activationStep = Object.freeze({
     MIN_ONE_PRODUCT: 'minOneProduct',
     SHIPPING_REGISTERED: 'shippingRegistered',
     PAYMENT_REGISTERED: 'paymentMethodRegistered',
+    LEGAL_DOCUMENTS_VALID: 'legalDocumentsValid',
 });
 
 /**
@@ -23,63 +20,36 @@ const activationStep = Object.freeze({
 async function storeActivationRoutine(store, mongoDbSession = null) {
     if (!store) {
         // throw new Error(`Store with the id ${storeId} was not found.`);
-        throw new Error(
-            `No store was provided to check its activation status.`
-        );
+        throw new Error(`No store was provided to check its activation status.`);
     }
     const storeId = store._id.toString();
     // PROFILE COMPLETE
-    let profileCompleteValue;
     // Check the store's values and call the set methods accordingly
-    if (checkProfileComplete(store)) {
-        profileCompleteValue = true;
-    } else {
-        profileCompleteValue = false;
-    }
+    const profileCompleteValue = checkProfileComplete(store);
 
     // MIN ONE PRODUCT
-    let minOneProductValue;
-    if (await checkMinOneProduct(storeId, mongoDbSession)) {
-        minOneProductValue = true;
-    } else {
-        minOneProductValue = false;
-    }
+    const minOneProductValue = await checkMinOneProduct(storeId, mongoDbSession);
 
     // SHIPPING
-    let shippingValue;
-    if (checkShippingRegistered(store)) {
-        shippingValue = true;
-    } else {
-        shippingValue = false;
-    }
+    const shippingValue = checkShippingRegistered(store);
 
     // PAYMENT
-    let paymentMethodValue;
-    if (checkPaymentMethodRegistered(store)) {
-        paymentMethodValue = true;
-    } else {
-        paymentMethodValue = false;
-    }
+    const paymentMethodValue = checkPaymentMethodRegistered(store);
+
+    // LEGAL DOCUMENTS
+    const legalDocumentsValue = checkLegalDocumentsValid(store);
 
     // get the value for the general actiovation status field
-    const stepValueArray = [
-        profileCompleteValue,
-        minOneProductValue,
-        shippingValue,
-        paymentMethodValue,
-    ];
+    const stepValueArray = [profileCompleteValue, minOneProductValue, shippingValue, paymentMethodValue];
     const activationValue = getGeneralActivationStatusValue(stepValueArray);
 
     // Build update object
-    let updateObject = {};
-    updateObject[`activationSteps.${activationStep.PROFILE_COMPLETE}`] =
-        profileCompleteValue;
-    updateObject[`activationSteps.${activationStep.MIN_ONE_PRODUCT}`] =
-        minOneProductValue;
-    updateObject[`activationSteps.${activationStep.SHIPPING_REGISTERED}`] =
-        shippingValue;
-    updateObject[`activationSteps.${activationStep.PAYMENT_REGISTERED}`] =
-        paymentMethodValue;
+    const updateObject = {};
+    updateObject[`activationSteps.${activationStep.PROFILE_COMPLETE}`] = profileCompleteValue;
+    updateObject[`activationSteps.${activationStep.MIN_ONE_PRODUCT}`] = minOneProductValue;
+    updateObject[`activationSteps.${activationStep.SHIPPING_REGISTERED}`] = shippingValue;
+    updateObject[`activationSteps.${activationStep.PAYMENT_REGISTERED}`] = paymentMethodValue;
+    updateObject[`activationSteps.${activationStep.LEGAL_DOCUMENTS_VALID}`] = legalDocumentsValue;
     updateObject[`activation`] = activationValue;
 
     // Update the store's values
@@ -117,45 +87,27 @@ function getGeneralActivationStatusValue(valueArray) {
 // TODO
 // Activation Step Validation Functions
 function checkProfileComplete(store) {
-    if (
-        store.profileData.title.length < 10 ||
-        store.profileData.title.length > 100
-    ) {
+    if (store.profileData.title.length < 10 || store.profileData.title.length > 100) {
         return false;
     }
 
-    if (
-        store.profileData.description.length < 100 ||
-        store.profileData.description.length > 1000
-    ) {
+    if (store.profileData.description.length < 100 || store.profileData.description.length > 10000) {
         return false;
     }
 
-    if (
-        store.profileData.tags.length < 1 ||
-        store.profileData.tags.length > 15
-    ) {
+    if (store.profileData.tags.length < 1 || store.profileData.tags.length > 15) {
         return false;
     }
 
-    // TODO Fetch images
-    // if (
-    //     store.profileData.images.length < 1 ||
-    //     store.profileData.images.length > 10
-    // ) {
-    //     return false;
-    // }
+    if (store.profileData.images.length < 1 || store.profileData.images.length > 10) {
+        return false;
+    }
 
     return true;
 }
 
 async function checkMinOneProduct(storeId, mongoDbSession) {
-    const product = await readOneOperation(
-        databaseEntity.PRODUCTS,
-        { storeId: storeId },
-        { _id: 1 },
-        mongoDbSession
-    );
+    const product = await readOneOperation(databaseEntity.PRODUCTS, { storeId: storeId }, { _id: 1 }, mongoDbSession);
     if (!product) {
         return false;
     }
@@ -175,5 +127,24 @@ function checkPaymentMethodRegistered(store) {
     if (store.payment.paypal.common.merchantIdInPayPal) {
         return true;
     }
+    return false;
+}
+
+function checkLegalDocumentsValid(store) {
+    let agbFound = false;
+    let dataPrivacyFound = false;
+
+    for (const document of store.legalDocuments) {
+        if (document.type === 'AGB') {
+            agbFound = true;
+        }
+        if (document.type === 'Datenschutz') {
+            dataPrivacyFound = true;
+        }
+        if (agbFound && dataPrivacyFound) {
+            return true;
+        }
+    }
+
     return false;
 }

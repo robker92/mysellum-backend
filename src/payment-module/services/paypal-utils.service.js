@@ -1,6 +1,6 @@
 'use strict';
 
-import { getPartnerReferralBody, getCreateOrderBody } from '../models';
+import { getPartnerReferralBody, getCreatePaypalOrderBody } from '../models';
 import { paypalClient, getAccessToken } from '../client/rest/paypal-rest-client';
 import { PAYPAL_CLIENT_ID, PAYPAL_PLATFORM_MERCHANT_ID } from '../../config';
 import { v4 as uuidv4 } from 'uuid';
@@ -112,7 +112,13 @@ async function fetchWebhookPaypalMerchantId(url) {
  */
 async function createPaypalOrder(orderData) {
     // const testEmail = 'sb-b10wx5264762@personal.example.com';
-    const requestBody = getCreateOrderBody(orderData.currency, orderData.totalSum, orderData.userEmail, 'EUR', '10.00');
+    const requestBody = getCreatePaypalOrderBody(
+        orderData.currency,
+        orderData.totalSum,
+        orderData.userEmail,
+        'EUR',
+        '10.00'
+    );
     console.log(JSON.stringify(requestBody));
     const accessToken = await getAccessToken();
 

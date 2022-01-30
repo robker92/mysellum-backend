@@ -23,7 +23,7 @@ const geoCodeOptions = {
 };
 const geoCoder = NodeGeocoder(geoCodeOptions);
 
-import { getStoreModel } from '../../data-models';
+import { getStoreModel } from '../models/store-model';
 import { createSignUpLinkService } from '../../payment-module/services/paypal';
 import {
     uploadBlobService,

@@ -1,23 +1,4 @@
 'use strict';
-//App imports
-// import {
-//     getMongoDbClient,
-//     getMongoDbTransactionWriteOptions,
-// } from '../../storage/mongodb/setup';
-
-// import { ObjectId } from 'mongodb';
-
-// import {
-//     getMongoStoresCollection,
-//     getMongoOrdersCollection,
-//     // getMongoProductsCollection,
-//     // getMongoUsersCollection,
-// } from '../../storage/mongodb/collections';
-
-// import { removeDuplicatesFromArray } from '../../utils/arrayFunctions';
-// import { getOrderModel } from '../models';
-// import { sendNodemailerMail } from '../../mailing/nodemailer';
-// import { contentType } from '../../mailing/enums/contentType';
 
 import {
     getSingleOrderService,
@@ -61,11 +42,7 @@ const getStoresOrdersController = async function (req, res, next) {
     let orders;
     let totalCount;
     try {
-        const result = await getStoresOrdersService(
-            userEmail,
-            pageSize,
-            pageNum
-        );
+        const result = await getStoresOrdersService(userEmail, pageSize, pageNum);
         orders = result.orders;
         totalCount = result.totalCount;
     } catch (error) {
@@ -447,14 +424,7 @@ const setStepStatusController = async function (req, res, next) {
     let statusFinished;
     let statusSuccessfully;
     try {
-        const returnValue = await setStepStatusService(
-            userEmail,
-            storeId,
-            orderId,
-            step,
-            value,
-            type
-        );
+        const returnValue = await setStepStatusService(userEmail, storeId, orderId, step, value, type);
         statusFinished = returnValue.statusFinished;
         statusSuccessfully = returnValue.statusSuccessfully;
     } catch (error) {

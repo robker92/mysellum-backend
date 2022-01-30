@@ -2,12 +2,15 @@
 //https://github.com/sideway/joi/blob/v13.1.2/API.md
 
 import { Joi } from 'express-validation';
-import { joiShoppingCartSchema } from '../../../utils/joiValidators';
+import { joiShoppingCartSchema, joiProductSchema } from '../../../utils/joiValidators';
 
 export { cartProductValidation, cartUpdateValidation };
 
 const cartProductValidation = {
-    body: joiShoppingCartSchema.required(),
+    body: Joi.object({
+        product: joiProductSchema(false).required(),
+        amount: Joi.number().integer().required(),
+    }).required(),
 };
 
 const cartUpdateValidation = {

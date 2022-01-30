@@ -93,7 +93,7 @@ const validateRequestBody = (schema) => {
         const testSchema = schema.body;
         const result = testSchema.validate(req.body);
         console.log(result.value.products);
-        console.log(JSON.stringify(result.error.details));
+        console.log(JSON.stringify(result.error?.details));
 
         // const testObj = {
         //     _id: '61c8633f05317d26e0a17e8f',

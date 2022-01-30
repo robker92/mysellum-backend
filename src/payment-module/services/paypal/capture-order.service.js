@@ -46,7 +46,9 @@ async function capturePaypalOrderService(orderId, orderData, userEmail) {
     // TODO: (when error occured: change to incompleted -> finished true; successf. false)
     try {
         let promises = [];
-        promises.push(saveCaptureIdsToOrders(orderId, captureResult.completeCapturesArray, captureResult.paypalPayer));
+        promises.push(
+            saveCaptureIdsToOrdersAndSetStatus(orderId, captureResult.completeCapturesArray, captureResult.paypalPayer)
+        );
         promises.push(
             handleIncompleteCaptures(orderId, captureResult.incompleteCapturesArray, captureResult.paypalPayer)
         );
@@ -84,7 +86,7 @@ async function capturePaypalOrderProcedure(orderId, orderData, userEmail) {
     try {
         await mongoDbSession.withTransaction(async () => {
             // Create the order object; no mongo session needed here since we only fetch and dont update
-            const orderObject = await createOrderDataStructure(orderData.products);
+            const orderObject = await createOrderDataStructure(orderData.products, orderData.deliveryMethod);
 
             // Insert Orders and decrease stocks
             const orderArray = await createOrderArray(orderObject, orderData, userEmail, orderId);
@@ -227,9 +229,7 @@ async function capturePaypalOrder(orderId) {
  * @param {string} captureArray the paypal capture id
  * @param {string} paypalPayer payer object which is returned at the capture step
  */
-async function saveCaptureIdsToOrders(paypalOrderId, captureArray, paypalPayer) {
-    console.log(`paypal order id: ${paypalOrderId}`);
-    console.log(captureArray);
+async function saveCaptureIdsToOrdersAndSetStatus(paypalOrderId, captureArray, paypalPayer) {
     let updates = [];
     // Iterate over the capture array and add the capture ids to the single orders (to which it belongs)
     for (const purchaseUnit of captureArray) {
@@ -287,7 +287,6 @@ async function handleIncompleteCaptures(paypalOrderId, incompleteCaptureArray) {
     await Promise.all(updates);
 
     return;
-    contentType;
 }
 
 async function sendNotificationEmails(customerEmail, captureArray) {
