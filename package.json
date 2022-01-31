@@ -21,6 +21,11 @@
   "license": "",
   "dependencies": {
     "@azure/storage-blob": "^12.8.0",
+    "@babel/cli": "^7.16.8",
+    "@babel/core": "^7.16.7",
+    "@babel/node": "^7.16.8",
+    "@babel/plugin-transform-runtime": "^7.16.10",
+    "@babel/preset-env": "^7.16.8",
     "@paypal/checkout-server-sdk": "^1.0.2",
     "@sinonjs/fake-timers": "^7.1.2",
     "axios": "^0.21.1",
@@ -29,6 +34,8 @@
     "body-parser": "^1.18.2",
     "cookie-parser": "latest",
     "cors": "latest",
+    "cp": "^0.2.0",
+    "cross-env": "^7.0.3",
     "crypto": "^1.0.1",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
@@ -59,11 +66,6 @@
     "uuid": "^8.3.2"
   },
   "devDependencies": {
-    "@babel/cli": "^7.16.8",
-    "@babel/core": "^7.16.7",
-    "@babel/node": "^7.16.8",
-    "@babel/preset-env": "^7.16.8",
-    "cross-env": "^7.0.3",
     "jest": "^26.6.3",
     "moxios": "latest",
     "nodemon": "^1.19.4",

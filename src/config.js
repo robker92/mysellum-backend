@@ -30,9 +30,9 @@ const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 if (!ADMIN_USER || !ADMIN_PASSWORD) {
     throw new Error('Admin credentials could not be found!');
 }
-
 const ADMIN_CREDENTIALS_OBJ = {};
 ADMIN_CREDENTIALS_OBJ[ADMIN_USER] = ADMIN_PASSWORD;
+
 // MongoDB
 // const MONGODB_URL =
 //     process.env.MONGODB_URL ||
