@@ -10,6 +10,7 @@ import {
 } from '../../../storage/database-operations';
 import { PAYPAL_PLATFORM_MERCHANT_ID } from '../../../config';
 import { fetchAndValidateStore } from '../../utils/order-utils';
+import { paypalClient, getAccessToken } from './client/rest/paypal-rest-client';
 
 export { onboardingDataService };
 
