@@ -4,6 +4,7 @@ import express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
+import { readLanguage } from './middlewares';
 
 //Routers
 import {
@@ -16,13 +17,9 @@ import {
     routerShipping,
 } from './store-module/routes/index';
 import { routerAdmin } from './admin-module';
-import {
-    routerAuthentication,
-    routerShoppingCart,
-    routerUsers,
-} from './user-module/routes';
+import { routerAuthentication, routerShoppingCart, routerUsers } from './user-module/routes';
 import { routerContact } from './contact-module/contact.routes';
-import { errorHandler } from './middlewares/ErrorHandler';
+import { errorHandler } from './middlewares';
 
 // import { routerPaypal } from './payment-module/paypal/paypal-routes';
 // import { routerOrders } from './payment-module/routes';
@@ -34,6 +31,7 @@ const app = express();
 app.use(helmet());
 app.use(cookieParser());
 app.disable('x-powered-by');
+// app.use(readLanguage);
 
 // Cors Whitelisted Origins:
 const corsWhitelist = ['https://prjct-frontend.azurewebsites.net'];

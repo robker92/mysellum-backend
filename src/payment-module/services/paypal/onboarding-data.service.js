@@ -26,6 +26,7 @@ async function onboardingDataService(
     accountStatus
 ) {
     try {
+        console.log('hi');
         // Validate Paypal Ids
         await validatePaypalMerchantId(merchantIdInPayPal);
         // Validate store id & store owner & check if values are not already set
@@ -36,9 +37,7 @@ async function onboardingDataService(
         // Validate store id & check if values are not already set
         const store = await fetchAndValidateStore(storeId);
         if (store.payment.paypal.common.merchantIdInPayPal) {
-            throw new Error(
-                'There is already a merchantIdInPayPal stored for this store.'
-            );
+            throw new Error('There is already a merchantIdInPayPal stored for this store.');
         }
         if (store.userEmail !== userEmail) {
             throw new Error('User not authorized to edit this store.');
@@ -87,9 +86,7 @@ async function validatePaypalMerchantId(merchantIdInPaypal, trackingId) {
     }
 
     let url = `/v1/customer/partners/${PAYPAL_PLATFORM_MERCHANT_ID}/merchant-integrations`;
-    url = merchantIdInPaypal
-        ? url + `/${merchantIdInPaypal}`
-        : url + `?tracking_id=${trackingId}`;
+    url = merchantIdInPaypal ? url + `/${merchantIdInPaypal}` : url + `?tracking_id=${trackingId}`;
     // if (!merchantIdInPaypal) {
     //     url = url + `?tracking_id=${trackingId}`;
     // } else {

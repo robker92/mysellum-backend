@@ -27,7 +27,7 @@ const joiStoreImages = Joi.array()
             id: Joi.number().required(),
             title: Joi.string().max(200).required(),
             size: Joi.number().optional(),
-            src: Joi.string().max(1000).required(),
+            src: Joi.string().required(),
             name: Joi.string().max(100).optional(),
             originalName: Joi.string().max(100).optional(),
         })
@@ -138,7 +138,6 @@ const editStoreVal = {
 
 const createStoreVal = {
     body: Joi.object({
-        // userEmail: Joi.string().email().optional(),
         title: joiTitle.required(),
         subtitle: joiSubtitle.optional(),
         description: joiDescription.required(),
@@ -148,11 +147,5 @@ const createStoreVal = {
 
         // TODO check if in list
         mapIcon: joiMapIcon.required(),
-        location: joiLocation.optional(),
-        shippingMethod: joiShippingMethod.optional(),
-        shippingCosts: joiShippingCosts.optional(),
-        shippingCostsCurrency: joiShippingCostsCurrency.optional(),
-        shippingCostsCurrencySymbol: joiShippingCostsCurrencySymbol.optional(),
-        shippingThresholdValue: joiShippingThresholdValue.optional(),
     }).required(),
 };

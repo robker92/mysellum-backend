@@ -1,0 +1,19 @@
+const USER_MODULE_PUBLIC_ERRORS = {
+    DEFAULT: { message: 'DEFAULT', code: 500 },
+    // AUTH SERVICE
+    AUTH_WRONG_CREDENTIALS: { message: 'AUTH_WRONG_CREDENTIALS', code: 401 },
+    EMAIL_NOT_VERIFIED: { message: 'EMAIL_NOT_VERIFIED', code: 403 },
+    USER_BLOCKED_OR_DELETED: { message: 'USER_BLOCKED_OR_DELETED', code: 403 },
+    EMAIL_ALREADY_USED: { message: 'EMAIL_ALREADY_USED', code: 400 }, // for an existing registered email, is not a client error
+    USER_NOT_FOUND: { message: 'USER_NOT_FOUND', code: 400 }, // aka email not registered
+    EMAIL_ALREADY_VERIFIED: { message: 'EMAIL_ALREADY_VERIFIED', code: 400 },
+    NEW_VERIFICATION_EMAIL_FORBIDDEN: 'NEW_VERIFICATION_EMAIL_FORBIDDEN',
+    RESET_LINK_INVALID_OR_EXPIRED: { message: 'RESET_LINK_INVALID_OR_EXPIRED', code: 400 },
+
+    // SHOPPING CART SERVICE
+    WRONG_STORE_ID_PROVIDED: { message: 'WRONG_STORE_ID_PROVIDED', code: 400 },
+    WRONG_PRODUCT_ID_PROVIDED: { message: 'WRONG_PRODUCT_ID_PROVIDED', code: 400 },
+    PRODUCT_NOT_FOUND_IN_CART: { message: 'PRODUCT_NOT_FOUND_IN_CART', code: 400 },
+};
+
+export { USER_MODULE_PUBLIC_ERRORS };

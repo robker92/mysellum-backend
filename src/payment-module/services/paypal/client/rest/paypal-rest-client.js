@@ -1,10 +1,11 @@
 'use strict';
 
 import axios from 'axios';
-
+import qs from 'qs';
 import {
     PAYPAL_BASE_URL,
     PAYPAL_CLIENT_ID,
+    PAYPAL_CLIENT_SECRET,
     PAYPAL_PLATFORM_MERCHANT_ID,
 } from '../../../../../config';
 
@@ -47,23 +48,26 @@ async function fetchAccessToken() {
     return response.data; //return the response body
 }
 
+let cachedAccessToken = {
+    expiresAt: null,
+    accessToken: null,
+};
+
 /**
  * Returns the access token. When the token is expired, it will be refreshed before.
  * @returns the access token
  */
 async function getAccessToken() {
-    if (
-        !cachedAccessToken.expiresAt ||
-        Date.now() >= parseFloat(cachedAccessToken.expiresAt)
-    ) {
-        console.log('access token is refreshed');
-        const tokenResponse = await fetchAccessToken();
-        console.log(tokenResponse.access_token);
-        cachedAccessToken.accessToken = tokenResponse.access_token; // get token from whole response body
-        // calculation of the expiration time in ms
-        cachedAccessToken.expiresAt =
-            Date.now() + tokenResponse.expires_in - 2000; // (we distract 2 seconds to make sure that no invalid token is used for a request)
+    if (cachedAccessToken.expiresAt && Date.now() < parseFloat(cachedAccessToken.expiresAt)) {
+        return cachedAccessToken.accessToken;
     }
+
+    console.log('access token is refreshed');
+    const tokenResponse = await fetchAccessToken();
+    console.log(tokenResponse.access_token);
+    cachedAccessToken.accessToken = tokenResponse.access_token; // get token from whole response body
+    // calculation of the expiration time in ms
+    cachedAccessToken.expiresAt = Date.now() + tokenResponse.expires_in - 2000; // (we subtract 2 seconds to make sure that no invalid token is used for a request)
 
     return cachedAccessToken.accessToken;
 }

@@ -43,8 +43,7 @@ export function getStoreModel(options) {
             profileComplete: true, // init is true since validations are done during creation
             minOneProduct: options.activation?.minOneProduct ?? false,
             shippingRegistered: options.activation?.shippingRegistered ?? false,
-            paymentMethodRegistered:
-                options.activation?.paymentMethodRegistered ?? false,
+            paymentMethodRegistered: options.activation?.paymentMethodRegistered ?? false,
         },
 
         openingHours: {
@@ -85,6 +84,9 @@ export function getStoreModel(options) {
             costs: 0,
             currency: 'EUR',
         },
+
+        legalDocuments: [],
+
         payment: {
             registered: false,
             // https://developer.paypal.com/docs/platforms/seller-onboarding/before-payment/

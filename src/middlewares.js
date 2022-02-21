@@ -3,6 +3,10 @@
 import jwt from 'jsonwebtoken';
 import { JWT_SECRET_KEY } from './config';
 import { ValidationError } from 'express-validation';
+import { DEFAULT_LANGUAGE, SUPPORTED_LANGUAGES } from './languages/config';
+
+// Error Messages
+import { USER_MODULE_PUBLIC_ERRORS } from './user-module/utils/errors';
 
 const allowCrossDomain = (req, res, next) => {
     res.header('Access-Control-Allow-Origin', 'http://localhost:8080');
@@ -48,6 +52,23 @@ function grantAccess(role) {
         }
     };
 }
+
+const readLanguage = (req, res, next) => {
+    const languageHeader = req.headers['accept-language'];
+
+    if (!languageHeader) {
+        req.language = DEFAULT_LANGUAGE;
+        return next();
+    }
+
+    const language = languageHeader.substr(0, 2);
+
+    if (SUPPORTED_LANGUAGES.indexOf(language) > -1) {
+        req.language = language;
+    }
+
+    next();
+};
 
 const checkAuthentication = (req, res, next) => {
     // check header or url parameters or post parameters for token
@@ -164,6 +185,39 @@ const validateRequestBody = (schema) => {
 // };
 
 const errorHandler = (err, req, res, next) => {
+    console.log(err.message);
+    console.log(err.code);
+    // const statusCode = translateErrorMessageToStatus(err.message);
+    // console.log(statusCode);
+
+    // TODO
+    return res.status(err.code || 500).send(err.message);
+};
+
+/**
+ * The function returns a http status code for a defined list of error messages. If an unknown message
+ * is given, undefined is returned. That way, it is sufficient in the code to throw regular errors using the
+ * predefined messages
+ * @param {string} message
+ * @returns the statuscode; default is 500
+ */
+function translateErrorMessageToStatus(message) {
+    let statusCode;
+
+    switch (message) {
+        case USER_MODULE_PUBLIC_ERRORS.AUTH_WRONG_CREDENTIALS3:
+            statusCode = 401;
+            break;
+
+        default:
+            statusCode = 500;
+            break;
+    }
+
+    return statusCode;
+}
+
+const errorHandlerOld = (err, req, res, next) => {
     console.log(err);
     //console.log(req.body)
     console.log('error handler');
@@ -205,6 +259,7 @@ const errorHandler = (err, req, res, next) => {
 //=============================================================================
 export {
     allowCrossDomain,
+    readLanguage,
     checkAuthentication,
     validateRequestBody,
     errorHandler,

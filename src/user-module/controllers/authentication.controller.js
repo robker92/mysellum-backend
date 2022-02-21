@@ -1,9 +1,6 @@
 'use strict';
 import { StatusCodes } from 'http-status-codes';
-import {
-    getAuthTokenCookieOptions,
-    getAuthControlCookieOptions,
-} from '../utils/cookieOptions';
+import { getAuthTokenCookieOptions, getAuthControlCookieOptions } from '../utils/cookieOptions';
 import {
     loginUserService,
     registerUserService,
@@ -14,10 +11,7 @@ import {
     resetPasswordService,
 } from '../services/authentication.service';
 import { getShippingCostsService } from '../../store-module/services/shipping.service';
-import {
-    validateShoppingCartService,
-    updateUsersShoppingCart,
-} from '../services/shopping-cart.service';
+import { validateShoppingCartService, updateUsersShoppingCart } from '../services/shopping-cart.service';
 
 export {
     loginUserController,
@@ -41,9 +35,7 @@ const loginUserController = async function (req, res, next) {
         console.log(JSON.stringify(result.userData.shoppingCart));
         // shopping cart routine; when an error occurs here, it is ignored and an empty shopping cart is returned
         try {
-            const updatedShoppingCart = await validateShoppingCartService(
-                result.userData.shoppingCart
-            );
+            const updatedShoppingCart = await validateShoppingCartService(result.userData.shoppingCart);
             // console.log(`carts:`);
             // console.log(
             //     JSON.stringify(result.userData.shoppingCart) !==
@@ -51,28 +43,20 @@ const loginUserController = async function (req, res, next) {
             // );
             console.log(JSON.stringify(result.userData.shoppingCart));
             console.log(JSON.stringify(updatedShoppingCart));
-            if (
-                JSON.stringify(result.userData.shoppingCart) !==
-                JSON.stringify(updatedShoppingCart)
-            ) {
+            if (JSON.stringify(result.userData.shoppingCart) !== JSON.stringify(updatedShoppingCart)) {
                 result.userData.shoppingCart = updatedShoppingCart;
                 await updateUsersShoppingCart(email, updatedShoppingCart);
             }
             // console.log(result.userData.shoppingCart.length);
-            const shippingCosts = await getShippingCostsService(
-                result.userData.shoppingCart
-            );
+            const shippingCosts = await getShippingCostsService(result.userData.shoppingCart);
             result.userData.shippingCosts = shippingCosts;
         } catch (error) {
-            console.log(
-                `[LOGIN] An error occured during a shopping cart routine:`
-            );
+            console.log(`[LOGIN] An error occured during a shopping cart routine:`);
             console.log(error);
             result.userData.shoppingCart = [];
         }
     } catch (error) {
         console.log(`[LOGIN] An error occured during the login of a user.`);
-        console.log(error);
         return next(error);
     }
     console.log(result.accessToken);

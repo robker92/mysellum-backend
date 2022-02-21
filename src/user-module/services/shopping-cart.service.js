@@ -11,11 +11,8 @@ import {
     databaseEntity,
 } from '../../storage/database-operations';
 import { ObjectId } from 'mongodb';
-
-import {
-    fetchAndValidateStore,
-    fetchAndValidateProduct,
-} from '../../store-module/utils/operations/store-checks';
+import { USER_MODULE_PUBLIC_ERRORS } from '../utils/errors';
+import { fetchAndValidateStore, fetchAndValidateProduct } from '../../store-module/utils/operations/store-checks';
 
 export {
     addToShoppingCartService,
@@ -26,16 +23,14 @@ export {
 };
 
 async function addToShoppingCartService(email, addedProduct, addedAmount) {
+    throw USER_MODULE_PUBLIC_ERRORS.WRONG_STORE_ID_PROVIDED;
     //Get the product from the database and save it in the shopping cart
     const store = await readOneOperation(databaseEntity.STORES, {
         _id: ObjectId(addedProduct.storeId),
     });
     if (!store) {
         //when no store was found -> wrong store id in the payload
-        throw {
-            status: 400,
-            message: 'Wrong store id provided.',
-        };
+        throw USER_MODULE_PUBLIC_ERRORS.WRONG_STORE_ID_PROVIDED;
     }
 
     const productFromDB = await readOneOperation(databaseEntity.PRODUCTS, {
@@ -43,13 +38,8 @@ async function addToShoppingCartService(email, addedProduct, addedAmount) {
     });
     if (!productFromDB) {
         //when no product was found -> wrong product id
-        throw {
-            status: 400,
-            message: 'Wrong product id provided.',
-        };
+        throw USER_MODULE_PUBLIC_ERRORS.WRONG_PRODUCT_ID_PROVIDED;
     }
-    //delete the image to save localstorage space
-    // delete productFromDB['imgSrc'];
 
     //Update the user's shopping cart
     const user = await readOneOperation(databaseEntity.USERS, {
@@ -57,10 +47,7 @@ async function addToShoppingCartService(email, addedProduct, addedAmount) {
     });
     if (!user) {
         //when no user was found -> wrong email
-        throw {
-            status: 400,
-            message: 'Wrong email provided.',
-        };
+        throw USER_MODULE_PUBLIC_ERRORS.USER_NOT_FOUND;
     }
 
     let currentShoppingCart = user.shoppingCart;
@@ -70,12 +57,10 @@ async function addToShoppingCartService(email, addedProduct, addedAmount) {
         for (let i = 0; i < currentShoppingCart.length; i++) {
             //Check if added product is already in cart and increase amount if yes
             if (
-                ObjectId(currentShoppingCart[i][0]._id).toString() ===
-                    productFromDB._id.toString() &&
+                ObjectId(currentShoppingCart[i][0]._id).toString() === productFromDB._id.toString() &&
                 currentShoppingCart[i][0].storeId === productFromDB.storeId
             ) {
-                currentShoppingCart[i][1] =
-                    currentShoppingCart[i][1] + addedAmount;
+                currentShoppingCart[i][1] = currentShoppingCart[i][1] + addedAmount;
                 // replace the current product in the cart with the fetched product from the database
                 // (in case there were some data changes with the product in the meantime)
                 currentShoppingCart[i].splice(0, 1, productFromDB);
@@ -104,21 +89,14 @@ async function addToShoppingCartService(email, addedProduct, addedAmount) {
     return currentShoppingCart;
 }
 
-async function removeFromShoppingCartService(
-    email,
-    removedProduct,
-    removedAmount
-) {
+async function removeFromShoppingCartService(email, removedProduct, removedAmount) {
     // Get the product from the database and save it in the shopping cart
     const store = await readOneOperation(databaseEntity.STORES, {
         _id: ObjectId(removedProduct.storeId),
     });
     if (!store) {
         // when no store was found -> wrong store id in the payload
-        throw {
-            status: 400,
-            message: 'Wrong store id provided.',
-        };
+        throw USER_MODULE_PUBLIC_ERRORS.WRONG_STORE_ID_PROVIDED;
     }
     // retrieve the product
     const productFromDB = await readOneOperation(databaseEntity.PRODUCTS, {
@@ -126,24 +104,15 @@ async function removeFromShoppingCartService(
     });
     if (!productFromDB) {
         // when no product was found -> wrong product id
-        throw {
-            status: 400,
-            message: 'Wrong product id provided.',
-        };
+        throw USER_MODULE_PUBLIC_ERRORS.WRONG_PRODUCT_ID_PROVIDED;
     }
-
-    // delete the image to save localstorage space
-    // delete productFromDB['imgSrc'];
 
     const user = await readOneOperation(databaseEntity.USERS, {
         email: email,
     });
     if (!user) {
         // when no user was found -> wrong email
-        throw {
-            status: 400,
-            message: 'Wrong email provided.',
-        };
+        throw USER_MODULE_PUBLIC_ERRORS.USER_NOT_FOUND;
     }
     let currentShoppingCart = user.shoppingCart;
 
@@ -151,12 +120,10 @@ async function removeFromShoppingCartService(
     for (let i = 0; i < currentShoppingCart.length; i++) {
         // Check if added product exists in cart
         if (
-            currentShoppingCart[i][0]._id.toString() ===
-                productFromDB._id.toString() &&
+            currentShoppingCart[i][0]._id.toString() === productFromDB._id.toString() &&
             currentShoppingCart[i][0].storeId === productFromDB.storeId
         ) {
-            currentShoppingCart[i][1] =
-                currentShoppingCart[i][1] - removedAmount;
+            currentShoppingCart[i][1] = currentShoppingCart[i][1] - removedAmount;
             // replace the product with the fetched one
             currentShoppingCart[i].splice(0, 1, productFromDB);
             // Delete the array element if amount <= 0
@@ -168,10 +135,7 @@ async function removeFromShoppingCartService(
         }
     }
     if (found === false) {
-        throw {
-            status: 400,
-            message: 'Product not found in shopping cart.',
-        };
+        throw USER_MODULE_PUBLIC_ERRORS.PRODUCT_NOT_FOUND_IN_CART;
     }
 
     await updateOneOperation(
@@ -202,10 +166,7 @@ async function updateShoppingCartService(email, shoppingCart) {
         });
         if (!store) {
             // when no store was found -> wrong store id in the payload
-            return next({
-                status: 400,
-                message: 'Wrong store id provided.',
-            });
+            throw USER_MODULE_PUBLIC_ERRORS.WRONG_STORE_ID_PROVIDED;
         }
 
         // retrieve the product
@@ -214,10 +175,7 @@ async function updateShoppingCartService(email, shoppingCart) {
         });
         if (!productFromDB) {
             // when no product was found -> wrong product id
-            throw {
-                status: 400,
-                message: 'Wrong product id provided.',
-            };
+            throw USER_MODULE_PUBLIC_ERRORS.WRONG_PRODUCT_ID_PROVIDED;
         }
 
         // delete the image to save localstorage space
@@ -243,10 +201,7 @@ async function updateShoppingCartService(email, shoppingCart) {
 async function validateShoppingCartService(shoppingCart) {
     const productsToRemove = await identifyProducts(shoppingCart);
     const shoppingCartCopy = JSON.parse(JSON.stringify(shoppingCart));
-    const updatedShoppingCart = removeProducts(
-        shoppingCartCopy,
-        productsToRemove
-    );
+    const updatedShoppingCart = removeProducts(shoppingCartCopy, productsToRemove);
 
     return updatedShoppingCart;
 }
@@ -276,13 +231,14 @@ function removeProducts(shoppingCart, productsToRemove) {
 }
 
 async function updateUsersShoppingCart(email, shoppingCart) {
-    console.log(`Email: ${email}`);
-    console.log(shoppingCart.length);
-    await updateOneOperation(
-        databaseEntity.USERS,
-        { email: email },
-        { shoppingCart: shoppingCart }
-    );
+    // console.log(`Email: ${email}`);
+    // console.log(shoppingCart.length);
+
+    try {
+        await updateOneOperation(databaseEntity.USERS, { email: email }, { shoppingCart: shoppingCart });
+    } catch (error) {
+        throw USER_MODULE_PUBLIC_ERRORS.DEFAULT;
+    }
 
     return;
 }

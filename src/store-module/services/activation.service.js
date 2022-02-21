@@ -84,7 +84,6 @@ function getGeneralActivationStatusValue(valueArray) {
     return resultValue;
 }
 
-// TODO
 // Activation Step Validation Functions
 function checkProfileComplete(store) {
     if (store.profileData.title.length < 10 || store.profileData.title.length > 100) {
@@ -95,7 +94,7 @@ function checkProfileComplete(store) {
         return false;
     }
 
-    if (store.profileData.tags.length < 1 || store.profileData.tags.length > 15) {
+    if (store.profileData.tags.length < 1 || store.profileData.tags.length > 10) {
         return false;
     }
 
@@ -114,17 +113,20 @@ async function checkMinOneProduct(storeId, mongoDbSession) {
     return true;
 }
 
-// TODO
 function checkShippingRegistered(store) {
-    return true;
+    if (
+        store.shipping.method &&
+        store.shipping.currency &&
+        store.shipping.thresholdValue >= 0 &&
+        store.shipping.thresholdValue >= 0
+    ) {
+        return true;
+    }
+    return false;
 }
 
-// TODO
 function checkPaymentMethodRegistered(store) {
-    // if (store.payment.registered) {
-    //     return true;
-    // }
-    if (store.payment.paypal.common.merchantIdInPayPal) {
+    if (store.payment.paypal.common.merchantIdInPayPal && store.payment.registered) {
         return true;
     }
     return false;

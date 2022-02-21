@@ -143,7 +143,7 @@ async function createStoreService(data, userEmail) {
         // };
 
         // Resize file
-        const resizedImage = await getImageBase64Resized(file.buffer);
+        const resizedImage = await getImageBase64Resized(image.src);
         // file.buffer = resizedImage.base64String;
 
         const resizedFile = {
