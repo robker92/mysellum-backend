@@ -83,51 +83,6 @@ async function onboardingDataService(
         await session.endSession();
     }
 
-    // try {
-    //     // Validate Paypal Ids
-    //     await validatePaypalMerchantId(merchantIdInPayPal);
-    //     // Validate store id & store owner & check if values are not already set
-    //     // save data to store (paypal + status)
-
-    //     // TODO check activation
-    //     console.log(`Received store id: ${storeId}`);
-    //     // Validate store id & check if values are not already set
-    //     const store = await fetchAndValidateStoreForOnboarding(storeId);
-    //     if (store.payment.paypal.common.merchantIdInPayPal) {
-    //         throw new Error('There is already a merchantIdInPayPal stored for this store.');
-    //     }
-    //     if (store.userEmail !== userEmail) {
-    //         throw new Error('User not authorized to edit this store.');
-    //     }
-
-    //     // save data to store (paypal + status)
-    //     await updateOneOperation(
-    //         databaseEntity.STORES,
-    //         {
-    //             _id: storeId,
-    //         },
-    //         {
-    //             'payment.registered': true,
-    //             'payment.paypal.common.merchantId': merchantId,
-    //             'payment.paypal.common.merchantIdInPayPal': merchantIdInPayPal,
-    //             'payment.paypal.common.permissionsGranted': permissionsGranted,
-    //             'payment.paypal.common.consentStatus': consentStatus,
-    //             'payment.paypal.common.productIntentId': productIntentId,
-    //             'payment.paypal.common.productIntentID': productIntentID,
-    //             'payment.paypal.common.consentStatus': consentStatus,
-    //             'payment.paypal.common.isEmailConfirmed': isEmailConfirmed,
-    //             'payment.paypal.common.accountStatus': accountStatus,
-    //             'activationSteps.paymentMethodRegistered': true,
-    //         },
-    //         'set'
-    //     );
-
-    //     await storeActivationRoutine(store, session);
-    // } catch (error) {
-    //     console.log(error);
-    //     throw error;
-    // }
-
     return;
 }
 
@@ -188,11 +143,11 @@ async function fetchAndValidateStoreForOnboarding(storeId, session = null) {
     );
 
     if (!findResult) {
-        throw new ValidationError(`A store with the store id ${storeId} could not be found.`);
+        throw new Error(`A store with the store id ${storeId} could not be found.`);
     }
 
     if (findResult.deleted) {
-        throw new ValidationError(`The store with the store id ${storeId} has been deleted.`);
+        throw new Error(`The store with the store id ${storeId} has been deleted.`);
     }
 
     return findResult;
