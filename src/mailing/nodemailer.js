@@ -46,10 +46,10 @@ import { validateContentType } from './validators/validateContentType';
 //     }
 // });
 
-// nodemailerTransporter.verify().then((verify) => {
-//     console.log(verify);
-// });
-nodemailerTransporter.verify().then((res) => console.log(res));
+nodemailerTransporter.verify().then((verify) => {
+    console.log(verify);
+});
+// nodemailerTransporter.verify().then((res) => console.log(res));
 /**
  * The function receives and options object and sends then the respective email.
  * @param {object} options contains 'contentType', 'email' and - depending on the email which should be send
@@ -69,8 +69,8 @@ async function sendNodemailerMail(options) {
     // });
     const transporter = nodemailerTransporter;
     // Checks if the transporter is working - if not an error is thrown immediately
-    const verify = await transporter.verify();
-    console.log(verify);
+    // const verify = await transporter.verify();
+    // console.log(verify);
 
     try {
         validateContentType(options.contentType);
