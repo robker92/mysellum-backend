@@ -72,10 +72,10 @@ const onboardingDataValidation = {
             .required(),
         permissionsGranted: Joi.boolean().required(),
         consentStatus: Joi.boolean().required(),
-        productIntentId: Joi.string().max(100).valid('addipmt'),
-        productIntentID: Joi.string().max(100).valid('addipmt'),
+        productIntentId: Joi.string().max(100).valid('addipmt').optional(),
+        productIntentID: Joi.string().max(100).valid('addipmt').optional(),
         isEmailConfirmed: Joi.boolean().required(),
-        accountStatus: Joi.string().max(100).valid('BUSINESS_ACCOUNT'),
+        accountStatus: Joi.string().max(100).valid('BUSINESS_ACCOUNT').optional(),
     }).required(),
 };
 

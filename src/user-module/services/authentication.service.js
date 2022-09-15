@@ -12,16 +12,18 @@ import {
     countDocumentsOperation,
     databaseEntity,
 } from '../../storage/database-operations';
+// MongoDB transaction
+import { getMongoDbClient, getMongoDbTransactionWriteOptions } from '../../storage/mongodb/setup';
 
 //pg
-import {
-    seqReadOneOperation,
-    seqReadManyOperation,
-    seqUpdateOperation,
-    seqCreateOperation,
-    seqDeleteOneOperation,
-    seqReadAndCountAllOperation,
-} from '../../storage/pg/operations';
+// import {
+//     seqReadOneOperation,
+//     seqReadManyOperation,
+//     seqUpdateOperation,
+//     seqCreateOperation,
+//     seqDeleteOneOperation,
+//     seqReadAndCountAllOperation,
+// } from '../../storage/pg/operations';
 
 import {
     JWT_SECRET_KEY,
@@ -35,9 +37,6 @@ import { getUserModel } from '../models/user-model';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
-// var moment = require('moment');
-// import moment from 'moment';
-// import moment from 'moment/src/moment';
 
 export {
     loginUserService,
@@ -117,15 +116,37 @@ async function loginUserService(email, password) {
         console.log(`order count: ${orderCount}`);
     }
 
-    let counter = 0;
+    let productCounter = 0;
     for (const element of user.shoppingCart) {
-        counter = counter + element[1];
+        productCounter = productCounter + element[1];
     }
 
+    const userData = getReturnUserObj(user, productCounter, orderCount);
+
     // TODO
+    // const userData = {
+    //     user: {
+    //         email: user.email,
+    //         name: {
+    //             firstName: user.firstName,
+    //             lastName: user.lastName,
+    //         },
+    //         ownedStoreId: user.ownedStoreId,
+    //         shoppingCart: user.shoppingCart,
+    //         productCounter: productCounter,
+    //     },
+    //     shoppingCart: user.shoppingCart,
+    //     productCounter: productCounter,
+    //     favoriteStores: user.favoriteStores,
+    //     orderCount: user.ownedStoreId ? orderCount : 0,
+    // };
+
+    return { accessToken, userData };
+}
+
+function getReturnUserObj(user, productCounter, orderCount) {
     const userData = {
         user: {
-            authorizationRole: 'Role1',
             email: user.email,
             name: {
                 firstName: user.firstName,
@@ -133,15 +154,15 @@ async function loginUserService(email, password) {
             },
             ownedStoreId: user.ownedStoreId,
             shoppingCart: user.shoppingCart,
-            productCounter: counter,
+            productCounter: productCounter,
         },
         shoppingCart: user.shoppingCart,
-        productCounter: counter,
+        productCounter: productCounter,
         favoriteStores: user.favoriteStores,
         orderCount: user.ownedStoreId ? orderCount : 0,
     };
 
-    return { accessToken, userData };
+    return userData;
 }
 
 function createVerificationToken() {
@@ -153,57 +174,72 @@ function createVerificationToken() {
 }
 
 async function registerUserService(data) {
-    const user = await readOneOperation(databaseEntity.USERS, {
-        email: data.email,
-    });
-    // Email already registered
-    if (user) {
-        throw USER_MODULE_PUBLIC_ERRORS.EMAIL_ALREADY_USED;
-    }
-
-    const passwordSalt = createPasswordSalt();
-    const valueToBeHashed = `${data.password}${passwordSalt}`;
-    const passwordHash = await bcrypt.hash(valueToBeHashed, PW_HASH_SALT_ROUNDS);
-    const verificationToken = createVerificationToken();
-
-    // get user data model function
-    const options = {
-        firstName: data.firstName,
-        lastName: data.lastName,
-        email: data.email,
-        phoneNumber: data.phoneNumber,
-        passwordHash: passwordHash,
-        passwordSalt: passwordSalt,
-        city: data.city,
-        postcode: data.postcode,
-        addressLine1: data.addressLine1,
-        birthdate: data.birthdate,
-        verificationToken: verificationToken,
-        verificationExpires: Date.now() + USER_VERIFICATION_TOKEN_EXPIRES, //Date now + 60min
-        datetimeCreated: new Date().toISOString(),
-    };
-    const userData = getUserModel(options);
-
-    // Create the user
-    const insertResult = await createOneOperation(databaseEntity.USERS, userData);
-    if (!insertResult) {
-        throw USER_MODULE_PUBLIC_ERRORS.REGISTRATION_UNSUCCESSFUL;
-    }
-    // const createdUser = insertResult.ops[0];
-
-    //send email verification e-mail
-    const mailOptions = {
-        email: data.email,
-        contentType: 'registrationVerification',
-        verificationToken: verificationToken,
-    };
-
-    // TODO add transaction -> when no mail is sent, the user should not be registered
+    const session = getMongoDbClient().startSession();
     try {
-        await sendNodemailerMail(mailOptions);
+        await session.withTransaction(async () => {
+            const user = await readOneOperation(
+                databaseEntity.USERS,
+                {
+                    email: data.email,
+                },
+                {},
+                session
+            );
+            // Email already registered
+            if (user) {
+                throw USER_MODULE_PUBLIC_ERRORS.EMAIL_ALREADY_USED;
+            }
+
+            const passwordSalt = createPasswordSalt();
+            const valueToBeHashed = `${data.password}${passwordSalt}`;
+            const passwordHash = await bcrypt.hash(valueToBeHashed, PW_HASH_SALT_ROUNDS);
+            const verificationToken = createVerificationToken();
+
+            // get user data model function
+            const options = {
+                firstName: data.firstName,
+                lastName: data.lastName,
+                email: data.email,
+                phoneNumber: data.phoneNumber,
+                passwordHash: passwordHash,
+                passwordSalt: passwordSalt,
+                city: data.city,
+                postcode: data.postcode,
+                addressLine1: data.addressLine1,
+                birthdate: data.birthdate,
+                verificationToken: verificationToken,
+                verificationExpires: Date.now() + USER_VERIFICATION_TOKEN_EXPIRES, //Date now + 60min
+                datetimeCreated: new Date().toISOString(),
+            };
+            const userData = getUserModel(options);
+
+            // Create the user
+            const insertResult = await createOneOperation(databaseEntity.USERS, userData, session);
+            if (!insertResult) {
+                throw USER_MODULE_PUBLIC_ERRORS.REGISTRATION_UNSUCCESSFUL;
+            }
+            // const createdUser = insertResult.ops[0];
+
+            //send email verification e-mail
+            const mailOptions = {
+                email: data.email,
+                contentType: 'registrationVerification',
+                verificationToken: verificationToken,
+            };
+
+            try {
+                await sendNodemailerMail(mailOptions);
+            } catch (error) {
+                console.log(error);
+                throw USER_MODULE_PUBLIC_ERRORS.DEFAULT;
+            }
+        }, getMongoDbTransactionWriteOptions());
     } catch (error) {
+        console.log('The transaction was aborted due to an unexpected error: ');
         console.log(error);
-        throw USER_MODULE_PUBLIC_ERRORS.DEFAULT;
+        throw error;
+    } finally {
+        await session.endSession();
     }
 
     console.log(`User registered`);
@@ -241,115 +277,150 @@ async function verifyRegistrationService(verificationToken) {
         email: user.email,
     });
 
-    const userData = {
-        message: 'Registration successful!',
-        user: {
-            authorizationRole: 'Role1',
-            email: user.email,
-            name: {
-                firstName: user.firstName,
-                lastName: user.lastName,
-            },
-            ownedStoreId: '',
-            shoppingCart: [],
-            productCounter: 0,
-        },
-        shoppingCart: user.shoppingCart,
-        favoriteStores: user.favoriteStores ?? [],
-        // productCounter: counter
-    };
+    const userData = getReturnUserObj(user, 0, 0);
+
+    // const userData = {
+    //     message: 'Registration successful!',
+    //     user: {
+    //         authorizationRole: 'Role1',
+    //         email: user.email,
+    //         name: {
+    //             firstName: user.firstName,
+    //             lastName: user.lastName,
+    //         },
+    //         ownedStoreId: '',
+    //         shoppingCart: [],
+    //         productCounter: 0,
+    //     },
+    //     shoppingCart: user.shoppingCart,
+    //     favoriteStores: user.favoriteStores ?? [],
+    //     // productCounter: counter
+    // };
 
     return { accessToken, userData };
 }
 
 async function resendVerificationEmailService(email, birthdate) {
-    const user = await readOneOperation(databaseEntity.USERS, {
-        email: email,
-    });
-    if (!user) {
-        throw USER_MODULE_PUBLIC_ERRORS.USER_NOT_FOUND;
-    }
-
-    if (user.birthdate !== birthdate || user.deleted === true || user.blocked === true) {
-        throw USER_MODULE_PUBLIC_ERRORS.USER_BLOCKED_OR_DELETED;
-    }
-
-    if (user.emailVerified === true) {
-        throw USER_MODULE_PUBLIC_ERRORS.EMAIL_ALREADY_VERIFIED;
-    }
-
-    // update token and expiration date
-    const verificationToken = createVerificationToken();
-    await updateOneOperation(
-        databaseEntity.USERS,
-        { email: email },
-        {
-            verifyRegistrationToken: verificationToken,
-            verifyRegistrationExpires: Date.now() + USER_VERIFICATION_TOKEN_EXPIRES, //Date now + 60min
-        }
-    );
-
-    //send email verification e-mail
-    const mailOptions = {
-        email: email,
-        contentType: 'registrationVerification',
-        verificationToken: verificationToken,
-    };
-
-    // TODO Transaction
+    const session = getMongoDbClient().startSession();
     try {
-        await sendNodemailerMail(mailOptions);
+        await session.withTransaction(async () => {
+            const user = await readOneOperation(
+                databaseEntity.USERS,
+                {
+                    email: email,
+                },
+                {},
+                session
+            );
+            if (!user) {
+                throw USER_MODULE_PUBLIC_ERRORS.USER_NOT_FOUND;
+            }
+
+            if (user.birthdate !== birthdate || user.deleted === true || user.blocked === true) {
+                throw USER_MODULE_PUBLIC_ERRORS.USER_BLOCKED_OR_DELETED;
+            }
+
+            if (user.emailVerified === true) {
+                throw USER_MODULE_PUBLIC_ERRORS.EMAIL_ALREADY_VERIFIED;
+            }
+
+            // update token and expiration date
+            const verificationToken = createVerificationToken();
+            await updateOneOperation(
+                databaseEntity.USERS,
+                { email: email },
+                {
+                    verifyRegistrationToken: verificationToken,
+                    verifyRegistrationExpires: Date.now() + USER_VERIFICATION_TOKEN_EXPIRES, //Date now + 60min
+                },
+                'set',
+                session
+            );
+
+            //send email verification e-mail
+            const mailOptions = {
+                email: email,
+                contentType: 'registrationVerification',
+                verificationToken: verificationToken,
+            };
+
+            try {
+                await sendNodemailerMail(mailOptions);
+            } catch (error) {
+                throw USER_MODULE_PUBLIC_ERRORS.DEFAULT;
+            }
+        }, getMongoDbTransactionWriteOptions());
     } catch (error) {
-        throw USER_MODULE_PUBLIC_ERRORS.DEFAULT;
+        console.log('The transaction was aborted due to an unexpected error: ');
+        console.log(error);
+        throw error;
+    } finally {
+        await session.endSession();
     }
 
     return;
 }
 
 async function sendPasswordResetMailService(email, birthdate) {
-    birthdate = convertBirthdate(birthdate);
-    const user = await readOneOperation(databaseEntity.USERS, {
-        email: email,
-        birthdate: birthdate,
-    });
-    if (!user) {
-        throw USER_MODULE_PUBLIC_ERRORS.USER_NOT_FOUND;
-    }
-
-    const resetPasswordToken = crypto.randomBytes(PW_RESET_TOKEN_NUM_BYTES).toString('hex');
-    const resetPasswordExpires = Date.now() + 3600000; //Current time in milliseconds + one hour
-    console.log(resetPasswordToken);
-    console.log(resetPasswordExpires);
-
-    //save token and expire date to user
-    await updateOneOperation(
-        databaseEntity.USERS,
-        {
-            email: email,
-            birthdate: birthdate,
-        },
-        {
-            resetPasswordToken: resetPasswordToken,
-            resetPasswordExpires: resetPasswordExpires,
-        },
-        'set'
-    );
-
-    //send mail to user email
-    const mailOptions = {
-        email: email,
-        contentType: 'resetPassword',
-        resetPasswordToken: resetPasswordToken,
-    };
-
-    let mailInfo;
+    const session = getMongoDbClient().startSession();
     try {
-        mailInfo = await sendNodemailerMail(mailOptions);
-    } catch (error) {
-        throw USER_MODULE_PUBLIC_ERRORS.DEFAULT;
-    }
+        await session.withTransaction(async () => {
+            birthdate = convertBirthdate(birthdate);
+            const user = await readOneOperation(
+                databaseEntity.USERS,
+                {
+                    email: email,
+                    birthdate: birthdate,
+                },
+                {},
+                session
+            );
+            if (!user) {
+                throw USER_MODULE_PUBLIC_ERRORS.USER_NOT_FOUND;
+            }
 
-    return mailInfo;
+            const resetPasswordToken = crypto.randomBytes(PW_RESET_TOKEN_NUM_BYTES).toString('hex');
+            const resetPasswordExpires = Date.now() + 3600000; //Current time in milliseconds + one hour
+            console.log(resetPasswordToken);
+            console.log(resetPasswordExpires);
+
+            //save token and expire date to user
+            await updateOneOperation(
+                databaseEntity.USERS,
+                {
+                    email: email,
+                    birthdate: birthdate,
+                },
+                {
+                    resetPasswordToken: resetPasswordToken,
+                    resetPasswordExpires: resetPasswordExpires,
+                },
+                'set',
+                session
+            );
+
+            //send mail to user email
+            const mailOptions = {
+                email: email,
+                contentType: 'resetPassword',
+                resetPasswordToken: resetPasswordToken,
+            };
+
+            let mailInfo;
+            try {
+                mailInfo = await sendNodemailerMail(mailOptions);
+            } catch (error) {
+                throw USER_MODULE_PUBLIC_ERRORS.DEFAULT;
+            }
+            console.log(mailInfo);
+        }, getMongoDbTransactionWriteOptions());
+    } catch (error) {
+        console.log('The transaction was aborted due to an unexpected error: ');
+        console.log(error);
+        throw error;
+    } finally {
+        await session.endSession();
+    }
 }
 
 async function checkResetTokenService(receivedToken) {
@@ -395,3 +466,14 @@ async function resetPasswordService(receivedToken, password) {
 
     return;
 }
+
+// const session = getMongoDbClient().startSession();
+// try {
+//     await session.withTransaction(async () => {}, getMongoDbTransactionWriteOptions());
+// } catch (error) {
+//     console.log('The transaction was aborted due to an unexpected error: ');
+//     console.log(error);
+//     throw error;
+// } finally {
+//     await session.endSession();
+// }

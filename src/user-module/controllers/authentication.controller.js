@@ -129,17 +129,14 @@ const sendPasswordResetMailController = async function (req, res, next) {
     const email = req.body.email;
     const birthdate = req.body.birthdate;
 
-    let result;
     try {
-        result = await sendPasswordResetMailService(email, birthdate);
+        await sendPasswordResetMailService(email, birthdate);
     } catch (error) {
         console.log(error);
         return next(error);
     }
 
-    return res.status(200).json({
-        info: result,
-    });
+    return res.senStatus(200);
 };
 
 const checkResetTokenController = async function (req, res, next) {

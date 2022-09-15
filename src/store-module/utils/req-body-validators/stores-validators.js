@@ -57,11 +57,11 @@ const editStoreVal = {
                     label: Joi.string().min(3).max(40).required(),
                     fileDetails: Joi.object({
                         lastModified: Joi.number().required(),
-                        lastModifiedDate: Joi.string().max(50).optional(),
+                        lastModifiedDate: Joi.string().allow(null, '').max(50).optional(),
                         name: Joi.string().min(3).max(100).required(),
                         size: Joi.number().required(),
                         type: Joi.string().min(3).max(50).required(),
-                        webkitRelativePath: Joi.string().min(3).max(50).optional(),
+                        webkitRelativePath: Joi.string().allow(null, '').min(3).max(50).optional(),
                     }).required(),
                     fileSrc: Joi.string().min(10).max(1500000).required(),
                 })
@@ -72,9 +72,9 @@ const editStoreVal = {
         mapIcon: Joi.string().min(1).max(100).required(),
         location: joiLocation.optional(),
         contact: Joi.object({
-            phoneNumber: Joi.string().regex(/[0-9]/).min(5).max(25).optional(),
-            emailAddress: Joi.string().email().min(5).max(100).optional(),
-            website: Joi.string().min(5).max(250).optional(),
+            phoneNumber: Joi.string().allow(null, '').regex(/[0-9]/).min(5).max(25).optional(),
+            emailAddress: Joi.string().allow(null, '').email().min(5).max(100).optional(),
+            website: Joi.string().allow(null, '').min(5).max(250).optional(),
         }).optional(),
         shippingMethod: joiShippingMethod.required(),
         shippingCosts: joiShippingCosts.required(),

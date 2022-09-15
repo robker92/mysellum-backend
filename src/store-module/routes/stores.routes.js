@@ -20,6 +20,7 @@ import { MULTER_LIMIT, ADMIN_CREDENTIALS_OBJ } from '../../config';
 
 // Utils
 import { checkAuthentication, jwtOptional } from '../../middlewares/CheckAuthentication';
+import { validateRequestBody } from '../../middlewares';
 import { parserJsonLimit } from '../../utils/bodyParsers';
 
 // Controllers
@@ -35,16 +36,15 @@ import {
 // Validation
 import { editStoreVal, createStoreVal } from '../utils/req-body-validators/stores-validators';
 const opts = {
-    keyByField: true, //Reduces the validation error to a list with key/value pair "fieldname": "Message"
+    // keyByField: true, //Reduces the validation error to a list with key/value pair "fieldname": "Message"
 };
 
 const routerPrefix = 'stores';
 
 routerStores.get(`/${routerPrefix}/:storeId`, jwtOptional, excHandler(getSingleStoreController));
 // routerStores.get(`/${routerPrefix}`, excHandler(controller_stores.getAllStores));
-
-//router.get(`/${routerPrefix}filteredStores/:searchterm`, excHandler(controller_stores.getFilteredStores));
-//router.post(`/${routerPrefix}/getFilteredStores2`, parserJsonLimit, excHandler(controller_stores.getFilteredStores2));
+// router.get(`/${routerPrefix}filteredStores/:searchterm`, excHandler(controller_stores.getFilteredStores));
+// router.post(`/${routerPrefix}/getFilteredStores2`, parserJsonLimit, excHandler(controller_stores.getFilteredStores2));
 
 //Stores
 routerStores.post(
@@ -60,6 +60,7 @@ routerStores.patch(
     `/${routerPrefix}/:storeId`,
     parserJsonLimit,
     checkAuthentication,
+    // validateRequestBody(editStoreVal), // TEST
     validate(editStoreVal, opts),
     excHandler(editStoreController)
 );

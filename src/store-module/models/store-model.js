@@ -39,11 +39,11 @@ export function getStoreModel(options) {
 
         activation: false, // determined by activation steps result
         activationSteps: {
-            // profileComplete: options.activation?.profileComplete ?? false,
             profileComplete: true, // init is true since validations are done during creation
             minOneProduct: options.activation?.minOneProduct ?? false,
             shippingRegistered: options.activation?.shippingRegistered ?? false,
             paymentMethodRegistered: options.activation?.paymentMethodRegistered ?? false,
+            legalDocumentsValid: options.activation?.legalDocumentsValid ?? false,
         },
 
         openingHours: {
@@ -85,7 +85,17 @@ export function getStoreModel(options) {
             currency: 'EUR',
         },
 
-        legalDocuments: [],
+        legalDocuments: [
+            // fileDetails: {
+            //     lastModified
+            //     name
+            //     size
+            //     type
+            // }
+            // fileSrc: ""
+            // label: ""
+            // type: ""
+        ],
 
         payment: {
             registered: false,
