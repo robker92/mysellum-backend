@@ -23,7 +23,6 @@ export {
 };
 
 async function addToShoppingCartService(email, addedProduct, addedAmount) {
-    throw USER_MODULE_PUBLIC_ERRORS.WRONG_STORE_ID_PROVIDED;
     //Get the product from the database and save it in the shopping cart
     const store = await readOneOperation(databaseEntity.STORES, {
         _id: ObjectId(addedProduct.storeId),
